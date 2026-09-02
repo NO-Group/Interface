@@ -52,14 +52,14 @@ void main() {
     test('mono theme is pure grayscale', () {
       final p = BrowserPalette.mono;
       for (final c in [p.background, p.surface, p.accent, p.primary]) {
-        expect(c.red == c.green && c.green == c.blue, isTrue,
+        expect(c.r == c.g && c.g == c.b, isTrue,
             reason: '$c is not grayscale');
       }
     });
 
     test('custom theme is frosted glass', () {
       expect(BrowserPalette.glass.chromeTranslucent, isTrue);
-      expect(BrowserPalette.glass.surface.alpha, lessThan(255));
+      expect(BrowserPalette.glass.surface.a * 255, lessThan(255));
     });
   });
 
