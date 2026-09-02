@@ -469,7 +469,7 @@ class _FilesBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = pal(context);
-    if (files.loading && files.nodes.isEmpty) {
+    if ((files.loading || !files.loaded) && files.nodes.isEmpty) {
       return const UiProgressLine(active: true);
     }
     final err = files.error;

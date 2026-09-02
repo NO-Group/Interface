@@ -10,12 +10,13 @@ Interface keeps the parts you already know — tabs, an address field, a menu �
 as one quiet row:
 
 ```
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│ ◈  [◀ ▶ ⟳ ⌂]  (● GitHub  ✕)( HN  ✕)( + )   │  ⌌ github.com · Search or type     ☆  ⬇  ▤  ⋯ │
-│ ▁▁▁▁▁▁▁ loading line ─────────────────────                                         │
-├──────────────────────────────────────────────────────────────────────────────────┤
-│  the page                                                                         │
-└──────────────────────────────────────────────────────────────────────────────────┘
++------------------------------------------------------------------------------+
+| logo | back fwd reload home | ( o GitHub  x )( HN  x )( + ) | address field |
+|                                                       shield star dl side menu|
+|  loading line ...............................................................|
++------------------------------------------------------------------------------+
+|  the page                                                                     |
++------------------------------------------------------------------------------+
 ```
 
 - **Tabs are pills in the bar**, not a strip of folders on top of the page. Each shows its icon,
@@ -37,20 +38,32 @@ Design tokens and the shared widgets that enforce all of this are in `lib/core/u
 
 ## Features
 
-- 🌐 **Real web browsing** — native WebView engine on every platform, tabs stay alive when you switch them
-- 🎨 **7 themes** — System · Light · Dark (navy/cyan) · Red · Green · Black & White (can render pages fully desaturated) · **Custom picture background** (frosted-glass chrome over your wallpaper)
-- ⚡ **Shortcuts on the new tab page** — a greeting, one search field, and an editable grid of favorite sites with folders and drag-to-reorder
-- 🔍 **Smart address field** — search and address in one box, with live suggestions, history and bookmark matches, a built-in calculator and full keyboard navigation
-- 🗂 **Tabs** — pill tabs with context menus, groups, middle-click close and split view; a grid switcher on phones; private tabs get their own chrome
-- ⭐ **Bookmarks** — the star in the bar, an optional bookmarks row, and a full manager with edit/delete
-- 🕘 **History** — grouped by day, per-item delete, clear-browsing-data dialog (history/cookies/cache)
-- ⬇️ **Real downloads** — streamed with progress and cancel, saved to your Downloads folder (Windows) / app Downloads (Android)
-- 🔎 **Find in page** (Ctrl+F) with match counter
-- 🛡 **Block ads & pop-ups** — built-in host blocklist, one-tap toggle
-- 🖥 **Desktop-site mode** for phones, per-window layout that adapts ≥840 px
-- ⌨️ **Keyboard shortcuts** — Ctrl+T / Ctrl+W / Ctrl+Tab / Ctrl+L / Ctrl+F / Ctrl+D / Ctrl+R / Alt+←→ / Ctrl+1…9
-- 🎬 Fullscreen video, and camera / microphone / location requests handled with a clear allow-once / allow / block prompt
-- 🔄 **Session restore** — reopen your tabs on startup
+- **Real web browsing** — the platform's own engine (System WebView / WebView2); tabs stay alive
+  when you switch them.
+- **Files** — a full file manager: open any folder on the device, make folders and files, rename,
+  copy, move, delete, search inside a folder, list or tiles, kept places, open a file in a tab or
+  in the app that usually takes it. Reached from the sidebar, the menu and quick actions.
+- **7 themes** — System, Light, Dark (navy and cyan), Red, Green, Black & White (can also show web
+  pages without colour), and a picture background of your own with frosted chrome.
+- **Shortcuts on the new tab page** — a greeting, one search field, and an editable grid of
+  favourite sites with folders and drag-to reorder.
+- **One address field for search and addresses** — live suggestions, history and bookmark matches,
+  a built-in calculator, full keyboard navigation.
+- **Tabs** — pill tabs with context menus, groups, middle-click close and split view; a grid
+  switcher on phones; private tabs get their own look.
+- **Bookmarks** — the star in the bar, an optional bookmarks row, and a manager with edit and delete.
+- **History** — grouped by day, delete one item, or clear everything from settings.
+- **Downloads** — streamed with progress and cancel, saved into your Downloads folder, and the file
+  manager opens on that folder in one tap.
+- **Find in page** with a match count.
+- **Ad and tracker blocking** with a per-site switch, a privacy dashboard and "hide leftover ad spaces".
+- **Desktop-site request** for phones; the layout adapts from 840 px up.
+- **Keyboard shortcuts** — Ctrl+T, Ctrl+W, Ctrl+Tab, Ctrl+L, Ctrl+F, Ctrl+D, Ctrl+R, Ctrl+K,
+  Alt+Left / Alt+Right, Ctrl+1 to 9.
+- **Fullscreen video**, and camera / microphone / location prompts with allow once, allow, block.
+- **Session restore** — your tabs come back on startup.
+- **Its own icon set** — 115 line icons drawn as SVG in `assets/icons/`, recoloured to match the
+  text around them. No emoji, no icon font.
 
 ## Get the app
 
@@ -77,7 +90,8 @@ Requirements: Flutter stable + Android SDK (APK) or Visual Studio 2022 with "Des
 ## Notes
 
 - The release APK is debug-signed (fine for sideloading); configure your own keystore for Play Store distribution.
-- Incognito tabs are fully private on Android/iOS; on Windows they share the WebView2 profile (engine limitation).
+- Private tabs keep history and cookies out of the profile on Android and iOS; on Windows they
+  share the WebView2 profile (an engine limitation).
 - Launcher icons are generated deterministically: `python3 tool/gen_icons.py`.
 
 ## Project layout
@@ -88,8 +102,8 @@ lib/
   models.dart bookmarks / history / speed dial / downloads
   services/   web engine bootstrap, suggestions, downloads, blocklist
   state/      settings, profile, tabs (browser engine)
-  widgets/    the one-row bar, pill tabs, address field, speed dial, find bar, …
-  pages/      browser shells (desktop/mobile), settings, history, …
+  widgets/    the one-row bar, pill tabs, address field, speed dial, find bar, icons, …
+  pages/      browser shells (desktop/mobile), settings, history, files, …
 ```
 
 ## Building the apps

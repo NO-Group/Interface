@@ -115,15 +115,21 @@ class SettingsBody extends StatelessWidget {
           ),
         ),
         _Section(title: 'Search & startup'),
-        for (final engine in SearchEngine.all)
-          RadioListTile<String>(
-            dense: true,
-            title: Text(engine.name),
-            subtitle: Text(displayUrl(engine.homepage)),
-            value: engine.id,
-            groupValue: settings.searchEngineId,
-            onChanged: (v) => settings.setSearchEngine(v ?? engine.id),
+        RadioGroup<String>(
+          groupValue: settings.searchEngineId,
+          onChanged: (v) => settings.setSearchEngine(v ?? settings.searchEngineId),
+          child: Column(
+            children: [
+              for (final engine in SearchEngine.all)
+                RadioListTile<String>(
+                  dense: true,
+                  title: Text(engine.name),
+                  subtitle: Text(displayUrl(engine.homepage)),
+                  value: engine.id,
+                ),
+            ],
           ),
+        ),
         const Divider(indent: 16, endIndent: 16),
         const _HomepagePicker(),
         SwitchListTile(
@@ -206,7 +212,6 @@ class SettingsBody extends StatelessWidget {
   Future<void> _clearBrowsingData(BuildContext context) async {
     final palette = pal(context);
     final profile = context.read<ProfileProvider>();
-    final browser = context.read<BrowserProvider>();
     var clearHistory = true;
     var clearCookies = true;
     var clearCache = true;
@@ -268,11 +273,9 @@ class SettingsBody extends StatelessWidget {
       }
     }
     if (clearCache) {
-      for (final tab in browser.tabs) {
-        try {
-          await tab.controller?.clearCache();
-        } catch (_) {}
-      }
+      try {
+        await InAppWebViewController.clearAllCache();
+      } catch (_) {}
     }
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
@@ -570,20 +573,13 @@ class _HomepagePickerState extends State<_HomepagePicker> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        RadioListTile<bool>(
-          dense: true,
-          title: const Text('New tab page'),
-          subtitle: const Text('Your shortcuts and a search box'),
-          value: true,
+        RadioGroup<bool>(
           groupValue: useDial,
-          onChanged: (_) => settings.setHomePage(''),
-        ),
-        RadioListTile<bool>(
-          dense: true,
-          title: const Text('Custom page'),
-          value: false,
-          groupValue: useDial,
-          onChanged: (_) {
+          onChanged: (v) {
+            if (v != false) {
+              settings.setHomePage('');
+              return;
+            }
             final parsed = urlFromInput(_controller.text);
             if (parsed != null && isWebScheme(parsed)) {
               settings.setHomePage(parsed.toString());
@@ -591,6 +587,21 @@ class _HomepagePickerState extends State<_HomepagePicker> {
               settings.setHomePage('');
             }
           },
+          child: Column(
+            children: [
+              RadioListTile<bool>(
+                dense: true,
+                title: const Text('New tab page'),
+                subtitle: const Text('Your shortcuts and a search box'),
+                value: true,
+              ),
+              RadioListTile<bool>(
+                dense: true,
+                title: const Text('Custom page'),
+                value: false,
+              ),
+            ],
+          ),
         ),
         if (!useDial)
           Padding(

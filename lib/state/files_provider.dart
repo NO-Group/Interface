@@ -54,6 +54,8 @@ class FilesProvider extends ChangeNotifier {
   }
 
   Future<void> load() async {
+    loading = true;
+    notifyListeners();
     _prefs ??= await SharedPreferences.getInstance();
     favourites = _prefs!.getStringList('files.favourites') ?? const [];
     sort = FileSort.values.asNameMap()[_prefs!.getString('files.sort')] ??
@@ -68,6 +70,7 @@ class FilesProvider extends ChangeNotifier {
         : (places.isNotEmpty ? places.first.path : fs.startPath());
     loaded = true;
     await refresh();
+    if (!loaded) return;
   }
 
   Future<void> refresh() async {

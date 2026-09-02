@@ -322,7 +322,6 @@ ThemeData buildMaterialTheme(BrowserPalette p) {
   final ui = TextStyle(color: p.text, fontSize: 13.5, height: 1.35);
 
   return base.copyWith(
-    useMaterial3: true,
     colorScheme: scheme,
     scaffoldBackgroundColor: p.background,
     canvasColor: p.surface,
