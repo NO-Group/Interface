@@ -1,0 +1,237 @@
+name: Build
+
+on:
+  push:
+    branches: [main, "arena/**"]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      build_android:
+        description: "Build the Android APK"
+        type: boolean
+        default: true
+      build_windows:
+        description: "Build the Windows EXE"
+        type: boolean
+        default: true
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze & test (fast gate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      checks: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Pub get
+        run: flutter pub get 2>&1 | tee /tmp/logs-pubget.txt
+
+      - name: Analyze
+        run: |
+          flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1 | tee /tmp/logs-analyze.txt
+          echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+        id: analyze
+        continue-on-error: true
+
+      - name: Unit & widget tests
+        run: |
+          flutter test 2>&1 | tee /tmp/logs-test.txt
+          echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+        id: test
+        continue-on-error: true
+
+      - name: Publish logs & verdict
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const read = (p) => { try { return fs.readFileSync(p, 'utf8'); } catch { return `(missing ${p})`; } };
+            const parts = [
+              '## flutter pub get', read('/tmp/logs-pubget.txt'),
+              '## flutter analyze (exit ${{ steps.analyze.outputs.code }})', read('/tmp/logs-analyze.txt'),
+              '## flutter test (exit ${{ steps.test.outputs.code }})', read('/tmp/logs-test.txt'),
+            ];
+            const text = parts.join('\n').slice(0, 65000);
+            const jobs = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId,
+            });
+            const job = jobs.data.jobs.find(j => (j.name || '').includes('Analyze'));
+            if (job) {
+              const checkId = Number(job.check_run_url.split('/').pop());
+              await github.rest.checks.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                check_run_id: checkId,
+                output: { title: 'Tool output', summary: 'Full tool logs attached', text: '```\n' + text + '\n```' },
+              });
+            }
+            if ('${{ steps.analyze.outputs.code }}' !== '0') core.setFailed('flutter analyze failed');
+            if ('${{ steps.test.outputs.code }}' !== '0') core.setFailed('flutter test failed');
+
+  android:
+    name: Android APK
+    needs: analyze
+    if: inputs.build_android != false
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      checks: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Build release APK
+        run: |
+          flutter pub get 2>&1 | tee /tmp/logs.txt
+          flutter build apk --release 2>&1 | tee -a /tmp/logs.txt
+          echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+        id: build
+        continue-on-error: true
+
+      - name: Stage artifact
+        if: steps.build.outputs.code == '0'
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk \
+             Interface-Browser-Android.apk
+          ls -lh Interface-Browser-Android.apk
+
+      - uses: actions/upload-artifact@v4
+        if: steps.build.outputs.code == '0'
+        with:
+          name: Interface-Browser-Android-apk
+          path: Interface-Browser-Android.apk
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Publish logs & verdict
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const text = (function(){ try { return fs.readFileSync('/tmp/logs.txt','utf8'); } catch { return ''; } })();
+            const jobs = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId,
+            });
+            const job = jobs.data.jobs.find(j => (j.name || '').includes('Android'));
+            if (job) {
+              const checkId = Number(job.check_run_url.split('/').pop());
+              await github.rest.checks.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                check_run_id: checkId,
+                output: { title: 'Build log', summary: 'Tool output', text: '```\n' + text.slice(-60000) + '\n```' },
+              });
+            }
+            if ('${{ steps.build.outputs.code }}'.trim() !== '0') core.setFailed('flutter build apk failed');
+
+  windows:
+    name: Windows EXE
+    needs: analyze
+    if: inputs.build_windows != false
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions:
+      checks: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Build Windows release
+        shell: pwsh
+        run: |
+          flutter pub get 2>&1 | Tee-Object -FilePath C:\logs.txt
+          flutter build windows --release 2>&1 | Tee-Object -FilePath C:\build-log.txt
+          Get-Content C:\build-log.txt | Out-File -Append C:\logs.txt
+          "code=$LASTEXITCODE" | Out-File -Append $env:GITHUB_OUTPUT -Encoding utf8
+        id: build
+        continue-on-error: true
+
+      - name: Package portable zip
+        if: steps.build.outputs.code == '0'
+        shell: pwsh
+        run: |
+          Get-ChildItem build/windows/x64/runner/Release | Format-Table Name,Length
+          tar -acf Interface-Browser-Windows-x64.zip -C build/windows/x64/runner/Release .
+          if ($LASTEXITCODE -ne 0) { "zip=$LASTEXITCODE" | Out-File -Append $env:GITHUB_OUTPUT -Encoding utf8; exit 1 }
+          Get-Item Interface-Browser-Windows-x64.zip | Format-List Name,Length
+          "zip=0" | Out-File -Append $env:GITHUB_OUTPUT -Encoding utf8
+        id: package
+        continue-on-error: true
+
+      - uses: actions/upload-artifact@v4
+        if: steps.build.outputs.code == '0' && steps.package.outputs.zip == '0'
+        with:
+          name: Interface-Browser-Windows-x64-exe
+          path: Interface-Browser-Windows-x64.zip
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Publish logs & verdict
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const text = (function(){ try { return fs.readFileSync('C:\\logs.txt','utf8'); } catch { return ''; } })();
+            const jobs = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId,
+            });
+            const job = jobs.data.jobs.find(j => (j.name || '').includes('Windows'));
+            if (job) {
+              const checkId = Number(job.check_run_url.split('/').pop());
+              await github.rest.checks.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                check_run_id: checkId,
+                output: { title: 'Build log', summary: 'Tool output', text: '```\n' + text.slice(-60000) + '\n```' },
+              });
+            }
+            if ('${{ steps.build.outputs.code }}'.trim() !== '0') core.setFailed('flutter build windows failed');
+            else if ('${{ steps.package.outputs.zip }}'.trim() !== '0') core.setFailed('packaging failed');
+
+  release:
+    name: GitHub Release (on v* tags)
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [android, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Attach artifacts to release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/*/Interface-Browser-Android.apk
+            dist/*/Interface-Browser-Windows-x64.zip
