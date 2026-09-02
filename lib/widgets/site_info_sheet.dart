@@ -1,7 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart' hide Favicon;
 import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
@@ -153,7 +153,7 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                             Navigator.of(sheetContext).pop();
                             browser.refreshWebViews();
                             final m = ScaffoldMessenger.of(context);
-                            m.showSnackBar(const SnackBar(
+                            m.showSnackBar(SnackBar(
                                 content:
                                     Text('Ads allowed on $host')));
                           },

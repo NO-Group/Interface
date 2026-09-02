@@ -56,10 +56,11 @@ class VerticalTabRail extends StatelessWidget {
                 final groupColor =
                     group == null ? null : Color(group.colorValue);
 
-                return InkWell(
+                return GestureDetector(
+                  onTertiaryTapUp: (_) => browser.closeTab(tab),
+                  child: InkWell(
                   onTap: () => browser.select(i),
                   onSecondaryTapUp: (d) => _menu(context, tab, d.globalPosition),
-                  onTertiaryTapUp: (_) => browser.closeTab(tab),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 120),
                     margin:
@@ -120,6 +121,7 @@ class VerticalTabRail extends StatelessWidget {
                         ),
                       ],
                     ),
+                  ),
                   ),
                 );
               },

@@ -737,7 +737,11 @@ class BrowserProvider extends ChangeNotifier {
 
 /// Friendly labels for permission resource types.
 String permissionLabel(PermissionResourceType t) {
-  switch (t.name) {
+  final key = t
+      .toString()
+      .replaceAll('PermissionResourceType.', '')
+      .toUpperCase();
+  switch (key) {
     case 'CAMERA':
       return 'camera';
     case 'MICROPHONE':

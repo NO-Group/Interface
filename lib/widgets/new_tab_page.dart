@@ -623,7 +623,7 @@ class _DraggableTile extends StatelessWidget {
       onLongPress: onLongPress,
     );
     return DragTarget<SpeedDialItem>(
-      onWillAcceptWithData: (data) => data?.id != item.id,
+      onWillAcceptWithDetails: (d) => d.data?.id != item.id,
       onAccept: (dragged) {
         // Find indices in the current visible list.
         final scope = ScopeInfo.of(context);

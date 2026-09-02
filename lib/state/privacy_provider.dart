@@ -30,7 +30,7 @@ class PrivacyProvider extends ChangeNotifier {
   List<MapEntry<String, int>> get topBlockedHosts {
     final entries = _blockedByHost.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    return entries.take(20);
+    return entries.take(20).toList();
   }
 
   int blockedFor(String host) => _blockedByHost[host] ?? 0;
