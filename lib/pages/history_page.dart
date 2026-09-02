@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../widgets/icons.dart';
 
 import '../core/pal.dart';
 import '../core/ui.dart';
@@ -25,7 +26,7 @@ class HistoryList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.history_rounded, size: 52, color: palette.textDim),
+            uiGlyph('clock', size: 52, color: palette.textDim),
             const SizedBox(height: 12),
             Text('Pages you visit show up here',
                 style: TextStyle(color: palette.text, fontSize: 15)),
@@ -121,7 +122,7 @@ class _HistoryTile extends StatelessWidget {
           ),
           if (!embedded)
             IconButton(
-              icon: Icon(Icons.close_rounded, size: 17, color: palette.textDim),
+              icon: uiGlyph('close', size: 17, color: palette.textDim),
               onPressed: () => profile.removeHistory(entry),
             ),
         ],
@@ -147,7 +148,7 @@ class HistoryRoute extends StatelessWidget {
         actions: [
           IconButton(
             tooltip: 'Clear browsing history',
-            icon: Icon(Icons.delete_sweep_outlined, color: palette.text),
+            icon: uiGlyph('clear', color: palette.text),
             onPressed: () async {
               final ok = await showDialog<bool>(
                 context: context,

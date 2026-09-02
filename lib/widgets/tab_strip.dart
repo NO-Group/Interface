@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
 import '../core/ui.dart';
@@ -55,7 +56,7 @@ class TabStrip extends StatelessWidget {
         ),
         Ui.gap(2),
         UiIconButton(
-          icon: Icons.add_rounded,
+          icon: 'plus',
           tooltip: 'New tab (Ctrl+T)',
           onTap: () => browser.newTab(),
         ),
@@ -83,32 +84,32 @@ class TabStrip extends StatelessWidget {
         const PopupMenuItem(
           value: 'new',
           height: Ui.menuRowHeight,
-          child: _MenuRow(icon: Icons.add_rounded, label: 'New tab to the right'),
+          child: _MenuRow(icon: 'plus', label: 'New tab to the right'),
         ),
         const PopupMenuItem(
           value: 'duplicate',
           height: Ui.menuRowHeight,
-          child: _MenuRow(icon: Icons.copy_rounded, label: 'Duplicate'),
+          child: _MenuRow(icon: 'copy', label: 'Duplicate'),
         ),
         const PopupMenuItem(
           value: 'split',
           height: Ui.menuRowHeight,
           child: _MenuRow(
-            icon: Icons.vertical_split_outlined,
+            icon: 'split',
             label: 'Open in split view',
           ),
         ),
         const PopupMenuItem(
           value: 'pin',
           height: Ui.menuRowHeight,
-          child: _MenuRow(icon: Icons.push_pin_rounded, label: 'Keep this tab'),
+          child: _MenuRow(icon: 'pin', label: 'Keep this tab'),
         ),
         const PopupMenuDivider(),
         PopupMenuItem(
           value: 'group',
           height: Ui.menuRowHeight,
           child: const _MenuRow(
-            icon: Icons.folder_rounded,
+            icon: 'folder',
             label: 'Add to group…',
           ),
         ),
@@ -117,7 +118,7 @@ class TabStrip extends StatelessWidget {
             value: 'ungroup',
             height: Ui.menuRowHeight,
             child: _MenuRow(
-              icon: Icons.folder_off_rounded,
+              icon: 'folder-block',
               label: 'Remove from group',
             ),
           ),
@@ -125,18 +126,18 @@ class TabStrip extends StatelessWidget {
         const PopupMenuItem(
           value: 'close',
           height: Ui.menuRowHeight,
-          child: _MenuRow(icon: Icons.close_rounded, label: 'Close tab'),
+          child: _MenuRow(icon: 'close', label: 'Close tab'),
         ),
         const PopupMenuItem(
           value: 'others',
           height: Ui.menuRowHeight,
-          child: _MenuRow(icon: Icons.tab_rounded, label: 'Close other tabs'),
+          child: _MenuRow(icon: 'tab', label: 'Close other tabs'),
         ),
         const PopupMenuItem(
           value: 'right',
           height: Ui.menuRowHeight,
           child: _MenuRow(
-            icon: Icons.keyboard_tab_rounded,
+            icon: 'keyboard',
             label: 'Close tabs to the right',
           ),
         ),
@@ -209,7 +210,7 @@ class TabStrip extends StatelessWidget {
                       ),
                     ),
                     if (tab.groupId == g.id)
-                      Icon(Icons.check_rounded,
+                      uiGlyph('check',
                           size: 16, color: palette.accent),
                   ],
                 ),
@@ -256,7 +257,7 @@ class TabStrip extends StatelessWidget {
                 },
                 child: Row(
                   children: [
-                    Icon(Icons.folder_off_rounded,
+                    uiGlyph('folder-block',
                         size: 16, color: palette.textDim),
                     const SizedBox(width: 10),
                     Text('No group', style: Ui.text(palette, color: palette.textDim)),
@@ -303,7 +304,7 @@ class TabCountButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.grid_view_rounded, size: 15, color: p.textDim),
+              uiGlyph('grid', size: 15, color: p.textDim),
               Ui.gap(7),
               Text('$count', style: Ui.text(p, weight: FontWeight.w600)),
             ],
@@ -317,7 +318,7 @@ class TabCountButton extends StatelessWidget {
 class _MenuRow extends StatelessWidget {
   const _MenuRow({required this.icon, required this.label});
 
-  final IconData icon;
+  final Object icon;
   final String label;
 
   @override
@@ -325,7 +326,7 @@ class _MenuRow extends StatelessWidget {
     final palette = pal(context);
     return Row(
       children: [
-        Icon(icon, size: 17, color: palette.textDim),
+        uiGlyph(icon, size: 17, color: palette.textDim),
         const SizedBox(width: 11),
         Text(label, style: Ui.text(palette)),
       ],
@@ -427,9 +428,9 @@ class _TabPill extends StatelessWidget {
                       ),
                     )
                   else if (tab.incognito)
-                    Icon(Icons.shield_rounded, size: 14, color: p.accent)
+                    uiGlyph('shield-on', size: 14, color: p.accent)
                   else if (tab.onSpeedDial)
-                    Icon(Icons.add_rounded, size: 14, color: p.textDim)
+                    uiGlyph('plus', size: 14, color: p.textDim)
                   else
                     Favicon(host: tab.host, url: tab.faviconUrl, size: 15),
                   const SizedBox(width: 8),
@@ -450,7 +451,7 @@ class _TabPill extends StatelessWidget {
                   if (isSplit)
                     Padding(
                       padding: const EdgeInsets.only(right: 2),
-                      child: Icon(Icons.vertical_split_rounded,
+                      child: uiGlyph('split',
                           size: 13, color: p.accent),
                     ),
                   SizedBox(
@@ -461,8 +462,8 @@ class _TabPill extends StatelessWidget {
                       padding: EdgeInsets.zero,
                       splashRadius: 11,
                       tooltip: 'Close tab (Ctrl+W)',
-                      icon: Icon(
-                        Icons.close_rounded,
+                      icon: uiGlyph(
+                        'close',
                         size: 13,
                         color: hovering || selected ? p.textDim : Colors.transparent,
                       ),

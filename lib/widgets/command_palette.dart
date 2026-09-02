@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
 import '../core/palette.dart';
@@ -9,6 +10,7 @@ import '../pages/bookmarks_page.dart';
 import '../pages/downloads_page.dart';
 import '../pages/history_page.dart';
 import '../pages/privacy_page.dart';
+import '../pages/files_page.dart';
 import '../pages/reader_page.dart';
 import '../pages/reading_list_page.dart';
 import '../pages/settings_page.dart';
@@ -20,7 +22,7 @@ class _Command {
   const _Command(this.label, this.hint, this.icon, this.run);
   final String label;
   final String hint;
-  final IconData icon;
+  final Object icon;
   final void Function(BuildContext) run;
 }
 
@@ -60,72 +62,74 @@ class _CommandPaletteState extends State<CommandPalette> {
     }
 
     return [
-      _Command('New tab', 'Ctrl+T', Icons.add_rounded, (_) => browser.newTab()),
-      _Command('New private tab', 'Ctrl+Shift+N', Icons.shield_outlined,
+      _Command('New tab', 'Ctrl+T', 'plus', (_) => browser.newTab()),
+      _Command('New private tab', 'Ctrl+Shift+N', 'shield',
           (_) => browser.newTab(incognito: true)),
-      _Command('Close current tab', 'Ctrl+W', Icons.close_rounded,
+      _Command('Close current tab', 'Ctrl+W', 'close',
           (_) => browser.closeCurrent()),
-      _Command('Find in page', 'Ctrl+F', Icons.find_in_page_rounded,
+      _Command('Find in page', 'Ctrl+F', 'find',
           (_) => browser.openFind()),
-      _Command('Reader view', '', Icons.menu_book_rounded, (_) {
+      _Command('Open files', '', 'folder', (_) => openPanelOrRoute(
+            SidePanel.files, const FilesRoute())),
+      _Command('Reader view', '', 'reading-list', (_) {
         Navigator.of(context).push(
           MaterialPageRoute<void>(builder: (_) => const ReaderPage()),
         );
       }),
       _Command(
-          'Add to speed dial', '', Icons.grid_view_rounded, (_) => profile
+          'Add to speed dial', '', 'grid', (_) => profile
               .toggleSpeedDial(
                   url: tab.url,
                   title: tab.title.isEmpty ? tab.host : tab.title)),
-      _Command('Save to reading list', '', Icons.auto_stories_outlined,
+      _Command('Save to reading list', '', 'reader',
           (_) => profile.addReading(url: tab.url, title: tab.title)),
-      _Command('Bookmark this page', 'Ctrl+D', Icons.star_rounded,
+      _Command('Bookmark this page', 'Ctrl+D', 'star-on',
           (_) => profile.toggleBookmark(url: tab.url, title: tab.title)),
-      _Command('Downloads', 'Ctrl+J', Icons.download_rounded,
+      _Command('Downloads', 'Ctrl+J', 'download',
           (_) => openPanelOrRoute(
               SidePanel.downloads, const DownloadsRoute())),
-      _Command('History', 'Ctrl+H', Icons.history_rounded,
+      _Command('History', 'Ctrl+H', 'clock',
           (_) => openPanelOrRoute(SidePanel.history, const HistoryRoute())),
-      _Command('Bookmarks', '', Icons.bookmarks_outlined,
+      _Command('Bookmarks', '', 'bookmarks',
           (_) => openPanelOrRoute(
               SidePanel.bookmarks, const BookmarksRoute())),
-      _Command('Reading list', '', Icons.auto_stories_outlined,
+      _Command('Reading list', '', 'reader',
           (_) => openPanelOrRoute(
               SidePanel.reading, const ReadingRoute())),
-      _Command('Privacy dashboard', '', Icons.shield_rounded,
+      _Command('Privacy dashboard', '', 'shield-on',
           (_) => openPanelOrRoute(
               SidePanel.privacy, const PrivacyRoute())),
-      _Command('Settings', '', Icons.settings_outlined,
+      _Command('Settings', '', 'sliders',
           (_) => openPanelOrRoute(
               SidePanel.settings, const SettingsRoute())),
-      _Command('Theme: System', '', Icons.brightness_auto,
+      _Command('Theme: System', '', 'auto',
           (_) => settings.setThemeChoice(ThemeChoice.system)),
-      _Command('Theme: Light', '', Icons.light_mode_outlined,
+      _Command('Theme: Light', '', 'sun',
           (_) => settings.setThemeChoice(ThemeChoice.light)),
-      _Command('Theme: Dark', '', Icons.dark_mode_outlined,
+      _Command('Theme: Dark', '', 'moon',
           (_) => settings.setThemeChoice(ThemeChoice.dark)),
-      _Command('Theme: Red', '', Icons.local_fire_department_outlined,
+      _Command('Theme: Red', '', 'flame',
           (_) => settings.setThemeChoice(ThemeChoice.red)),
-      _Command('Theme: Green', '', Icons.eco_outlined,
+      _Command('Theme: Green', '', 'leaf',
           (_) => settings.setThemeChoice(ThemeChoice.green)),
-      _Command('Theme: Black & White', '', Icons.contrast,
+      _Command('Theme: Black & White', '', 'contrast',
           (_) => settings.setThemeChoice(ThemeChoice.mono)),
-      _Command('Theme: Custom picture', '', Icons.wallpaper,
+      _Command('Theme: Custom picture', '', 'image',
           (_) => settings.setThemeChoice(ThemeChoice.custom)),
-      _Command('Toggle ad blocking', '', Icons.block_rounded,
+      _Command('Toggle ad blocking', '', 'block',
           (_) => settings.setBlockAds(!settings.blockAds)),
-      _Command('Reload page', 'Ctrl+R', Icons.refresh_rounded,
+      _Command('Reload page', 'Ctrl+R', 'reload',
           (_) => browser.reload()),
-      _Command('New tab page', '', Icons.home_outlined, (_) => browser.goHome()),
+      _Command('New tab page', '', 'home', (_) => browser.goHome()),
       if (desktop) ...[
-        _Command('Toggle split view', '', Icons.vertical_split_rounded,
+        _Command('Toggle split view', '', 'split',
             (_) => browser.splitActive
                 ? browser.closeSplit()
                 : browser.openSplit()),
-        _Command('Toggle vertical tabs', '', Icons.view_agenda_outlined,
+        _Command('Toggle vertical tabs', '', 'list',
             (_) => settings.setVerticalTabs(!settings.verticalTabs)),
         _Command(
-            'Toggle bookmarks bar', '', Icons.bookmark_border_rounded, (_) {
+            'Toggle bookmarks bar', '', 'bookmark', (_) {
           settings.setShowBookmarksBar(!settings.showBookmarksBar);
         }),
       ],
@@ -166,7 +170,7 @@ class _CommandPaletteState extends State<CommandPalette> {
                     padding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
                     child: Row(
                       children: [
-                        Icon(Icons.search_rounded, size: 19, color: palette.textDim),
+                        uiGlyph('search', size: 19, color: palette.textDim),
                         const SizedBox(width: 11),
                         Expanded(
                           child: TextField(
@@ -184,7 +188,7 @@ class _CommandPaletteState extends State<CommandPalette> {
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.close_rounded,
+                          icon: uiGlyph('close',
                               size: 19, color: palette.textDim),
                           onPressed: browser.closePalette,
                         ),
@@ -227,7 +231,7 @@ class _CommandPaletteState extends State<CommandPalette> {
                                   ),
                                   child: Row(
                                     children: [
-                                      Icon(cmd.icon,
+                                      uiGlyph(cmd.icon,
                                           size: 17,
                                           color: selected
                                               ? palette.accent

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
 import '../core/ui.dart';
@@ -26,7 +27,7 @@ class TabSwitcherPage extends StatelessWidget {
           style: Ui.text(palette, size: 16, weight: FontWeight.w700),
         ),
         leading: IconButton(
-          icon: Icon(Icons.close_rounded, color: palette.text),
+          icon: uiGlyph('close', color: palette.text),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
@@ -37,7 +38,7 @@ class TabSwitcherPage extends StatelessWidget {
             ),
           IconButton(
             tooltip: 'New private tab',
-            icon: Icon(Icons.shield_outlined, color: palette.text),
+            icon: uiGlyph('shield', color: palette.text),
             onPressed: () {
               browser.newTab(incognito: true);
               Navigator.of(context).pop();
@@ -45,7 +46,7 @@ class TabSwitcherPage extends StatelessWidget {
           ),
           IconButton(
             tooltip: 'New tab',
-            icon: Icon(Icons.add_rounded, color: palette.text),
+            icon: uiGlyph('plus', color: palette.text),
             onPressed: () {
               browser.newTab();
               Navigator.of(context).pop();
@@ -128,9 +129,9 @@ class _TabCard extends StatelessWidget {
             Row(
               children: [
                 if (tab.incognito)
-                  Icon(Icons.shield_rounded, size: 15, color: palette.accent)
+                  uiGlyph('shield-on', size: 15, color: palette.accent)
                 else if (tab.onSpeedDial)
-                  Icon(Icons.add_rounded, size: 15, color: palette.textDim)
+                  uiGlyph('plus', size: 15, color: palette.textDim)
                 else
                   Favicon(host: tab.host, url: tab.faviconUrl, size: 16),
                 const SizedBox(width: 6),
@@ -151,7 +152,7 @@ class _TabCard extends StatelessWidget {
                   customBorder: const CircleBorder(),
                   child: Padding(
                     padding: const EdgeInsets.all(3),
-                    child: Icon(Icons.close_rounded,
+                    child: uiGlyph('close',
                         size: 15, color: palette.textDim),
                   ),
                 ),
@@ -199,7 +200,7 @@ class _NewTabCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: palette.border),
         ),
-        child: Icon(Icons.add_rounded, size: 34, color: palette.textDim),
+        child: uiGlyph('plus', size: 34, color: palette.textDim),
       ),
     );
   }

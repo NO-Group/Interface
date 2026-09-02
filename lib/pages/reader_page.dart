@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../widgets/icons.dart';
 
 import '../core/pal.dart';
 import '../services/reader_extractor.dart';
@@ -81,7 +82,7 @@ class _ReaderPageState extends State<ReaderPage> {
         foregroundColor: scheme.foreground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
+          icon: uiGlyph('close'),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         titleSpacing: 0,
@@ -96,19 +97,19 @@ class _ReaderPageState extends State<ReaderPage> {
         actions: [
           IconButton(
             tooltip: 'Smaller text',
-            icon: const Icon(Icons.text_decrease_rounded, size: 20),
+            icon: uiGlyph('text', size: 20),
             onPressed: () =>
                 settings.setReaderFontSize(settings.readerFontSize - 1),
           ),
           IconButton(
             tooltip: 'Larger text',
-            icon: const Icon(Icons.text_increase_rounded, size: 20),
+            icon: uiGlyph('text', size: 20),
             onPressed: () =>
                 settings.setReaderFontSize(settings.readerFontSize + 1),
           ),
           PopupMenuButton<ReaderTheme>(
             tooltip: 'Reader theme',
-            icon: Icon(Icons.palette_outlined,
+            icon: uiGlyph('palette',
                 size: 20, color: scheme.foreground),
             onSelected: settings.setReaderTheme,
             itemBuilder: (_) => const [
@@ -119,7 +120,7 @@ class _ReaderPageState extends State<ReaderPage> {
           ),
           IconButton(
             tooltip: 'Copy article text',
-            icon: const Icon(Icons.copy_rounded, size: 19),
+            icon: uiGlyph('copy', size: 19),
             onPressed: _article == null
                 ? null
                 : () {
@@ -132,7 +133,7 @@ class _ReaderPageState extends State<ReaderPage> {
           ),
           IconButton(
             tooltip: 'Reload',
-            icon: const Icon(Icons.refresh_rounded, size: 20),
+            icon: uiGlyph('reload', size: 20),
             onPressed: _extract,
           ),
         ],
@@ -423,7 +424,7 @@ class _EmptyReader extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.menu_book_rounded, size: 52, color: accent),
+          uiGlyph('reading-list', size: 52, color: accent),
           const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),

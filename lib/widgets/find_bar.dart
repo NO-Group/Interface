@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
 import '../core/ui.dart';
@@ -88,7 +89,7 @@ class _FindBarState extends State<FindBar> {
       decoration: Ui.floating(palette, radius: Ui.rCard),
       child: Row(
         children: [
-          Icon(Icons.search_rounded, size: 17, color: palette.textDim),
+          uiGlyph('search', size: 17, color: palette.textDim),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
@@ -122,21 +123,21 @@ class _FindBarState extends State<FindBar> {
               ),
             ),
           UiIconButton(
-            icon: Icons.arrow_upward_rounded,
+            icon: 'arrow-up',
             iconSize: 16,
             size: 32,
             tooltip: 'Previous match',
             onTap: () => _next(false),
           ),
           UiIconButton(
-            icon: Icons.arrow_downward_rounded,
+            icon: 'arrow-down',
             iconSize: 16,
             size: 32,
             tooltip: 'Next match',
             onTap: () => _next(true),
           ),
           UiIconButton(
-            icon: Icons.close_rounded,
+            icon: 'close',
             iconSize: 16,
             size: 32,
             tooltip: 'Close',

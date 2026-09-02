@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../widgets/icons.dart';
 
 import '../core/pal.dart';
 import '../core/ui.dart';
@@ -44,7 +45,7 @@ class PrivacyPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(Ui.rCard),
                   border: Border.all(color: palette.border),
                 ),
-                child: Icon(Icons.shield_rounded,
+                child: uiGlyph('shield-on',
                     size: 24, color: palette.accent),
               ),
               const SizedBox(width: 16),
@@ -78,7 +79,7 @@ class PrivacyPage extends StatelessWidget {
           child: Row(
             children: [
               _Stat(
-                icon: Icons.data_usage_rounded,
+                icon: 'shield',
                 label:
                     '${(privacy.kbSaved / 1024).toStringAsFixed(privacy.kbSaved > 10240 ? 0 : 1)} MB',
                 sub: 'data saved (est.)',
@@ -86,7 +87,7 @@ class PrivacyPage extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               _Stat(
-                icon: Icons.bolt_rounded,
+                icon: 'bolt',
                 label: '${privacy.topBlockedHosts.length}',
                 sub: 'worst offenders',
                 palette: palette,
@@ -95,7 +96,7 @@ class PrivacyPage extends StatelessWidget {
           ),
         ),
         SwitchListTile(
-          secondary: Icon(Icons.block_rounded,
+          secondary: uiGlyph('block',
               color: settings.blockAds ? palette.accent : palette.textDim),
           title: const Text('Block ads & pop-ups'),
           subtitle:
@@ -104,7 +105,7 @@ class PrivacyPage extends StatelessWidget {
           onChanged: settings.setBlockAds,
         ),
         SwitchListTile(
-          secondary: Icon(Icons.visibility_off_rounded,
+          secondary: uiGlyph('eye-off',
               color: settings.cosmeticFiltering
                   ? palette.accent
                   : palette.textDim),
@@ -156,7 +157,7 @@ class PrivacyPage extends StatelessWidget {
           Center(
             child: TextButton.icon(
               onPressed: () => privacy.resetStats(),
-              icon: const Icon(Icons.restart_alt_rounded, size: 18),
+              icon: uiGlyph('restore', size: 18),
               label: const Text('Reset statistics'),
             ),
           ),
@@ -175,7 +176,7 @@ class _Stat extends StatelessWidget {
     required this.palette,
   });
 
-  final IconData icon;
+  final Object icon;
   final String label;
   final String sub;
   final BrowserPalette palette;
@@ -192,7 +193,7 @@ class _Stat extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: palette.accent),
+            uiGlyph(icon, size: 20, color: palette.accent),
             const SizedBox(width: 10),
             Expanded(
               child: Column(

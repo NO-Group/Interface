@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
 import '../core/ui.dart';
@@ -111,7 +112,7 @@ class _NewTabPageState extends State<NewTabPage> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.shield_rounded,
+                              uiGlyph('shield-on',
                                   size: 16, color: palette.accent),
                               const SizedBox(width: 8),
                               Text(
@@ -126,17 +127,7 @@ class _NewTabPageState extends State<NewTabPage> {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(9),
-                              child: Image.asset(
-                                'assets/brand/app_logo.png',
-                                width: 28,
-                                height: 28,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    const LogoMark(size: 26),
-                              ),
-                            ),
+                            const LogoMark(size: 28),
                             const SizedBox(width: 10),
                             Text(
                               'Interface',
@@ -176,7 +167,7 @@ class _NewTabPageState extends State<NewTabPage> {
                             hintText: 'Search or type an address',
                             hintStyle: Ui.text(
                                 palette, size: 14.5, color: palette.textDim),
-                            prefixIcon: Icon(Icons.search_rounded,
+                            prefixIcon: uiGlyph('search',
                                 color: palette.textDim),
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 15),
@@ -206,7 +197,7 @@ class _NewTabPageState extends State<NewTabPage> {
                               child: Padding(
                                 padding: const EdgeInsets.all(4),
                                 child: Row(children: [
-                                  Icon(Icons.arrow_back_ios_new_rounded,
+                                  uiGlyph('back',
                                       size: 13, color: palette.accent),
                                   const SizedBox(width: 6),
                                   Text(
@@ -219,7 +210,7 @@ class _NewTabPageState extends State<NewTabPage> {
                               ),
                             ),
                             const SizedBox(width: 6),
-                            Icon(Icons.chevron_right_rounded,
+                            uiGlyph('chevron-right',
                                 size: 15, color: palette.textDim),
                             const SizedBox(width: 6),
                           ],
@@ -242,7 +233,7 @@ class _NewTabPageState extends State<NewTabPage> {
                           if (folder != null)
                             IconButton(
                               visualDensity: VisualDensity.compact,
-                              icon: Icon(Icons.edit_outlined,
+                              icon: uiGlyph('pencil',
                                   size: 16, color: palette.textDim),
                               tooltip: 'Rename folder',
                               onPressed: () => _editFolder(context, folder),
@@ -269,14 +260,14 @@ class _NewTabPageState extends State<NewTabPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           _QuickLink(
-                            icon: Icons.star_rounded,
+                            icon: 'star-on',
                             label: 'Bookmarks',
                             onTap: () => _openLibrary(context,
                                 SidePanel.bookmarks, const BookmarksRoute()),
                           ),
                           const SizedBox(width: 22),
                           _QuickLink(
-                            icon: Icons.history_rounded,
+                            icon: 'clock',
                             label: 'History',
                             onTap: () => _openLibrary(context,
                                 SidePanel.history, const HistoryRoute()),
@@ -365,7 +356,7 @@ class _NewTabPageState extends State<NewTabPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.edit_outlined),
+              leading: uiGlyph('pencil'),
               title: const Text('Rename'),
               onTap: () {
                 Navigator.of(sheet).pop();
@@ -373,7 +364,7 @@ class _NewTabPageState extends State<NewTabPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.delete_outline_rounded),
+              leading: uiGlyph('trash'),
               title: Text(
                   'Delete folder'),
               onTap: () {
@@ -402,7 +393,7 @@ class _NewTabPageState extends State<NewTabPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.open_in_new_rounded),
+              leading: uiGlyph('external'),
               title: const Text('Open'),
               onTap: () {
                 Navigator.of(sheet).pop();
@@ -410,7 +401,7 @@ class _NewTabPageState extends State<NewTabPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.edit_outlined),
+              leading: uiGlyph('pencil'),
               title: const Text('Edit'),
               onTap: () {
                 Navigator.of(sheet).pop();
@@ -418,7 +409,7 @@ class _NewTabPageState extends State<NewTabPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.folder_outlined),
+              leading: uiGlyph('folder'),
               title: const Text('Move to folder…'),
               onTap: () {
                 Navigator.of(sheet).pop();
@@ -426,7 +417,7 @@ class _NewTabPageState extends State<NewTabPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.delete_outline_rounded),
+              leading: uiGlyph('trash'),
               title: const Text('Remove'),
               onTap: () {
                 profile.removeSpeedDial(item);
@@ -454,7 +445,7 @@ class _NewTabPageState extends State<NewTabPage> {
           children: [
             const SizedBox(height: 6),
             ListTile(
-              leading: const Icon(Icons.dialpad_rounded),
+              leading: uiGlyph('dial'),
               title: const Text('All shortcuts'),
               onTap: () {
                 profile.updateSpeedDial(item, clearFolder: true);
@@ -463,7 +454,7 @@ class _NewTabPageState extends State<NewTabPage> {
             ),
             for (final f in profile.dialFolders)
               ListTile(
-                leading: Icon(Icons.folder_rounded, color: palette.accent),
+                leading: uiGlyph('folder', color: palette.accent),
                 title: Text(f.name),
                 onTap: () {
                   profile.updateSpeedDial(item, folderId: f.id);
@@ -773,7 +764,7 @@ class _FolderTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(17),
                 border: Border.all(color: palette.border),
               ),
-              child: Icon(Icons.folder_rounded,
+              child: uiGlyph('folder',
                   size: 28, color: palette.accent),
             ),
             const SizedBox(height: 7),
@@ -823,7 +814,7 @@ class _AddDialTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(17),
                 border: Border.all(color: palette.border),
               ),
-              child: Icon(Icons.add_rounded, size: 26, color: palette.textDim),
+              child: uiGlyph('plus', size: 26, color: palette.textDim),
             ),
             const SizedBox(height: 7),
             Text(
@@ -862,7 +853,7 @@ class _AddFolderTile extends StatelessWidget {
                 border: Border.all(color: palette.border),
               ),
               child:
-                  Icon(Icons.create_new_folder_outlined,
+                  uiGlyph('folder-plus',
                       size: 24, color: palette.textDim),
             ),
             const SizedBox(height: 7),
@@ -884,7 +875,7 @@ class _QuickLink extends StatelessWidget {
     required this.onTap,
   });
 
-  final IconData icon;
+  final Object icon;
   final String label;
   final VoidCallback onTap;
 
@@ -899,7 +890,7 @@ class _QuickLink extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 21, color: palette.accent),
+            uiGlyph(icon, size: 21, color: palette.accent),
             const SizedBox(height: 4),
             Text(
               label,

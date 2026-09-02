@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/calc.dart';
 import '../core/pal.dart';
@@ -31,16 +32,16 @@ class _Suggestion {
   final String? secondary;
   final String value;
 
-  IconData get icon {
+  Object get icon {
     switch (kind) {
       case _Kind.history:
-        return Icons.history_rounded;
+        return 'clock';
       case _Kind.bookmark:
-        return Icons.star_rounded;
+        return 'star-on';
       case _Kind.search:
-        return Icons.search_rounded;
+        return 'search';
       case _Kind.url:
-        return Icons.language_rounded;
+        return 'globe';
     }
   }
 }
@@ -165,7 +166,7 @@ class _OmniboxState extends State<Omnibox> {
               if (!compact && focused && _controller.text.isNotEmpty)
                 IconButton(
                   visualDensity: VisualDensity.compact,
-                  icon: Icon(Icons.close_rounded,
+                  icon: uiGlyph('close',
                       size: 16, color: palette.textDim),
                   tooltip: 'Clear',
                   onPressed: () => _controller.clear(),
@@ -182,26 +183,26 @@ class _OmniboxState extends State<Omnibox> {
 
   Widget _leadingIcon(BrowserPalette palette, BrowserTab tab) {
     if (tab.onSpeedDial || tab.url.isEmpty) {
-      return Icon(Icons.search_rounded, size: 17, color: palette.textDim);
+      return uiGlyph('search', size: 17, color: palette.textDim);
     }
     if (tab.url.startsWith('https://')) {
-      return Icon(Icons.lock_rounded, size: 14, color: palette.success);
+      return uiGlyph('lock', size: 14, color: palette.success);
     }
     if (tab.url.startsWith('http://')) {
-      return Icon(Icons.info_outline_rounded, size: 16, color: palette.danger);
+      return uiGlyph('info', size: 16, color: palette.danger);
     }
-    return Icon(Icons.language_rounded, size: 16, color: palette.textDim);
+    return uiGlyph('globe', size: 16, color: palette.textDim);
   }
 
   Widget _trailingButton(BrowserPalette palette, BrowserTab tab) {
     final browser = context.read<BrowserProvider>();
-    final icon = tab.loading ? Icons.close_rounded : Icons.refresh_rounded;
+    final icon = tab.loading ? 'close' : 'reload';
     return IconButton(
       visualDensity: VisualDensity.compact,
       splashRadius: 16,
       constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
       padding: EdgeInsets.zero,
-      icon: Icon(icon, size: 19, color: palette.textDim),
+      icon: uiGlyph(icon, size: 19, color: palette.textDim),
       onPressed: tab.loading ? browser.stopLoading : () => browser.reload(),
     );
   }
@@ -536,7 +537,7 @@ class _PanelCard extends StatelessWidget {
                     ),
                     child: s.kind == _Kind.url
                         ? Favicon(host: _hostOf(s.value), size: 15)
-                        : Icon(s.icon, size: 15, color: palette.textDim),
+                        : uiGlyph(s.icon, size: 15, color: palette.textDim),
                   ),
                   const SizedBox(width: 11),
                   Expanded(

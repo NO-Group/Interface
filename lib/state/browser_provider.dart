@@ -74,7 +74,7 @@ class BrowserTab {
 }
 
 /// Which page the desktop Opera-style sidebar shows (null = collapsed).
-enum SidePanel { none, bookmarks, history, downloads, settings, reading, privacy }
+enum SidePanel { none, bookmarks, history, downloads, settings, reading, privacy, files }
 
 /// A pending site permission prompt (camera / mic / location…).
 class PermissionAsk {

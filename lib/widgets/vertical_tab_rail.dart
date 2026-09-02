@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
 import '../core/ui.dart';
@@ -36,7 +37,7 @@ class VerticalTabRail extends StatelessWidget {
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   icon:
-                      Icon(Icons.add_rounded, size: 19, color: palette.accent),
+                      uiGlyph('plus', size: 19, color: palette.accent),
                   onPressed: () => browser.newTab(),
                 ),
               ],
@@ -83,10 +84,10 @@ class VerticalTabRail extends StatelessWidget {
                     child: Row(
                       children: [
                         if (tab.incognito)
-                          Icon(Icons.shield_rounded,
+                          uiGlyph('shield-on',
                               size: 15, color: palette.accent)
                         else if (tab.onSpeedDial)
-                          Icon(Icons.add_rounded,
+                          uiGlyph('plus',
                               size: 15, color: palette.textDim)
                         else
                           Favicon(host: tab.host, url: tab.faviconUrl, size: 16),
@@ -106,7 +107,7 @@ class VerticalTabRail extends StatelessWidget {
                           ),
                         ),
                         if (isSplit)
-                          Icon(Icons.vertical_split_rounded,
+                          uiGlyph('split',
                               size: 14, color: palette.accent),
                         const SizedBox(width: 4),
                         InkWell(
@@ -114,7 +115,7 @@ class VerticalTabRail extends StatelessWidget {
                           customBorder: const CircleBorder(),
                           child: Padding(
                             padding: const EdgeInsets.all(3),
-                            child: Icon(Icons.close_rounded,
+                            child: uiGlyph('close',
                                 size: 13, color: palette.textDim),
                           ),
                         ),

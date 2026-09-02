@@ -32,22 +32,22 @@ extension ThemeChoiceX on ThemeChoice {
     }
   }
 
-  IconData get icon {
+  Object get icon {
     switch (this) {
       case ThemeChoice.system:
-        return Icons.brightness_auto_outlined;
+        return 'auto';
       case ThemeChoice.light:
-        return Icons.light_mode_outlined;
+        return 'sun';
       case ThemeChoice.dark:
-        return Icons.dark_mode_outlined;
+        return 'moon';
       case ThemeChoice.red:
-        return Icons.local_fire_department_outlined;
+        return 'flame';
       case ThemeChoice.green:
-        return Icons.eco_outlined;
+        return 'leaf';
       case ThemeChoice.mono:
-        return Icons.contrast_outlined;
+        return 'contrast';
       case ThemeChoice.custom:
-        return Icons.wallpaper_outlined;
+        return 'image';
     }
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
 import '../core/ui.dart';
@@ -35,7 +36,7 @@ class PermissionBanner extends StatelessWidget {
                 alignment: Alignment.center,
                 decoration: Ui.tint(palette, palette.accent, radius: 9),
                 child:
-                    Icon(Icons.videocam_outlined, size: 17, color: palette.accent),
+                    uiGlyph('video', size: 17, color: palette.accent),
               ),
               const SizedBox(width: 12),
               Expanded(

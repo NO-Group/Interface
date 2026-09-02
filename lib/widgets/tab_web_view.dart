@@ -4,6 +4,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
 import '../core/ui.dart';
@@ -344,7 +345,7 @@ class _ErrorPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(Ui.rCard),
               border: Border.all(color: palette.border),
             ),
-            child: Icon(Icons.wifi_off_rounded, size: 30, color: palette.textDim),
+            child: uiGlyph('wifi-off', size: 30, color: palette.textDim),
           ),
           const SizedBox(height: 20),
           Text(
@@ -377,13 +378,13 @@ class _ErrorPage extends StatelessWidget {
             children: [
               FilledButton.icon(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
+                icon: uiGlyph('reload'),
                 label: const Text('Try again'),
               ),
               const SizedBox(width: 12),
               OutlinedButton.icon(
                 onPressed: onHome,
-                icon: const Icon(Icons.home_outlined),
+                icon: uiGlyph('home'),
                 label: const Text('Home'),
               ),
             ],

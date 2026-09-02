@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
 import '../core/palette.dart';
 import '../core/ui.dart';
+import 'logo.dart';
 import '../state/settings_provider.dart';
 
 /// First-run welcome: brand + theme preview + privacy promise.
@@ -35,14 +37,14 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
       _Slide(
         palette: palette,
         logo: true,
-        icon: Icons.public_rounded,
+        icon: 'globe',
         title: 'Welcome to Interface',
         body:
             'One row of controls, tabs that stay out of the way,\nand a browser that doesn’t pretend to be someone else’s.',
       ),
       _Slide(
         palette: palette,
-        icon: Icons.palette_outlined,
+        icon: 'palette',
         title: 'Make it yours',
         body:
             'Pick a look now, change it later in Settings.\nYou can also put your own picture behind the app.',
@@ -54,7 +56,7 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
       ),
       _Slide(
         palette: palette,
-        icon: Icons.shield_rounded,
+        icon: 'shield-on',
         title: 'Private by default',
         body:
             'Ads and trackers are blocked from the first page load.\nTap the shield any time to see what happened on a page.',
@@ -164,7 +166,7 @@ class _Slide extends StatelessWidget {
   });
 
   final BrowserPalette palette;
-  final IconData icon;
+  final Object icon;
   final String title;
   final String body;
   final Widget? extra;
@@ -177,23 +179,12 @@ class _Slide extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 78,
-            height: 78,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: palette.surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: palette.border),
-            ),
-            child: Image.asset(
-              'assets/brand/app_logo.png',
-              width: 46,
-              height: 46,
-              errorBuilder: (_, __, ___) =>
-                  Icon(icon, size: 36, color: palette.accent),
-            ),
-          ),
+          // The app's own artwork for the welcome slide; the other slides get
+          // an icon, drawn on nothing.
+          if (logo)
+            const LogoMark(size: 66)
+          else
+            uiGlyph(icon, size: 34, color: palette.accent),
           const SizedBox(height: 30),
           Text(
             title,

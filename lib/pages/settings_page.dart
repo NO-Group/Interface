@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:provider/provider.dart';
+import '../widgets/icons.dart';
 
 import '../core/pal.dart';
 import '../core/ui.dart';
@@ -57,7 +58,7 @@ class SettingsBody extends StatelessWidget {
           ),
         ],
         ListTile(
-          leading: Icon(Icons.format_size_rounded, color: palette.textDim),
+          leading: uiGlyph('text', color: palette.textDim),
           title: Text('Text size',
               style: TextStyle(color: palette.text, fontSize: 14)),
           subtitle: Slider(
@@ -97,7 +98,7 @@ class SettingsBody extends StatelessWidget {
         ),
         ListTile(
           leading:
-              Icon(Icons.text_fields_rounded, color: palette.textDim),
+              uiGlyph('text', color: palette.textDim),
           title: Text('Reader text size',
               style: TextStyle(color: palette.text, fontSize: 14)),
           subtitle: Slider(
@@ -154,7 +155,7 @@ class SettingsBody extends StatelessWidget {
             },
           ),
         ListTile(
-          leading: Icon(Icons.shield_rounded, color: palette.accent),
+          leading: uiGlyph('shield-on', color: palette.accent),
           title: const Text('Privacy dashboard'),
           subtitle:
               const Text('See what was blocked and set rules per site'),
@@ -162,7 +163,7 @@ class SettingsBody extends StatelessWidget {
         ),
         const Divider(indent: 16, endIndent: 16),
         ListTile(
-          leading: Icon(Icons.cleaning_services_outlined,
+          leading: uiGlyph('sparkle',
               color: palette.danger),
           title: const Text('Clear browsing data'),
           subtitle: const Text('History, cookies and cache'),
@@ -175,12 +176,12 @@ class SettingsBody extends StatelessWidget {
           subtitle: Text('Version 2.0.0'),
         ),
         ListTile(
-          leading: Icon(Icons.waving_hand_outlined, color: palette.textDim),
+          leading: uiGlyph('sparkle', color: palette.textDim),
           title: const Text('Replay welcome tour'),
           onTap: () => settings.setOnboardingSeen(false),
         ),
         ListTile(
-          leading: Icon(Icons.description_outlined, color: palette.textDim),
+          leading: uiGlyph('file-text', color: palette.textDim),
           title: const Text('Open-source licenses'),
           onTap: () => showLicensePage(
             context: context,
@@ -374,7 +375,7 @@ class _ThemeCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(choice.icon,
+                uiGlyph(choice.icon,
                     size: 16,
                     color: selected ? palette.accent : palette.textDim),
                 const SizedBox(width: 7),
@@ -391,7 +392,7 @@ class _ThemeCard extends StatelessWidget {
                   ),
                 ),
                 if (selected)
-                  Icon(Icons.check_circle_rounded,
+                  uiGlyph('check-circle',
                       size: 16, color: palette.accent),
               ],
             ),
@@ -477,7 +478,7 @@ class _WallpaperCard extends StatelessWidget {
                     width: 74,
                     height: 48,
                     color: palette.surfaceAlt,
-                    child: Icon(Icons.broken_image_outlined,
+                    child: uiGlyph('image',
                         color: palette.textDim),
                   ),
                 ),
@@ -490,7 +491,7 @@ class _WallpaperCard extends StatelessWidget {
                   color: palette.surfaceAlt,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(Icons.image_outlined, color: palette.textDim),
+                child: uiGlyph('image', color: palette.textDim),
               ),
             const SizedBox(width: 12),
             Expanded(
@@ -528,7 +529,7 @@ class _WallpaperCard extends StatelessWidget {
                   foregroundColor: palette.onAccent,
                 ),
                 onPressed: () => _pick(context),
-                icon: const Icon(Icons.photo_library_outlined, size: 17),
+                icon: uiGlyph('images', size: 17),
                 label: const Text('Choose'),
               ),
           ],
@@ -602,7 +603,7 @@ class _HomepagePickerState extends State<_HomepagePicker> {
                 isDense: true,
                 labelText: 'Address, e.g. example.com',
                 suffixIcon: IconButton(
-                  icon: const Icon(Icons.arrow_forward_rounded, size: 19),
+                  icon: uiGlyph('forward', size: 19),
                   onPressed: () {
                     final parsed = urlFromInput(_controller.text);
                     if (parsed != null) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
 import '../core/ui.dart';
@@ -75,7 +76,7 @@ class UiIconButton extends StatelessWidget {
     this.badgeColor,
   });
 
-  final IconData icon;
+  final Object icon;
   final String? tooltip;
   final VoidCallback? onTap;
   final bool selected;
@@ -104,7 +105,7 @@ class UiIconButton extends StatelessWidget {
             color: selected ? p.ring : Colors.transparent,
           ),
         ),
-        child: Icon(
+        child: uiGlyph(
           icon,
           size: iconSize,
           color: !enabled
@@ -304,6 +305,7 @@ class UiRow extends StatelessWidget {
     this.trailing,
     this.onTap,
     this.onSecondaryTap,
+    this.onLongPress,
     this.selected = false,
     this.height,
     this.padding,
@@ -316,6 +318,7 @@ class UiRow extends StatelessWidget {
   final Widget? trailing;
   final VoidCallback? onTap;
   final VoidCallback? onSecondaryTap;
+  final VoidCallback? onLongPress;
   final bool selected;
   final double? height;
   final EdgeInsetsGeometry? padding;
@@ -328,6 +331,7 @@ class UiRow extends StatelessWidget {
     return UiHoverable(
       onTap: onTap,
       onSecondaryTap: onSecondaryTap,
+      onLongPress: onLongPress,
       builder: (context, hovering, pressed) => AnimatedContainer(
         duration: Ui.quick,
         curve: Ui.curve,
@@ -450,7 +454,7 @@ class UiButton extends StatelessWidget {
   });
 
   final String label;
-  final IconData? icon;
+  final Object? icon;
   final VoidCallback? onTap;
   final bool filled;
   final bool compact;
@@ -483,7 +487,7 @@ class UiButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null) ...[
-                Icon(
+                uiGlyph(
                   icon,
                   size: 16,
                   color: filled ? p.onAccent : (onTap == null ? p.textFaint : p.text),
@@ -562,7 +566,7 @@ class UiChip extends StatelessWidget {
             ),
             if (onClose != null) ...[
               Ui.gap(4),
-              Icon(Icons.close_rounded, size: 13, color: p.textDim),
+              uiGlyph('close', size: 13, color: p.textDim),
             ],
           ],
         ),
@@ -583,7 +587,7 @@ class UiEmpty extends StatelessWidget {
     this.onAction,
   });
 
-  final IconData icon;
+  final Object icon;
   final String title;
   final String message;
   final String? actionLabel;
@@ -608,7 +612,7 @@ class UiEmpty extends StatelessWidget {
                   borderRadius: BorderRadius.circular(Ui.rCard),
                   border: Border.all(color: p.border),
                 ),
-                child: Icon(icon, size: 21, color: p.textDim),
+                child: uiGlyph(icon, size: 21, color: p.textDim),
               ),
               Ui.vgap(14),
               Text(

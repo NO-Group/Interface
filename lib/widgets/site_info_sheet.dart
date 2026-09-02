@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart' hide Favicon;
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
 import '../core/ui.dart';
@@ -46,7 +47,7 @@ Future<void> showSiteInfoSheet(BuildContext context) {
           Widget siteToggle(
             String title,
             String subtitle,
-            IconData icon,
+            Object icon,
             bool globalDefault,
             bool? siteValue, {
             String? settingsKey,
@@ -55,7 +56,7 @@ Future<void> showSiteInfoSheet(BuildContext context) {
             final value = choice ?? globalDefault;
             final isOverride = choice != null;
             return SwitchListTile(
-              secondary: Icon(icon,
+              secondary: uiGlyph(icon,
                   color: value ? palette.accent : palette.textDim),
               title: Text(title, style: Ui.text(palette, weight: FontWeight.w500)),
               subtitle: Text(
@@ -98,8 +99,8 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                       color: secure ? palette.success : palette.danger,
                     ),
                   ),
-                  trailing: Icon(
-                    secure ? Icons.lock_rounded : Icons.warning_amber_rounded,
+                  trailing: uiGlyph(
+                    secure ? 'lock' : 'alert',
                     color: secure ? palette.success : palette.danger,
                   ),
                 ),
@@ -115,7 +116,7 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.shield_rounded,
+                      uiGlyph('shield-on',
                           size: 17, color: palette.accent),
                       const SizedBox(width: 11),
                       Expanded(
@@ -151,7 +152,7 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                 siteToggle(
                   'Block ads & trackers',
                   'Applies to this site only',
-                  Icons.block_rounded,
+                  'block',
                   settings.blockAds,
                   current.blockAds,
                   settingsKey: 'ads',
@@ -159,7 +160,7 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                 siteToggle(
                   'JavaScript',
                   'Reload applies the change',
-                  Icons.javascript_rounded,
+                  'code',
                   true,
                   current.javaScript,
                   settingsKey: 'js',
@@ -168,7 +169,7 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                   siteToggle(
                     'Desktop site',
                     'Request the desktop version',
-                    Icons.desktop_windows_rounded,
+                    'monitor',
                     settings.desktopMode,
                     current.desktopSite,
                     settingsKey: 'desktop',
@@ -176,14 +177,14 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                 siteToggle(
                   'Camera, mic & location',
                   'Ask / allow access from this site',
-                  Icons.videocam_outlined,
+                  'video',
                   true,
                   current.media,
                   settingsKey: 'media',
                 ),
                 Divider(color: palette.border, height: 1),
                 ListTile(
-                  leading: Icon(Icons.cookie_outlined, color: palette.textDim),
+                  leading: uiGlyph('cookie', color: palette.textDim),
                   title: Text('Cookies & site data',
                       style: Ui.text(palette, weight: FontWeight.w500)),
                   subtitle: Text('Clear cookies set by $host',

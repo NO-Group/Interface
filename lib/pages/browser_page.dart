@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart' show LaunchMode, launchUrl;
 import 'package:provider/provider.dart';
+import '../widgets/icons.dart';
 
 import '../core/pal.dart';
 import '../core/ui.dart';
@@ -27,6 +28,7 @@ import '../widgets/tab_web_view.dart';
 import '../widgets/view_stack.dart';
 import 'bookmarks_page.dart';
 import 'downloads_page.dart';
+import 'files_page.dart';
 import 'history_page.dart';
 import 'privacy_page.dart';
 import 'reading_list_page.dart';
@@ -75,7 +77,7 @@ class BrowserPage extends StatelessWidget {
                 backgroundColor: Colors.black54,
                 foregroundColor: Colors.white,
               ),
-              icon: const Icon(Icons.fullscreen_rounded),
+              icon: uiGlyph('expand'),
               onPressed: () => browser.setFullscreen(false),
             ),
           ),
@@ -117,7 +119,7 @@ class _WebView2Banner extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(14, 9, 14, 9),
         child: Row(
           children: [
-            const Icon(Icons.warning_amber_rounded,
+            uiGlyph('alert',
                 size: 18, color: Colors.white),
             const SizedBox(width: 11),
             const Expanded(
@@ -348,7 +350,7 @@ class _SplitView extends StatelessWidget {
                       color: palette.chromeFill,
                       child: Row(
                         children: [
-                          Icon(Icons.vertical_split_rounded,
+                          uiGlyph('split',
                               size: 14, color: palette.accent),
                           const SizedBox(width: 8),
                           Expanded(
@@ -369,7 +371,7 @@ class _SplitView extends StatelessWidget {
                             customBorder: const CircleBorder(),
                             child: Padding(
                               padding: const EdgeInsets.all(3),
-                              child: Icon(Icons.close_rounded,
+                              child: uiGlyph('close',
                                   size: 14, color: palette.textDim),
                             ),
                           ),
@@ -379,7 +381,7 @@ class _SplitView extends StatelessWidget {
                             customBorder: const CircleBorder(),
                             child: Padding(
                               padding: const EdgeInsets.all(3),
-                              child: Icon(Icons.close_fullscreen_rounded,
+                              child: uiGlyph('compress',
                                   size: 14, color: palette.textDim),
                             ),
                           ),
@@ -443,6 +445,7 @@ class _SidePanel extends StatelessWidget {
       SidePanel.settings => 'Settings',
       SidePanel.reading => 'Reading list',
       SidePanel.privacy => 'Privacy',
+      SidePanel.files => 'Files',
       SidePanel.none => '',
     };
 
@@ -468,7 +471,7 @@ class _SidePanel extends StatelessWidget {
                         ),
                       ),
                       UiIconButton(
-                        icon: Icons.chevron_right_rounded,
+                        icon: 'chevron-right',
                         tooltip: 'Hide sidebar',
                         onTap: () => browser.setSidePanel(SidePanel.none),
                       ),
@@ -485,6 +488,7 @@ class _SidePanel extends StatelessWidget {
                   SidePanel.settings => const SettingsBody(),
                   SidePanel.reading => const ReadingListPage(embedded: true),
                   SidePanel.privacy => const PrivacyPage(embedded: true),
+                  SidePanel.files => const FilesPage(embedded: true),
                   SidePanel.none => const SizedBox.shrink(),
                 },
               ),
@@ -506,7 +510,7 @@ class _SideRail extends StatelessWidget {
     final browser = context.watch<BrowserProvider>();
     final profile = context.watch<ProfileProvider>();
 
-    Widget railButton(SidePanel target, IconData icon, String tip,
+    Widget railButton(SidePanel target, Object icon, String tip,
         {int badge = 0}) {
       return UiIconButton(
         icon: icon,
@@ -525,19 +529,20 @@ class _SideRail extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           const SizedBox(height: 8),
-          railButton(SidePanel.bookmarks, Icons.star_border_rounded,
+          railButton(SidePanel.bookmarks, 'star',
               'Bookmarks'),
-          railButton(SidePanel.history, Icons.history_rounded,
+          railButton(SidePanel.history, 'clock',
               'History (Ctrl+H)'),
-          railButton(SidePanel.downloads, Icons.download_rounded,
+          railButton(SidePanel.downloads, 'download',
               'Downloads (Ctrl+J)'),
-          railButton(SidePanel.reading, Icons.auto_stories_outlined,
+          railButton(SidePanel.files, 'folder', 'Files'),
+          railButton(SidePanel.reading, 'reader',
               'Reading list',
               badge: profile.unreadReadingCount),
           const Spacer(),
-          railButton(SidePanel.privacy, Icons.shield_outlined,
+          railButton(SidePanel.privacy, 'shield',
               'Privacy dashboard'),
-          railButton(SidePanel.settings, Icons.settings_outlined, 'Settings'),
+          railButton(SidePanel.settings, 'sliders', 'Settings'),
           const SizedBox(height: 8),
         ],
       ),
@@ -589,7 +594,7 @@ class MobileShell extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 child: Row(
                   children: [
-                    Icon(Icons.shield_rounded, size: 14, color: palette.accent),
+                    uiGlyph('shield-on', size: 14, color: palette.accent),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -650,21 +655,21 @@ class _MobileDock extends StatelessWidget {
             child: Row(
               children: [
                 _Key(
-                  icon: Icons.arrow_back_ios_new_rounded,
+                  icon: 'back',
                   enabled: tab.canBack,
                   onTap: browser.goBack,
                 ),
                 _Key(
-                  icon: Icons.arrow_forward_ios_rounded,
+                  icon: 'forward',
                   enabled: tab.canForward,
                   onTap: browser.goForward,
                 ),
                 _Key(
-                  icon: tab.loading ? Icons.close_rounded : Icons.refresh_rounded,
+                  icon: tab.loading ? 'close' : 'reload',
                   onTap: tab.loading ? browser.stopLoading : browser.reload,
                 ),
                 _Key(
-                  icon: Icons.shield_outlined,
+                  icon: 'shield',
                   badge: blocked,
                   onTap: () => showSiteInfoSheet(context),
                 ),
@@ -678,7 +683,7 @@ class _MobileDock extends StatelessWidget {
                   ),
                 ),
                 _Key(
-                  icon: Icons.more_horiz_rounded,
+                  icon: 'dots',
                   onTap: () => showMobileMenu(context),
                 ),
               ],
@@ -699,7 +704,7 @@ class _Key extends StatelessWidget {
   });
 
   final VoidCallback onTap;
-  final IconData? icon;
+  final Object? icon;
   final bool enabled;
   final int badge;
 
@@ -708,7 +713,7 @@ class _Key extends StatelessWidget {
     return Expanded(
       child: Center(
         child: UiIconButton(
-          icon: icon ?? Icons.close_rounded,
+          icon: icon ?? 'close',
           size: 44,
           iconSize: 20,
           badge: badge,
@@ -745,7 +750,7 @@ class _TabKey extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.grid_view_rounded, size: 16, color: p.textDim),
+                uiGlyph('grid', size: 16, color: p.textDim),
                 Ui.gap(6),
                 Text('$count',
                     style: Ui.text(p, size: Ui.sizeSmall, weight: FontWeight.w600)),

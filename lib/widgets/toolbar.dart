@@ -68,28 +68,28 @@ class TopBar extends StatelessWidget {
                       UiCluster(
                         children: [
                           UiIconButton(
-                            icon: Icons.arrow_back_ios_new_rounded,
+                            icon: 'back',
                             iconSize: 16,
                             tooltip: 'Back (Alt+Left)',
                             onTap: tab.canBack ? browser.goBack : null,
                           ),
                           UiIconButton(
-                            icon: Icons.arrow_forward_ios_rounded,
+                            icon: 'forward',
                             iconSize: 16,
                             tooltip: 'Forward (Alt+Right)',
                             onTap: tab.canForward ? browser.goForward : null,
                           ),
                           UiIconButton(
                             icon: tab.loading
-                                ? Icons.close_rounded
-                                : Icons.refresh_rounded,
+                                ? 'close'
+                                : 'reload',
                             tooltip:
                                 tab.loading ? 'Stop loading (Esc)' : 'Reload (Ctrl+R)',
                             onTap: tab.loading ? browser.stopLoading : browser.reload,
                           ),
                           if (medium)
                             UiIconButton(
-                              icon: Icons.home_outlined,
+                              icon: 'home',
                               tooltip: 'New tab page',
                               onTap: browser.goHome,
                             ),
@@ -133,8 +133,8 @@ class TopBar extends StatelessWidget {
                       ),
                       UiIconButton(
                         icon: bookmarked
-                            ? Icons.star_rounded
-                            : Icons.star_border_rounded,
+                            ? 'star-on'
+                            : 'star',
                         color: bookmarked ? p.accent : null,
                         tooltip: bookmarked
                             ? 'Remove bookmark (Ctrl+D)'
@@ -145,7 +145,7 @@ class TopBar extends StatelessWidget {
                       ),
                       if (roomy)
                         UiIconButton(
-                          icon: Icons.menu_book_rounded,
+                          icon: 'reading-list',
                           tooltip: 'Reader view',
                           onTap: () => Navigator.of(context).push(
                             MaterialPageRoute<void>(
@@ -155,7 +155,7 @@ class TopBar extends StatelessWidget {
                         ),
                       if (medium)
                         UiIconButton(
-                          icon: Icons.download_rounded,
+                          icon: 'download',
                           tooltip: runningDownloads > 0
                               ? '$runningDownloads downloads in progress'
                               : 'Downloads (Ctrl+J)',
@@ -164,7 +164,7 @@ class TopBar extends StatelessWidget {
                         ),
                       if (roomy)
                         UiIconButton(
-                          icon: Icons.vertical_split_outlined,
+                          icon: 'split',
                           tooltip: browser.splitActive
                               ? 'Close split view'
                               : 'Split view — two tabs side by side',
@@ -175,14 +175,14 @@ class TopBar extends StatelessWidget {
                         ),
                       if (roomy)
                         UiIconButton(
-                          icon: Icons.bolt_rounded,
+                          icon: 'bolt',
                           tooltip: 'Quick actions (Ctrl+K)',
                           onTap: browser.openPalette,
                         ),
                       UiIconButton(
                         icon: browser.sidePanel == SidePanel.none
-                            ? Icons.view_sidebar_outlined
-                            : Icons.view_sidebar_rounded,
+                            ? 'sidebar'
+                            : 'sidebar',
                         tooltip: browser.sidePanel == SidePanel.none
                             ? 'Show sidebar'
                             : 'Hide sidebar',
@@ -194,7 +194,7 @@ class TopBar extends StatelessWidget {
                         ),
                       ),
                       UiIconButton(
-                        icon: Icons.shield_outlined,
+                        icon: 'shield',
                         tooltip: 'New private tab (Ctrl+Shift+N)',
                         onTap: () => browser.newTab(incognito: true),
                       ),
@@ -244,7 +244,7 @@ class _Shield extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = pal(context);
     return UiIconButton(
-      icon: Icons.shield_outlined,
+      icon: 'shield',
       color: enabled && blocked > 0 ? p.accent : p.textDim,
       badge: blocked,
       tooltip: blocked > 0
@@ -300,7 +300,7 @@ class BookmarksBar extends StatelessWidget {
               ),
             Ui.gap(6),
             UiIconButton(
-              icon: Icons.bookmarks_rounded,
+              icon: 'bookmarks',
               size: 28,
               iconSize: 16,
               tooltip: 'All bookmarks',
