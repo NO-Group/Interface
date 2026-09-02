@@ -101,27 +101,6 @@ jobs:
         id: build
         continue-on-error: true
 
-      - name: Publish logs on failure
-        if: failure() || steps.build.outputs.code != '0'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const text = (function(){ try { return fs.readFileSync('/tmp/logs.txt','utf8'); } catch { return ''; } })();
-            const jobs = await github.rest.actions.listJobsForWorkflowRun({
-              owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId,
-            });
-            const job = jobs.data.jobs.find(j => (j.name || '').includes('Android'));
-            if (job) {
-              const checkId = Number(job.check_run_url.split('/').pop());
-              await github.rest.checks.update({
-                owner: context.repo.owner, repo: context.repo.repo,
-                check_run_id: checkId,
-                output: { title: 'Build log', summary: 'Build failed', text: '```\n' + text.slice(-60000) + '\n```' },
-              });
-            }
-            core.setFailed('flutter build apk failed');
-
       - name: Stage artifact
         if: steps.build.outputs.code == '0'
         run: |
@@ -136,6 +115,27 @@ jobs:
           path: Interface-Browser-Android.apk
           retention-days: 90
           if-no-files-found: error
+
+      - name: Publish logs & verdict
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const text = (function(){ try { return fs.readFileSync('/tmp/logs.txt','utf8'); } catch { return ''; } })();
+            const jobs = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId,
+            });
+            const job = jobs.data.jobs.find(j => (j.name || '').includes('Android'));
+            if (job) {
+              const checkId = Number(job.check_run_url.split('/').pop());
+              await github.rest.checks.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                check_run_id: checkId,
+                output: { title: 'Build log', summary: 'Tool output', text: '```\n' + text.slice(-60000) + '\n```' },
+              });
+            }
+            if ('${{ steps.build.outputs.code }}'.trim() !== '0') core.setFailed('flutter build apk failed');
 
   windows:
     name: Windows EXE
@@ -159,12 +159,32 @@ jobs:
           flutter pub get 2>&1 | Tee-Object -FilePath C:\logs.txt
           flutter build windows --release 2>&1 | Tee-Object -FilePath C:\build-log.txt
           Get-Content C:\build-log.txt | Out-File -Append C:\logs.txt
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "code=$LASTEXITCODE" | Out-File -Append $env:GITHUB_OUTPUT -Encoding utf8
         id: build
         continue-on-error: true
 
-      - name: Publish logs on failure
-        if: failure() || steps.build.outputs.code != '0'
+      - name: Package portable zip
+        if: steps.build.outputs.code == '0'
+        shell: pwsh
+        run: |
+          Get-ChildItem build/windows/x64/runner/Release | Format-Table Name,Length
+          tar -acf Interface-Browser-Windows-x64.zip -C build/windows/x64/runner/Release .
+          if ($LASTEXITCODE -ne 0) { "zip=$LASTEXITCODE" | Out-File -Append $env:GITHUB_OUTPUT -Encoding utf8; exit 1 }
+          Get-Item Interface-Browser-Windows-x64.zip | Format-List Name,Length
+          "zip=0" | Out-File -Append $env:GITHUB_OUTPUT -Encoding utf8
+        id: package
+        continue-on-error: true
+
+      - uses: actions/upload-artifact@v4
+        if: steps.build.outputs.code == '0' && steps.package.outputs.zip == '0'
+        with:
+          name: Interface-Browser-Windows-x64-exe
+          path: Interface-Browser-Windows-x64.zip
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Publish logs & verdict
+        if: always()
         uses: actions/github-script@v7
         with:
           script: |
@@ -179,26 +199,11 @@ jobs:
               await github.rest.checks.update({
                 owner: context.repo.owner, repo: context.repo.repo,
                 check_run_id: checkId,
-                output: { title: 'Build log', summary: 'Build failed', text: '```\n' + text.slice(-60000) + '\n```' },
+                output: { title: 'Build log', summary: 'Tool output', text: '```\n' + text.slice(-60000) + '\n```' },
               });
             }
-            core.setFailed('flutter build windows failed');
-
-      - name: Package portable zip
-        if: steps.build.outputs.code == '0'
-        shell: pwsh
-        run: |
-          Compress-Archive -Path build/windows/x64/runner/Release/* `
-            -DestinationPath Interface-Browser-Windows-x64.zip
-          Get-Item Interface-Browser-Windows-x64.zip | Select-Object Name,Length
-
-      - uses: actions/upload-artifact@v4
-        if: steps.build.outputs.code == '0'
-        with:
-          name: Interface-Browser-Windows-x64-exe
-          path: Interface-Browser-Windows-x64.zip
-          retention-days: 90
-          if-no-files-found: error
+            if ('${{ steps.build.outputs.code }}'.trim() !== '0') core.setFailed('flutter build windows failed');
+            else if ('${{ steps.package.outputs.zip }}'.trim() !== '0') core.setFailed('packaging failed');
 
   release:
     name: GitHub Release (on v* tags)
