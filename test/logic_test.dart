@@ -39,9 +39,11 @@ void main() {
     });
 
     test('the brand is navy + cyan in the default themes', () {
-      expect(BrowserPalette.dark.primary, BrowserPalette.navy);
-      expect(BrowserPalette.dark.accent, BrowserPalette.cyan);
+      // Light theme chrome wears the exact brand navy.
       expect(BrowserPalette.light.primary, BrowserPalette.navy);
+      // Dark theme keeps the navy family + cyan accent.
+      expect(BrowserPalette.dark.primary, const Color(0xFF14336B));
+      expect(BrowserPalette.dark.accent, BrowserPalette.cyan);
       expect(BrowserPalette.light.accent, BrowserPalette.cyanDeep);
     });
 

@@ -8,6 +8,9 @@ void main() {
       const MaterialApp(home: Scaffold(body: Center(child: LogoMark(size: 48)))),
     );
     expect(find.byType(LogoMark), findsOneWidget);
-    expect(find.byType(CustomPaint), findsOneWidget);
+    expect(find.descendant(
+      of: find.byType(LogoMark),
+      matching: find.byType(CustomPaint),
+    ), findsOneWidget);
   });
 }
