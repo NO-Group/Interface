@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -237,7 +238,7 @@ class BrowserProvider extends ChangeNotifier {
     final c = tab.controller;
     if (c != null) {
       unawaited(
-        c.loadUrl(URLRequest(url: WebUri(url))).catchError((_) {}),
+        c.loadUrl(urlRequest: URLRequest(url: WebUri(url))).catchError((_) {}),
       );
     } else {
       tab.initialUrl = url;
@@ -497,7 +498,7 @@ InAppWebViewSettings buildSettingsFor({
   return InAppWebViewSettings(
     javaScriptEnabled: true,
     useShouldOverrideUrlLoading: true,
-    useOnDownloadStartRequest: true,
+    useOnDownloadStart: true,
     transparentBackground: true,
     supportZoom: true,
     mediaPlaybackRequiresUserGesture: false,

@@ -105,7 +105,6 @@ const kBlockedHosts = <String>{
   'bugsnag.com',
   'crashlytics.com',
   // Malvertsing / shady domains
-  'adcash.com',
   'adnium.com',
   'adcron.com',
   'aducdn.com',

@@ -3,7 +3,6 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
-import '../core/palette.dart';
 import '../core/urls.dart';
 import '../pages/downloads_page.dart';
 import '../services/downloader.dart';
@@ -79,16 +78,16 @@ class _TabWebViewState extends State<TabWebView> {
       onExitFullscreen: (c) =>
           context.read<BrowserProvider>().setFullscreen(false),
       onPermissionRequest: (controller, request) async {
-        return PermissionRequestResponse(
+        return PermissionResponse(
           resources: request.resources,
-          action: PermissionRequestResponseAction.GRANT,
+          action: PermissionResponseAction.GRANT,
         );
       },
     );
 
     if (settings.grayscaleContent) {
       view = ColorFiltered(
-        colorFilter: const ColorFilter.saturation(0),
+        colorFilter: ColorFilter.saturation(0),
         child: view,
       );
     }
@@ -125,7 +124,7 @@ class _TabWebViewState extends State<TabWebView> {
         pending.isNotEmpty &&
         pending != 'about:blank' &&
         tab.onSpeedDial == false) {
-      c.loadUrl(URLRequest(url: WebUri(pending)));
+      c.loadUrl(urlRequest: URLRequest(url: WebUri(pending)));
     }
   }
 
@@ -194,8 +193,8 @@ class _TabWebViewState extends State<TabWebView> {
     WebResourceRequest request,
     WebResourceError error,
   ) {
-    final desc = error.description ?? '';
-    final type = error.errorType.toString();
+    final desc = error.description;
+    final type = error.type.toString();
     final cancelled = desc.contains('ERR_ABORTED') ||
         desc.contains('Canceled') ||
         desc.contains('cancelled') ||

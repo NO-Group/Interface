@@ -158,12 +158,13 @@ class _ChromeTabState extends State<_ChromeTab> {
     final palette = pal(context);
     final w = widget.selected;
 
-    return InkWell(
-      onTap: widget.onSelect,
-      onSecondaryTapUp: (d) => widget.onSecondaryTap(d.globalPosition),
+    return GestureDetector(
       onTertiaryTapUp: (_) => widget.onClose(),
-      onHover: (v) => setState(() => _hovering = v),
-      child: AnimatedContainer(
+      child: InkWell(
+        onTap: widget.onSelect,
+        onSecondaryTapUp: (d) => widget.onSecondaryTap(d.globalPosition),
+        onHover: (v) => setState(() => _hovering = v),
+        child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
         width: widget.tab.displayTitle.length > 24 ? 220.0 : 168.0,
         margin: const EdgeInsets.fromLTRB(2, 6, 2, 0),
@@ -218,6 +219,7 @@ class _ChromeTabState extends State<_ChromeTab> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

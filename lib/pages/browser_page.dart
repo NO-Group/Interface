@@ -1,4 +1,4 @@
-import 'dart:io' show File, Platform;
+import 'dart:io' show File;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
 import '../services/web_engine.dart';
+import '../state/profile_provider.dart';
 import '../state/browser_provider.dart';
 import '../state/settings_provider.dart';
 import '../widgets/app_menu.dart';
@@ -163,7 +164,7 @@ class DesktopShell extends StatelessWidget {
         },
         for (var i = 1; i <= 8; i++)
           SingleActivator(
-            LogicalKeyboardKey digitCode(i),
+            desktopDigit(i),
             control: true,
           ): () => browser.select(i - 1),
         const SingleActivator(LogicalKeyboardKey.digit9, control: true):
@@ -211,7 +212,7 @@ class DesktopShell extends StatelessWidget {
     );
   }
 
-  static LogicalKeyboardKey digitCode(int n) {
+  static LogicalKeyboardKey desktopDigit(int n) {
     const map = {
       1: LogicalKeyboardKey.digit1,
       2: LogicalKeyboardKey.digit2,
@@ -537,7 +538,7 @@ class _TabsButton extends StatelessWidget {
             count: count,
             backgroundColor: palette.accent,
             textColor: palette.onAccent,
-            child: Icon(Icons.tabs_rounded, size: 21, color: palette.text),
+            child: Icon(Icons.tab_rounded, size: 21, color: palette.text),
           ),
         ),
       ),

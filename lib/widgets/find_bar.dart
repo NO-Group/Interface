@@ -51,7 +51,7 @@ class _FindBarState extends State<FindBar> {
             .read<BrowserProvider>()
             .current
             .controller
-            ?.findAll(find: q);
+            ?.findAllAsync(find: q);
       } catch (_) {}
     });
   }

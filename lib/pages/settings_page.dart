@@ -347,12 +347,11 @@ class _WallpaperCard extends StatelessWidget {
   final BrowserPalette palette;
 
   Future<void> _pick(BuildContext context) async {
-    final res = await FilePicker.platform.pickFiles(
+    final res = await FilePicker.pickFiles(
       type: FileType.image,
-      allowCompression: true,
-      withData: false,
+      dialogTitle: 'Choose a background picture',
     );
-    final path = res?.files.single.path;
+    final path = res.isEmpty ? null : res.first.path;
     if (path == null || !context.mounted) return;
     final saved = await settings.setCustomBackground(path);
     if (!context.mounted) return;

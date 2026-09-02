@@ -5,7 +5,6 @@ import '../core/pal.dart';
 import '../core/urls.dart';
 import '../state/browser_provider.dart';
 import '../state/profile_provider.dart';
-import '../state/settings_provider.dart';
 import 'app_menu.dart';
 import 'favicon.dart';
 import 'glass.dart';

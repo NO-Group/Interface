@@ -83,7 +83,7 @@ class DownloadItem {
   final String id;
   final String url;
   String fileName;
-  final String savedDir;
+  String savedDir;
   String? path;
   int received = 0;
   int total = 0;
