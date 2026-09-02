@@ -17,6 +17,9 @@ jobs:
     name: Analyze & test (fast gate)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      checks: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -26,19 +29,57 @@ jobs:
           cache: true
 
       - name: Pub get
-        run: flutter pub get
+        run: flutter pub get 2>&1 | tee /tmp/logs-pubget.txt
 
       - name: Analyze
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        run: |
+          flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1 | tee /tmp/logs-analyze.txt
+          echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+        id: analyze
+        continue-on-error: true
 
       - name: Unit & widget tests
-        run: flutter test
+        run: |
+          flutter test 2>&1 | tee /tmp/logs-test.txt
+          echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+        id: test
+        continue-on-error: true
+
+      - name: Publish logs & verdict
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const read = (p) => { try { return fs.readFileSync(p, 'utf8'); } catch { return `(missing ${p})`; } };
+            const parts = [
+              '## flutter pub get', read('/tmp/logs-pubget.txt'),
+              '## flutter analyze (exit ${{ steps.analyze.outputs.code }})', read('/tmp/logs-analyze.txt'),
+              '## flutter test (exit ${{ steps.test.outputs.code }})', read('/tmp/logs-test.txt'),
+            ];
+            const text = parts.join('\n').slice(0, 65000);
+            const jobs = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId,
+            });
+            const job = jobs.data.jobs.find(j => (j.name || '').includes('Analyze'));
+            if (job) {
+              const checkId = Number(job.check_run_url.split('/').pop());
+              await github.rest.checks.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                check_run_id: checkId,
+                output: { title: 'Tool output', summary: 'Full tool logs attached', text: '```\n' + text + '\n```' },
+              });
+            }
+            if ('${{ steps.analyze.outputs.code }}' !== '0') core.setFailed('flutter analyze failed');
+            if ('${{ steps.test.outputs.code }}' !== '0') core.setFailed('flutter test failed');
 
   android:
     name: Android APK
     needs: analyze
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    permissions:
+      checks: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -52,19 +93,44 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Pub get
-        run: flutter pub get
-
       - name: Build release APK
-        run: flutter build apk --release
+        run: |
+          flutter pub get 2>&1 | tee /tmp/logs.txt
+          flutter build apk --release 2>&1 | tee -a /tmp/logs.txt
+          echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+        id: build
+        continue-on-error: true
+
+      - name: Publish logs on failure
+        if: failure() || steps.build.outputs.code != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const text = (function(){ try { return fs.readFileSync('/tmp/logs.txt','utf8'); } catch { return ''; } })();
+            const jobs = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId,
+            });
+            const job = jobs.data.jobs.find(j => (j.name || '').includes('Android'));
+            if (job) {
+              const checkId = Number(job.check_run_url.split('/').pop());
+              await github.rest.checks.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                check_run_id: checkId,
+                output: { title: 'Build log', summary: 'Build failed', text: '```\n' + text.slice(-60000) + '\n```' },
+              });
+            }
+            core.setFailed('flutter build apk failed');
 
       - name: Stage artifact
+        if: steps.build.outputs.code == '0'
         run: |
           cp build/app/outputs/flutter-apk/app-release.apk \
              Interface-Browser-Android.apk
           ls -lh Interface-Browser-Android.apk
 
       - uses: actions/upload-artifact@v4
+        if: steps.build.outputs.code == '0'
         with:
           name: Interface-Browser-Android-apk
           path: Interface-Browser-Android.apk
@@ -76,6 +142,9 @@ jobs:
     needs: analyze
     runs-on: windows-latest
     timeout-minutes: 60
+    permissions:
+      checks: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -84,13 +153,39 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Pub get
-        run: flutter pub get
-
       - name: Build Windows release
-        run: flutter build windows --release
+        shell: pwsh
+        run: |
+          flutter pub get 2>&1 | Tee-Object -FilePath C:\logs.txt
+          flutter build windows --release 2>&1 | Tee-Object -FilePath C:\build-log.txt
+          Get-Content C:\build-log.txt | Out-File -Append C:\logs.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        id: build
+        continue-on-error: true
+
+      - name: Publish logs on failure
+        if: failure() || steps.build.outputs.code != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const text = (function(){ try { return fs.readFileSync('C:\\logs.txt','utf8'); } catch { return ''; } })();
+            const jobs = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId,
+            });
+            const job = jobs.data.jobs.find(j => (j.name || '').includes('Windows'));
+            if (job) {
+              const checkId = Number(job.check_run_url.split('/').pop());
+              await github.rest.checks.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                check_run_id: checkId,
+                output: { title: 'Build log', summary: 'Build failed', text: '```\n' + text.slice(-60000) + '\n```' },
+              });
+            }
+            core.setFailed('flutter build windows failed');
 
       - name: Package portable zip
+        if: steps.build.outputs.code == '0'
         shell: pwsh
         run: |
           Compress-Archive -Path build/windows/x64/runner/Release/* `
@@ -98,6 +193,7 @@ jobs:
           Get-Item Interface-Browser-Windows-x64.zip | Select-Object Name,Length
 
       - uses: actions/upload-artifact@v4
+        if: steps.build.outputs.code == '0'
         with:
           name: Interface-Browser-Windows-x64-exe
           path: Interface-Browser-Windows-x64.zip
