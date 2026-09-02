@@ -33,8 +33,8 @@ import 'reading_list_page.dart';
 import 'settings_page.dart';
 
 /// Root of the browser UI. Picks the desktop or mobile shell, paints the
-/// custom wallpaper layer, handles fullscreen video, split view,
-/// command palette and onboarding.
+/// wallpaper theme, and handles fullscreen video, split view, quick
+/// actions and the welcome screen.
 class BrowserPage extends StatelessWidget {
   const BrowserPage({super.key});
 
@@ -143,7 +143,7 @@ class _WebView2Banner extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Desktop (Chrome tabs + Opera sidebar + split view)
+// Desktop
 // ---------------------------------------------------------------------------
 
 class DesktopShell extends StatelessWidget {
@@ -282,7 +282,7 @@ class DesktopShell extends StatelessWidget {
   }
 }
 
-/// Two tabs side-by-side with a draggable divider (Opera-style split view).
+/// Two tabs side by side with a draggable divider.
 class _SplitView extends StatelessWidget {
   const _SplitView({
     required this.fraction,
@@ -426,7 +426,7 @@ class _PrimarySplitStack extends StatelessWidget {
   }
 }
 
-/// Opera-style sidebar with the library pages.
+/// Sidebar with the library pages.
 class _SidePanel extends StatelessWidget {
   const _SidePanel();
 
@@ -505,7 +505,6 @@ class _SideRail extends StatelessWidget {
   Widget build(BuildContext context) {
     final browser = context.watch<BrowserProvider>();
     final profile = context.watch<ProfileProvider>();
-    final palette = pal(context);
 
     Widget railButton(SidePanel target, IconData icon, String tip,
         {int badge = 0}) {
@@ -547,7 +546,7 @@ class _SideRail extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Mobile (Opera bottom bar + Chrome grid)
+// Mobile
 // ---------------------------------------------------------------------------
 
 class MobileShell extends StatelessWidget {

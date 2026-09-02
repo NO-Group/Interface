@@ -433,6 +433,10 @@ ThemeData buildMaterialTheme(BrowserPalette p) {
       ),
     ),
     listTileTheme: ListTileThemeData(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(10)),
+      ),
+      style: ListTileStyle.list,
       iconColor: p.textDim,
       selectedColor: p.accent,
       selectedTileColor: p.accent.withValues(alpha: 0.10),

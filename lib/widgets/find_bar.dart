@@ -8,7 +8,7 @@ import '../core/ui.dart';
 import '../state/browser_provider.dart';
 import 'ui_kit.dart';
 
-/// Chrome-style find-in-page bar (Ctrl+F).
+/// Find in page (Ctrl+F).
 class FindBar extends StatefulWidget {
   const FindBar({super.key, this.compact = false});
 

@@ -6,7 +6,7 @@ import '../core/ui.dart';
 import '../state/browser_provider.dart';
 import 'favicon.dart';
 
-/// Edge/Opera-style vertical tab rail (desktop).
+/// Tabs as a column on the left, for wide screens.
 class VerticalTabRail extends StatelessWidget {
   const VerticalTabRail({super.key});
 

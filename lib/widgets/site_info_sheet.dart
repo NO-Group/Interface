@@ -6,15 +6,14 @@ import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
 import '../core/ui.dart';
-import '../core/urls.dart';
 import '../models.dart';
 import '../state/browser_provider.dart';
 import '../state/privacy_provider.dart';
 import '../state/settings_provider.dart';
 import 'favicon.dart';
 
-/// Chrome-style site information sheet: security, blocked-tracker count
-/// and per-site settings (ads, JavaScript, desktop site, device access).
+/// Site information: connection, what was blocked, and per-site settings
+/// (ads, JavaScript, desktop site, camera and microphone).
 Future<void> showSiteInfoSheet(BuildContext context) {
   final browser = context.read<BrowserProvider>();
   final tab = browser.current;
@@ -34,7 +33,6 @@ Future<void> showSiteInfoSheet(BuildContext context) {
   final url = tab.url;
   final secure = url.startsWith('https://');
   final blocked = privacy.blockedFor(host);
-  final rule = privacy.ruleFor(host) ?? SiteRule(host: host);
 
   return showModalBottomSheet<void>(
     context: context,

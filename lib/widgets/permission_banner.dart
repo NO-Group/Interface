@@ -5,8 +5,8 @@ import '../core/pal.dart';
 import '../core/ui.dart';
 import '../state/browser_provider.dart';
 
-/// Chromium-style top banner for pending site permission requests
-/// (camera / microphone / location).
+/// Top banner for pending site permission requests (camera / microphone /
+/// location).
 class PermissionBanner extends StatelessWidget {
   const PermissionBanner({super.key});
 

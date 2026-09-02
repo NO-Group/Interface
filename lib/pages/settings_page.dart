@@ -39,7 +39,7 @@ class SettingsBody extends StatelessWidget {
           SwitchListTile(
             title: const Text('Desaturate web content'),
             subtitle: const Text(
-                'Render pages in pure black & white in this theme'),
+                'Show web pages without colour'),
             value: settings.grayscaleInMono,
             onChanged: settings.setGrayscaleInMono,
           ),
@@ -58,7 +58,7 @@ class SettingsBody extends StatelessWidget {
         ],
         ListTile(
           leading: Icon(Icons.format_size_rounded, color: palette.textDim),
-          title: Text('Interface size',
+          title: Text('Text size',
               style: TextStyle(color: palette.text, fontSize: 14)),
           subtitle: Slider(
             value: settings.fontScale,
@@ -136,7 +136,7 @@ class SettingsBody extends StatelessWidget {
         SwitchListTile(
           title: const Text('Block ads & pop-ups'),
           subtitle: const Text(
-              'Built-in blocklist of common ad, tracker and pop-under hosts'),
+              'Blocks common ads and trackers before they load'),
           value: settings.blockAds,
           onChanged: settings.setBlockAds,
         ),
@@ -144,7 +144,7 @@ class SettingsBody extends StatelessWidget {
           SwitchListTile(
             title: const Text('Desktop site'),
             subtitle:
-                const Text('Request desktop versions of websites (phone)'),
+                const Text('Ask sites for their desktop layout'),
             value: settings.desktopMode,
             onChanged: (v) async {
               settings.setDesktopMode(v);
@@ -157,7 +157,7 @@ class SettingsBody extends StatelessWidget {
           leading: Icon(Icons.shield_rounded, color: palette.accent),
           title: const Text('Privacy dashboard'),
           subtitle:
-              const Text('Per-site rules, permissions and blocked stats'),
+              const Text('See what was blocked and set rules per site'),
           onTap: () => _openPrivacy(context),
         ),
         const Divider(indent: 16, endIndent: 16),
@@ -172,7 +172,7 @@ class SettingsBody extends StatelessWidget {
         const ListTile(
           leading: LogoMark(size: 34),
           title: Text('Interface Browser'),
-          subtitle: Text('Version 1.1.0 · Flutter + WebView'),
+          subtitle: Text('Version 2.0.0'),
         ),
         ListTile(
           leading: Icon(Icons.waving_hand_outlined, color: palette.textDim),
@@ -572,15 +572,15 @@ class _HomepagePickerState extends State<_HomepagePicker> {
       children: [
         RadioListTile<bool>(
           dense: true,
-          title: const Text('Homepage: Speed dial'),
-          subtitle: const Text('Opera-style start page with your favorites'),
+          title: const Text('New tab page'),
+          subtitle: const Text('Your shortcuts and a search box'),
           value: true,
           groupValue: useDial,
           onChanged: (_) => settings.setHomePage(''),
         ),
         RadioListTile<bool>(
           dense: true,
-          title: const Text('Homepage: custom page'),
+          title: const Text('Custom page'),
           value: false,
           groupValue: useDial,
           onChanged: (_) {

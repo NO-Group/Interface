@@ -45,14 +45,14 @@ class _Suggestion {
   }
 }
 
-/// The omnibox — Chrome's combined address & search bar.
+/// The address field: one box for addresses and searches.
 ///
-/// Shows suggestions from history, bookmarks and a live web suggest API,
-/// with full keyboard navigation (↑ ↓ Enter Esc).
+/// Suggests from history, bookmarks and the search engine while you type,
+/// and walks with the keyboard (up, down, Enter, Esc).
 class Omnibox extends StatefulWidget {
   const Omnibox({super.key, this.compact = false});
 
-  /// True → mobile pill sitting at the bottom of the screen.
+  /// True → the borderless field inside the phone's bottom dock.
   final bool compact;
 
   @override

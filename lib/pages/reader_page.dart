@@ -64,7 +64,7 @@ class _ReaderPageState extends State<ReaderPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _error =
-          'This page does not look like an article Reader can reformat.');
+          'This page doesn’t look like an article.');
     }
   }
 

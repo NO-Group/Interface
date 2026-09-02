@@ -191,9 +191,9 @@ class _TabWebViewState extends State<TabWebView> {
     } catch (_) {}
     try {
       final favicons = await c.getFavicons();
-      if (favicons != null && favicons.isNotEmpty) {
+      if (favicons.isNotEmpty) {
         favicons.sort((a, b) => (b.height ?? 0).compareTo(a.height ?? 0));
-        tab.faviconUrl = favicons.first.url?.toString();
+        tab.faviconUrl = favicons.first.url.toString();
       }
     } catch (_) {}
     if (!tab.incognito && tab.url.startsWith('http')) {

@@ -99,7 +99,7 @@ class PrivacyPage extends StatelessWidget {
               color: settings.blockAds ? palette.accent : palette.textDim),
           title: const Text('Block ads & pop-ups'),
           subtitle:
-              const Text('Network-level blocklist of ad/tracker hosts'),
+              const Text('Blocks known ad and tracker addresses before they load'),
           value: settings.blockAds,
           onChanged: settings.setBlockAds,
         ),
@@ -108,7 +108,7 @@ class PrivacyPage extends StatelessWidget {
               color: settings.cosmeticFiltering
                   ? palette.accent
                   : palette.textDim),
-          title: const Text('Cosmetic filtering'),
+          title: const Text('Hide leftover ad spaces'),
           subtitle: const Text('Hide empty ad slots left behind'),
           value: settings.cosmeticFiltering,
           onChanged: settings.setCosmeticFiltering,
@@ -118,7 +118,7 @@ class PrivacyPage extends StatelessWidget {
             padding: const EdgeInsets.all(28),
             child: Center(
               child: Text(
-                'Browse a little — blocked domains will appear here.',
+                'Blocked ads and trackers will be listed here.',
                 style: TextStyle(color: palette.textDim, fontSize: 12.5),
               ),
             ),

@@ -8,7 +8,7 @@ import '../state/browser_provider.dart';
 import 'favicon.dart';
 import 'ui_kit.dart';
 
-/// Tabs live inside the one-row bar as compact pills: icon, title, close.
+/// Tabs live in the bar as compact pills: icon, title, close.
 /// Selected = lifted surface with a 2px accent underline, groups = a colour
 /// dot you can click to collapse the rest of the group.
 class TabStrip extends StatelessWidget {
@@ -362,7 +362,16 @@ class _TabPill extends StatelessWidget {
     return ConstrainedBox(
       constraints: const BoxConstraints(minWidth: 96, maxWidth: 208),
       child: UiHoverable(
-        onTap: onSelect,
+        onTap: () {
+          // Keep the tab you picked in view.
+          Scrollable.ensureVisible(
+            context,
+            alignment: 0.5,
+            duration: Ui.normal,
+            curve: Ui.curve,
+          );
+          onSelect();
+        },
         builder: (context, hovering, pressed) {
           return GestureDetector(
             onTertiaryTapUp: (_) => onClose(),

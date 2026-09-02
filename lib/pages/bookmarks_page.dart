@@ -26,7 +26,7 @@ class BookmarksList extends StatelessWidget {
           children: [
             Icon(Icons.star_border_rounded, size: 52, color: palette.textDim),
             const SizedBox(height: 12),
-            Text('Tap ☆ in the toolbar to bookmark pages',
+            Text('Use the star in the toolbar to keep pages here',
                 style: TextStyle(color: palette.text, fontSize: 15)),
           ],
         ),

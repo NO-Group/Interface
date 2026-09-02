@@ -26,7 +26,7 @@ class ReadingListPage extends StatelessWidget {
             Icon(Icons.auto_stories_rounded, size: 52, color: palette.textDim),
             const SizedBox(height: 12),
             Text(
-              'Save articles with "Read later" in the menu',
+              'Save pages from the menu to read later',
               style: TextStyle(color: palette.text, fontSize: 14),
             ),
           ],

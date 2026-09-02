@@ -115,7 +115,7 @@ class _NewTabPageState extends State<NewTabPage> {
                                   size: 16, color: palette.accent),
                               const SizedBox(width: 8),
                               Text(
-                                'Incognito — history is not saved',
+                                'Private tab — nothing is saved here',
                                 style: TextStyle(
                                     color: palette.text, fontSize: 12.5),
                               ),
@@ -375,7 +375,7 @@ class _NewTabPageState extends State<NewTabPage> {
             ListTile(
               leading: const Icon(Icons.delete_outline_rounded),
               title: Text(
-                  'Delete folder (${profile.dialItemsIn(folder.id).length} sites move to root)'),
+                  'Delete folder'),
               onTap: () {
                 profile.deleteDialFolder(folder);
                 setState(() => _openFolder = null);
@@ -455,7 +455,7 @@ class _NewTabPageState extends State<NewTabPage> {
             const SizedBox(height: 6),
             ListTile(
               leading: const Icon(Icons.dialpad_rounded),
-              title: const Text('Main dial'),
+              title: const Text('All shortcuts'),
               onTap: () {
                 profile.updateSpeedDial(item, clearFolder: true);
                 Navigator.of(sheet).pop();
@@ -631,7 +631,7 @@ class _DraggableTile extends StatelessWidget {
       onLongPress: onLongPress,
     );
     return DragTarget<SpeedDialItem>(
-      onWillAcceptWithDetails: (d) => d.data?.id != item.id,
+      onWillAcceptWithDetails: (d) => d.data.id != item.id,
       onAccept: (dragged) {
         // Find indices in the current visible list.
         final scope = ScopeInfo.of(context);

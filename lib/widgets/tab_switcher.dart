@@ -6,8 +6,7 @@ import '../core/ui.dart';
 import '../state/browser_provider.dart';
 import 'favicon.dart';
 
-/// Chrome-mobile-style tab switcher: grid of live tab cards,
-/// plus one-tap new tab & incognito.
+/// The tab grid: every open page as a card, plus new tab and new private tab.
 class TabSwitcherPage extends StatelessWidget {
   const TabSwitcherPage({super.key});
 
@@ -34,10 +33,10 @@ class TabSwitcherPage extends StatelessWidget {
           if (incognitoCount > 0)
             TextButton(
               onPressed: () => browser.closeAllIncognito(),
-              child: const Text('Close incognito'),
+              child: const Text('Close private tabs'),
             ),
           IconButton(
-            tooltip: 'New incognito tab',
+            tooltip: 'New private tab',
             icon: Icon(Icons.shield_outlined, color: palette.text),
             onPressed: () {
               browser.newTab(incognito: true);

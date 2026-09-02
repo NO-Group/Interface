@@ -40,7 +40,7 @@ List<_Entry> _entriesFor(BuildContext context) {
 
   return [
     _Entry('new_tab', Icons.add_rounded, 'New tab'),
-    _Entry('new_incognito', Icons.shield_outlined, 'New incognito tab'),
+    _Entry('new_incognito', Icons.shield_outlined, 'New private tab'),
     const _Entry('div1', Icons.horizontal_rule, ''),
     _Entry('bookmark', Icons.star_rounded,
         bookmarked ? 'Remove bookmark' : 'Bookmark this page'),

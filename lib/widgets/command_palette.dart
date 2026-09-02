@@ -197,7 +197,7 @@ class _CommandPaletteState extends State<CommandPalette> {
                         ? Padding(
                             padding: const EdgeInsets.all(24),
                             child: Text(
-                              'No matching command',
+                              'Nothing matches that',
                               style: Ui.text(palette, color: palette.textDim),
                             ),
                           )
