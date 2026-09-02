@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
 import '../core/palette.dart';
+import '../core/ui.dart';
 import '../pages/bookmarks_page.dart';
 import '../pages/downloads_page.dart';
 import '../pages/history_page.dart';
@@ -23,7 +24,7 @@ class _Command {
   final void Function(BuildContext) run;
 }
 
-/// Power-user command palette (Ctrl+K): fuzzy-search every browser action.
+/// Quick actions (Ctrl+K): type to find a browser action.
 class CommandPalette extends StatefulWidget {
   const CommandPalette({super.key});
 
@@ -60,13 +61,13 @@ class _CommandPaletteState extends State<CommandPalette> {
 
     return [
       _Command('New tab', 'Ctrl+T', Icons.add_rounded, (_) => browser.newTab()),
-      _Command('New incognito tab', 'Ctrl+Shift+N', Icons.shield_outlined,
+      _Command('New private tab', 'Ctrl+Shift+N', Icons.shield_outlined,
           (_) => browser.newTab(incognito: true)),
       _Command('Close current tab', 'Ctrl+W', Icons.close_rounded,
           (_) => browser.closeCurrent()),
       _Command('Find in page', 'Ctrl+F', Icons.find_in_page_rounded,
           (_) => browser.openFind()),
-      _Command('Enter Reader Mode', '', Icons.menu_book_rounded, (_) {
+      _Command('Reader view', '', Icons.menu_book_rounded, (_) {
         Navigator.of(context).push(
           MaterialPageRoute<void>(builder: (_) => const ReaderPage()),
         );
@@ -115,8 +116,7 @@ class _CommandPaletteState extends State<CommandPalette> {
           (_) => settings.setBlockAds(!settings.blockAds)),
       _Command('Reload page', 'Ctrl+R', Icons.refresh_rounded,
           (_) => browser.reload()),
-      _Command('Go to speed dial / home', '', Icons.home_outlined,
-          (_) => browser.goHome()),
+      _Command('New tab page', '', Icons.home_outlined, (_) => browser.goHome()),
       if (desktop) ...[
         _Command('Toggle split view', '', Icons.vertical_split_rounded,
             (_) => browser.splitActive
@@ -151,21 +151,9 @@ class _CommandPaletteState extends State<CommandPalette> {
         child: GestureDetector(
           onTap: () {},
           child: Container(
-            width: 560,
-            constraints: const BoxConstraints(maxHeight: 460),
-            decoration: BoxDecoration(
-              color: palette.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: palette.border),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black
-                      .withValues(alpha: palette.isDark ? 0.6 : 0.25),
-                  blurRadius: 40,
-                  offset: const Offset(0, 12),
-                ),
-              ],
-            ),
+            width: 540,
+            constraints: const BoxConstraints(maxHeight: 440),
+            decoration: Ui.floating(palette, radius: Ui.rCard),
             child: CallbackShortcuts(
               bindings: {
                 const SingleActivator(LogicalKeyboardKey.escape):
@@ -178,19 +166,18 @@ class _CommandPaletteState extends State<CommandPalette> {
                     padding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
                     child: Row(
                       children: [
-                        Icon(Icons.bolt_rounded, size: 20, color: palette.accent),
-                        const SizedBox(width: 10),
+                        Icon(Icons.search_rounded, size: 19, color: palette.textDim),
+                        const SizedBox(width: 11),
                         Expanded(
                           child: TextField(
                             controller: _controller,
                             autofocus: true,
-                            style: TextStyle(color: palette.text),
+                            style: Ui.text(palette, size: 14.5, color: palette.text),
                             cursorColor: palette.accent,
                             decoration: InputDecoration(
                               border: InputBorder.none,
-                              hintText:
-                                  'Type a command… "theme", "split", "reader"',
-                              hintStyle: TextStyle(color: palette.textDim),
+                              hintText: 'Search actions',
+                              hintStyle: Ui.text(palette, size: 14.5, color: palette.textDim),
                             ),
                             onChanged: (v) =>
                                 setState(() { _query = v; _sel = 0; }),
@@ -204,14 +191,14 @@ class _CommandPaletteState extends State<CommandPalette> {
                       ],
                     ),
                   ),
-                  Divider(height: 1, color: palette.border),
+                  Ui.rule(palette),
                   Flexible(
                     child: results.isEmpty
                         ? Padding(
                             padding: const EdgeInsets.all(24),
                             child: Text(
                               'No matching command',
-                              style: TextStyle(color: palette.textDim),
+                              style: Ui.text(palette, color: palette.textDim),
                             ),
                           )
                         : ListView.builder(
@@ -226,16 +213,22 @@ class _CommandPaletteState extends State<CommandPalette> {
                                 onHover: (h) {
                                   if (h) setState(() => _sel = i);
                                 },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 9),
-                                  color: selected
-                                      ? palette.surfaceAlt
-                                      : Colors.transparent,
+                                child: AnimatedContainer(
+                                  duration: Ui.quick,
+                                  curve: Ui.curve,
+                                  height: 42,
+                                  margin: const EdgeInsets.symmetric(horizontal: 6),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                  decoration: BoxDecoration(
+                                    color: selected
+                                        ? palette.activeFill
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(Ui.rControl),
+                                  ),
                                   child: Row(
                                     children: [
                                       Icon(cmd.icon,
-                                          size: 18,
+                                          size: 17,
                                           color: selected
                                               ? palette.accent
                                               : palette.textDim),
@@ -243,10 +236,11 @@ class _CommandPaletteState extends State<CommandPalette> {
                                       Expanded(
                                         child: Text(
                                           cmd.label,
-                                          style: TextStyle(
-                                            color: palette.text,
-                                            fontSize: 13.5,
-                                            fontWeight: selected
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Ui.text(
+                                            palette,
+                                            weight: selected
                                                 ? FontWeight.w600
                                                 : FontWeight.w400,
                                           ),
@@ -255,9 +249,10 @@ class _CommandPaletteState extends State<CommandPalette> {
                                       if (cmd.hint.isNotEmpty)
                                         Text(
                                           cmd.hint,
-                                          style: TextStyle(
-                                            color: palette.textDim,
-                                            fontSize: 11,
+                                          style: Ui.text(
+                                            palette,
+                                            size: Ui.sizeCaption,
+                                            color: palette.textFaint,
                                           ),
                                         ),
                                     ],

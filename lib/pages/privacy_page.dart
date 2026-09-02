@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../state/privacy_provider.dart';
 import '../state/settings_provider.dart';
 import '../widgets/favicon.dart';
@@ -35,18 +36,16 @@ class PrivacyPage extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(14),
+                width: 52,
+                height: 52,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      palette.primary,
-                      palette.primary.withValues(alpha: 0.7),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
+                  color: palette.surfaceAlt,
+                  borderRadius: BorderRadius.circular(Ui.rCard),
+                  border: Border.all(color: palette.border),
                 ),
                 child: Icon(Icons.shield_rounded,
-                    size: 30, color: palette.accent),
+                    size: 24, color: palette.accent),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -128,13 +127,8 @@ class PrivacyPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
             child: Text(
-              'MOST-BLOCKED DOMAINS',
-              style: TextStyle(
-                color: palette.textDim,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.8,
-              ),
+              'Most blocked',
+              style: Ui.text(palette, size: 14, weight: FontWeight.w700),
             ),
           ),
           for (final e in privacy.topBlockedHosts)
@@ -148,10 +142,7 @@ class PrivacyPage extends StatelessWidget {
               trailing: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: palette.accent.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                decoration: Ui.tint(palette, palette.accent, radius: 7),
                 child: Text(
                   '${e.value}',
                   style: TextStyle(

@@ -6,6 +6,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../core/palette.dart';
 import '../core/urls.dart';
 import '../state/browser_provider.dart';
@@ -291,15 +292,10 @@ class _Section extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = pal(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
       child: Text(
-        title.toUpperCase(),
-        style: TextStyle(
-          color: palette.textDim,
-          fontSize: 11.5,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.9,
-        ),
+        title,
+        style: Ui.text(palette, size: 14, weight: FontWeight.w700),
       ),
     );
   }

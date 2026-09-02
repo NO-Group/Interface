@@ -1,9 +1,9 @@
 name: interface_browser
-description: "Interface Browser — a fast, themeable web browser for Android & Windows. Navy blue + cyan by default, Chrome × Opera inspired UX."
+description: "Interface — a fast, themeable browser for phones and laptops, with one quiet row of controls, tabs as pills, a privacy shield you can actually read, and seven hand-tuned themes."
 publish_to: 'none'
 
 # Android: versionName / versionCode. Windows: product file version.
-version: 1.0.0+1
+version: 2.0.0+1
 
 environment:
   sdk: ^3.12.2

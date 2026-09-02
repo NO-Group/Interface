@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
 import '../core/palette.dart';
+import '../core/ui.dart';
 import '../state/settings_provider.dart';
 
 /// First-run welcome: brand + theme preview + privacy promise.
@@ -37,14 +38,14 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
         icon: Icons.public_rounded,
         title: 'Welcome to Interface',
         body:
-            'A real browser for your phone and laptop.\nNavy steel, cyan speed — built to get out of your way.',
+            'One row of controls, tabs that stay out of the way,\nand a browser that doesn’t pretend to be someone else’s.',
       ),
       _Slide(
         palette: palette,
         icon: Icons.palette_outlined,
         title: 'Make it yours',
         body:
-            'Light, Dark, Red, Green, Black & White,\nor your own picture behind frosted glass.',
+            'Pick a look now, change it later in Settings.\nYou can also put your own picture behind the app.',
         extra: _ThemePicker(
           palette: palette,
           picked: _pickedTheme,
@@ -56,7 +57,7 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
         icon: Icons.shield_rounded,
         title: 'Private by default',
         body:
-            'Ads and trackers are blocked from the first page load.\nWatch the count climb in your Privacy dashboard.',
+            'Ads and trackers are blocked from the first page load.\nTap the shield any time to see what happened on a page.',
       ),
     ];
 
@@ -96,13 +97,13 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
                   const SizedBox(height: 22),
                   SizedBox(
                     width: double.infinity,
-                    height: 48,
+                    height: 46,
                     child: FilledButton(
                       style: FilledButton.styleFrom(
                         backgroundColor: palette.primary,
                         foregroundColor: palette.onPrimary,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(Ui.rField),
                         ),
                       ),
                       onPressed: () {
@@ -177,40 +178,40 @@ class _Slide extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 86,
-            height: 86,
+            width: 78,
+            height: 78,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [palette.primary, palette.background],
-              ),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: palette.accent.withValues(alpha: 0.5)),
+              color: palette.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: palette.border),
             ),
             child: Image.asset(
               'assets/brand/app_logo.png',
-              errorBuilder: (_, __, ___) => Icon(icon, size: 44, color: palette.accent),
+              width: 46,
+              height: 46,
+              errorBuilder: (_, __, ___) =>
+                  Icon(icon, size: 36, color: palette.accent),
             ),
           ),
           const SizedBox(height: 30),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: palette.text,
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
+            style: Ui.text(
+              palette,
+              size: Ui.sizeHero,
+              weight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 12),
           Text(
             body,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: Ui.text(
+              palette,
+              size: 14,
               color: palette.textDim,
-              fontSize: 14.5,
               height: 1.6,
             ),
           ),
@@ -267,11 +268,11 @@ class _ThemePicker extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: p.background,
-          borderRadius: BorderRadius.circular(12),
+          color: active ? palette.activeFill : p.background,
+          borderRadius: BorderRadius.circular(Ui.rField),
           border: Border.all(
             color: active ? palette.accent : palette.border,
-            width: active ? 2 : 1,
+            width: active ? 1.4 : 1,
           ),
         ),
         child: Row(

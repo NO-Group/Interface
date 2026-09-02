@@ -2,6 +2,7 @@ import 'dart:io' show File;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart' show LaunchMode, launchUrl;
 import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
@@ -111,13 +112,30 @@ class _WebView2Banner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFF7A1F1F),
-      child: ListTile(
-        dense: true,
-        leading: const Icon(Icons.warning_amber_rounded, color: Colors.white),
-        title: const Text(
-          'WebView2 runtime missing — install it from Microsoft to browse.',
-          style: TextStyle(color: Colors.white, fontSize: 12.5),
+      color: palette.danger,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 9, 14, 9),
+        child: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded,
+                size: 18, color: Colors.white),
+            const SizedBox(width: 11),
+            const Expanded(
+              child: Text(
+                'Pages need Microsoft’s WebView2 to display on this PC.',
+                style: TextStyle(color: Colors.white, fontSize: 13),
+              ),
+            ),
+            TextButton(
+              onPressed: () => launchUrl(
+                Uri.parse(
+                  'https://developer.microsoft.com/microsoft-edge/webview2/',
+                ),
+                mode: LaunchMode.externalApplication,
+              ),
+              child: const Text('Get it'),
+            ),
+          ],
         ),
       ),
     );

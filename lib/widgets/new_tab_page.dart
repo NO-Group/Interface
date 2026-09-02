@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../core/urls.dart';
 import '../models.dart';
 import '../pages/bookmarks_page.dart';
@@ -14,8 +15,8 @@ import '../state/settings_provider.dart';
 import 'favicon.dart';
 import 'logo.dart';
 
-/// Opera-style new tab: clock, big search box and the speed dial grid
-/// with folders and drag-to-reorder.
+/// The page a fresh tab opens to: a greeting, one search field, and your
+/// shortcuts (with folders and drag-to-reorder).
 class NewTabPage extends StatefulWidget {
   const NewTabPage({super.key, required this.tab});
 
@@ -45,6 +46,14 @@ class _NewTabPageState extends State<NewTabPage> {
     super.dispose();
   }
 
+  String get _greetingWord {
+    final h = DateTime.now().hour;
+    if (h < 5) return 'Still up';
+    if (h < 12) return 'Good morning';
+    if (h < 18) return 'Good afternoon';
+    return 'Good evening';
+  }
+
   void _go(String value) {
     if (value.trim().isEmpty) return;
     context.read<BrowserProvider>().navigate(value);
@@ -67,10 +76,7 @@ class _NewTabPageState extends State<NewTabPage> {
     final profile = context.watch<ProfileProvider>();
     final wallpaper = settings.hasCustomBackground;
 
-    final now = DateTime.now();
-    final hh = now.hour.toString().padLeft(2, '0');
-    final mm = now.minute.toString().padLeft(2, '0');
-    final date = DateFormatE.format(now);
+    final date = DateFormatE.format(DateTime.now());
 
     final folder = _openFolder == null
         ? null
@@ -92,7 +98,7 @@ class _NewTabPageState extends State<NewTabPage> {
                   constraints: const BoxConstraints(maxWidth: 780),
                   child: Column(
                     children: [
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 10),
                       if (widget.tab.incognito)
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -121,42 +127,36 @@ class _NewTabPageState extends State<NewTabPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             ClipRRect(
-                              borderRadius: BorderRadius.circular(11),
+                              borderRadius: BorderRadius.circular(9),
                               child: Image.asset(
                                 'assets/brand/app_logo.png',
-                                width: 34,
-                                height: 34,
+                                width: 28,
+                                height: 28,
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) =>
-                                    const LogoMark(size: 30),
+                                    const LogoMark(size: 26),
                               ),
                             ),
                             const SizedBox(width: 10),
                             Text(
                               'Interface',
-                              style: TextStyle(
-                                color: palette.text,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.4,
+                              style: Ui.text(
+                                palette,
+                                size: 16,
+                                weight: FontWeight.w700,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 10),
                         Text(
-                          '$hh:$mm',
-                          style: TextStyle(
-                            color: palette.text.withValues(alpha: 0.94),
-                            fontSize: 42,
-                            fontWeight: FontWeight.w300,
-                            letterSpacing: 2,
+                          '$_greetingWord  ·  $date',
+                          textAlign: TextAlign.center,
+                          style: Ui.text(
+                            palette,
+                            size: Ui.sizeTitle,
+                            color: palette.textDim,
                           ),
-                        ),
-                        Text(
-                          date,
-                          style:
-                              TextStyle(color: palette.textDim, fontSize: 13),
                         ),
                       ],
                       const SizedBox(height: 22),
@@ -166,31 +166,32 @@ class _NewTabPageState extends State<NewTabPage> {
                           controller: _search,
                           textInputAction: TextInputAction.search,
                           onSubmitted: _go,
-                          style: TextStyle(color: palette.text, fontSize: 15),
+                          style: Ui.text(palette, size: 15, color: palette.text),
                           cursorColor: palette.accent,
                           decoration: InputDecoration(
                             filled: true,
-                            fillColor:
-                                palette.omniboxFill.withValues(alpha: 0.92),
-                            hintText:
-                                'Search with ${settings.searchEngine.name} or enter address',
-                            hintStyle: TextStyle(
-                                color: palette.textDim, fontSize: 13.5),
-                            prefixIcon:
-                                Icon(Icons.search_rounded, color: palette.accent),
-                            contentPadding: EdgeInsets.zero,
+                            fillColor: wallpaper
+                                ? palette.surface.withValues(alpha: 0.9)
+                                : palette.omniboxFill,
+                            hintText: 'Search or type an address',
+                            hintStyle: Ui.text(
+                                palette, size: 14.5, color: palette.textDim),
+                            prefixIcon: Icon(Icons.search_rounded,
+                                color: palette.textDim),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 15),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(26),
+                              borderRadius: BorderRadius.circular(Ui.rCard),
                               borderSide: BorderSide(color: palette.border),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(26),
+                              borderRadius: BorderRadius.circular(Ui.rCard),
                               borderSide: BorderSide(color: palette.border),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(26),
+                              borderRadius: BorderRadius.circular(Ui.rCard),
                               borderSide: BorderSide(
-                                  color: palette.accent, width: 1.6),
+                                  color: palette.accent, width: 1.4),
                             ),
                           ),
                         ),
@@ -209,9 +210,10 @@ class _NewTabPageState extends State<NewTabPage> {
                                       size: 13, color: palette.accent),
                                   const SizedBox(width: 6),
                                   Text(
-                                    'Speed dial',
-                                    style: TextStyle(
-                                        color: palette.accent, fontSize: 12),
+                                    'Shortcuts',
+                                    style: Ui.text(palette,
+                                        size: Ui.sizeSmall,
+                                        color: palette.accent),
                                   ),
                                 ]),
                               ),
@@ -222,14 +224,20 @@ class _NewTabPageState extends State<NewTabPage> {
                             const SizedBox(width: 6),
                           ],
                           Text(
-                            folder?.name ?? 'Speed dial',
-                            style: TextStyle(
-                              color: palette.textDim,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.8,
+                            folder?.name ?? 'Shortcuts',
+                            style: Ui.text(
+                              palette,
+                              size: Ui.sizeTitle,
+                              weight: FontWeight.w700,
                             ),
                           ),
+                          const SizedBox(width: 8),
+                          if (items.isNotEmpty)
+                            Text(
+                              '${items.length}',
+                              style: Ui.text(palette,
+                                  size: Ui.sizeCaption, color: palette.textDim),
+                            ),
                           const Spacer(),
                           if (folder != null)
                             IconButton(
@@ -703,16 +711,8 @@ class _DialTile extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: palette.surface.withValues(alpha: 0.92),
-                borderRadius: BorderRadius.circular(17),
+                borderRadius: BorderRadius.circular(Ui.rCard),
                 border: Border.all(color: palette.border),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black
-                        .withValues(alpha: palette.isDark ? 0.28 : 0.10),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
               ),
               child: Favicon(host: hostOf(item.url), size: 30),
             ),
@@ -722,7 +722,7 @@ class _DialTile extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: TextStyle(color: palette.text, fontSize: 12),
+              style: Ui.text(palette, size: Ui.sizeCaption + 0.5),
             ),
           ],
         ),

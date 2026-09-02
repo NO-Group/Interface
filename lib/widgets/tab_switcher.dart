@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../state/browser_provider.dart';
 import 'favicon.dart';
 
@@ -22,8 +23,8 @@ class TabSwitcherPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: palette.background,
         title: Text(
-          '${browser.tabCount} ${browser.tabCount == 1 ? 'tab' : 'tabs'}',
-          style: TextStyle(color: palette.text),
+          browser.tabCount == 1 ? '1 tab' : '${browser.tabCount} tabs',
+          style: Ui.text(palette, size: 16, weight: FontWeight.w700),
         ),
         leading: IconButton(
           icon: Icon(Icons.close_rounded, color: palette.text),
@@ -115,9 +116,10 @@ class _TabCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: palette.surface,
           borderRadius: BorderRadius.circular(14),
+          boxShadow: selected ? Ui.float(palette, y: 4, blur: 14) : null,
           border: Border.all(
             color: selected ? palette.accent : palette.border,
-            width: selected ? 1.8 : 1,
+            width: selected ? 1.4 : 1,
           ),
         ),
         padding: const EdgeInsets.all(10),
@@ -138,10 +140,10 @@ class _TabCard extends StatelessWidget {
                     tab.displayTitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: palette.text,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
+                    style: Ui.text(
+                      palette,
+                      size: Ui.sizeSmall,
+                      weight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -162,7 +164,7 @@ class _TabCard extends StatelessWidget {
                 tab.host,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: palette.textDim, fontSize: 11),
+                style: Ui.caption(palette),
               ),
             const SizedBox(height: 6),
             ClipRRect(

@@ -5,6 +5,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart' hide Favicon;
 import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../core/urls.dart';
 import '../models.dart';
 import '../state/browser_provider.dart';
@@ -39,9 +40,6 @@ Future<void> showSiteInfoSheet(BuildContext context) {
     context: context,
     isScrollControlled: true,
     backgroundColor: palette.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
     builder: (sheetContext) => SafeArea(
       child: StatefulBuilder(
         builder: (sheetContext, setSheet) {
@@ -61,13 +59,10 @@ Future<void> showSiteInfoSheet(BuildContext context) {
             return SwitchListTile(
               secondary: Icon(icon,
                   color: value ? palette.accent : palette.textDim),
-              title: Text(title,
-                  style: TextStyle(color: palette.text, fontSize: 13.5)),
+              title: Text(title, style: Ui.text(palette, weight: FontWeight.w500)),
               subtitle: Text(
-                isOverride
-                    ? 'Site override — $subtitle'
-                    : '$subtitle (default)',
-                style: TextStyle(color: palette.textDim, fontSize: 11.5),
+                isOverride ? 'Only for this site' : subtitle,
+                style: Ui.caption(palette),
               ),
               value: value,
               onChanged: (v) {
@@ -87,33 +82,22 @@ Future<void> showSiteInfoSheet(BuildContext context) {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(height: 10),
-                Container(
-                  width: 38,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: palette.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 6),
                 ListTile(
                   leading: Favicon(host: host, size: 34),
                   title: Text(
                     host,
-                    style: TextStyle(
-                      color: palette.text,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
+                    style: Ui.text(palette, size: 15.5, weight: FontWeight.w700),
                   ),
                   subtitle: Text(
                     secure
                         ? 'Connection is secure (HTTPS)'
                         : 'Not secure — data can be read in transit',
-                    style: TextStyle(
+                    style: Ui.text(
+                      palette,
+                      size: Ui.sizeSmall,
+                      weight: FontWeight.w500,
                       color: secure ? palette.success : palette.danger,
-                      fontSize: 12,
                     ),
                   ),
                   trailing: Icon(
@@ -123,22 +107,25 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                 ),
                 Divider(color: palette.border, height: 1),
                 Container(
-                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(12, 6, 12, 6),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  color: palette.surfaceAlt.withValues(alpha: 0.4),
+                      const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+                  decoration: BoxDecoration(
+                    color: blocked > 0 ? palette.accentSoft : palette.surfaceAlt,
+                    borderRadius: BorderRadius.circular(Ui.rField),
+                    border: Border.all(color: palette.border),
+                  ),
                   child: Row(
                     children: [
                       Icon(Icons.shield_rounded,
-                          size: 18, color: palette.accent),
-                      const SizedBox(width: 10),
+                          size: 17, color: palette.accent),
+                      const SizedBox(width: 11),
                       Expanded(
                         child: Text(
                           blocked > 0
-                              ? '$blocked trackers & ads blocked on this site'
-                              : 'No trackers blocked on this site yet',
-                          style: TextStyle(
-                              color: palette.text, fontSize: 13),
+                              ? '$blocked ads and trackers blocked on this site'
+                              : 'Nothing blocked on this site yet',
+                          style: Ui.text(palette, size: Ui.sizeBody),
                         ),
                       ),
                       if (blocked > 0)
@@ -153,9 +140,9 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                             Navigator.of(sheetContext).pop();
                             browser.refreshWebViews();
                             final m = ScaffoldMessenger.of(context);
-                            m.showSnackBar(SnackBar(
-                                content:
-                                    Text('Ads allowed on $host')));
+                            m.showSnackBar(
+                              SnackBar(content: Text('Ads allowed on $host')),
+                            );
                           },
                           child: const Text('Allow ads'),
                         ),
@@ -200,10 +187,9 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                 ListTile(
                   leading: Icon(Icons.cookie_outlined, color: palette.textDim),
                   title: Text('Cookies & site data',
-                      style: TextStyle(color: palette.text, fontSize: 13.5)),
+                      style: Ui.text(palette, weight: FontWeight.w500)),
                   subtitle: Text('Clear cookies set by $host',
-                      style:
-                          TextStyle(color: palette.textDim, fontSize: 11.5)),
+                      style: Ui.caption(palette)),
                   trailing: FilledButton.tonal(
                     onPressed: () async {
                       Navigator.of(sheetContext).pop();

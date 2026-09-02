@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../pages/bookmarks_page.dart';
 import '../pages/downloads_page.dart';
 import '../pages/history_page.dart';
@@ -51,7 +52,7 @@ List<_Entry> _entriesFor(BuildContext context) {
         onReadingList
             ? 'Saved — open reading list'
             : 'Read later'),
-    if (!onDial) const _Entry('reader', Icons.menu_book_rounded, 'Reader mode'),
+    if (!onDial) const _Entry('reader', Icons.menu_book_rounded, 'Reader view'),
     const _Entry('div2', Icons.horizontal_rule, ''),
     const _Entry('bookmarks', Icons.bookmarks_outlined, 'Bookmarks'),
     const _Entry('history', Icons.history_rounded, 'History'),
@@ -61,7 +62,7 @@ List<_Entry> _entriesFor(BuildContext context) {
     const _Entry('find', Icons.find_in_page_rounded, 'Find in page'),
     if (wide) ...[
       const _Entry('split', Icons.vertical_split_outlined, 'Split view'),
-      const _Entry('palette', Icons.bolt_rounded, 'Command palette  (Ctrl+K)'),
+      const _Entry('palette', Icons.bolt_rounded, 'Quick actions  (Ctrl+K)'),
       const _Entry('print', Icons.print_rounded, 'Print page'),
     ],
     _Entry('block_ads', Icons.block_rounded, 'Block ads & pop-ups',
@@ -160,9 +161,9 @@ Future<void> runMenuAction(BuildContext context, String id) async {
       showAboutDialog(
         context: context,
         applicationName: 'Interface Browser',
-        applicationVersion: '1.1.0',
+        applicationVersion: '2.0.0',
         applicationLegalese:
-            'A fast, themeable browser for phones & laptops.',
+            'A fast, themeable browser for phones and laptops.',
         applicationIcon: const LogoMark(size: 44),
       );
   }
@@ -189,9 +190,13 @@ class AppMenuButton extends StatelessWidget {
     return PopupMenuButton<String>(
       tooltip: 'Menu',
       color: palette.surface,
-      icon: Icon(Icons.more_vert_rounded, color: palette.text),
+      elevation: 0,
+      shadowColor: Colors.black.withValues(alpha: palette.isDark ? 0.5 : 0.14),
+      constraints: const BoxConstraints(minWidth: 272),
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      icon: Icon(Icons.more_horiz_rounded, color: palette.text, size: 22),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Ui.rMenu),
         side: BorderSide(color: palette.border),
       ),
       itemBuilder: (_) => [
@@ -201,22 +206,29 @@ class AppMenuButton extends StatelessWidget {
           else
             PopupMenuItem(
               value: e.id,
-              height: 42,
+              height: Ui.menuRowHeight,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
                 children: [
                   Icon(e.icon,
-                      size: 18,
+                      size: 17,
                       color: e.checkable ? palette.accent : palette.textDim),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 11),
                   Expanded(
                     child: Text(
                       e.label,
-                      style: TextStyle(color: palette.text, fontSize: 13.5),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Ui.text(
+                        palette,
+                        color: palette.text,
+                        weight: e.checkable ? FontWeight.w600 : FontWeight.w400,
+                      ),
                     ),
                   ),
                   if (e.checkable)
                     Icon(Icons.check_rounded,
-                        size: 17, color: palette.accent),
+                        size: 16, color: palette.accent),
                 ],
               ),
             ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../state/browser_provider.dart';
 import 'favicon.dart';
 
@@ -22,16 +23,14 @@ class VerticalTabRail extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 10, 8, 6),
             child: Row(
               children: [
-                Icon(Icons.tab_rounded, size: 15, color: palette.textDim),
-                const SizedBox(width: 8),
                 Text(
-                  '${browser.tabCount} tabs',
-                  style: TextStyle(
-                    color: palette.textDim,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                  ),
+                  'Tabs',
+                  style: Ui.text(palette, size: 14, weight: FontWeight.w700),
+                ),
+                const SizedBox(width: 7),
+                Text(
+                  '${browser.tabCount}',
+                  style: Ui.text(palette, size: Ui.sizeCaption, color: palette.textDim),
                 ),
                 const Spacer(),
                 IconButton(
@@ -71,7 +70,7 @@ class VerticalTabRail extends StatelessWidget {
                       color: selected
                           ? palette.surfaceAlt.withValues(alpha: 0.9)
                           : Colors.transparent,
-                      borderRadius: BorderRadius.circular(9),
+                      borderRadius: BorderRadius.circular(Ui.rField),
                       border: Border(
                         left: BorderSide(
                           color: selected
@@ -146,8 +145,12 @@ class VerticalTabRail extends StatelessWidget {
         0,
       ),
       items: const [
-        PopupMenuItem(value: 'split', child: Text('Open in split view')),
-        PopupMenuItem(value: 'close', child: Text('Close tab')),
+        PopupMenuItem(
+          value: 'split',
+          height: 40,
+          child: Text('Open in split view'),
+        ),
+        PopupMenuItem(value: 'close', height: 40, child: Text('Close tab')),
       ],
     );
     if (action == 'split') browser.openSplit(tab: tab);

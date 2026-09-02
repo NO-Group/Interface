@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../core/urls.dart';
 import '../models.dart';
 import '../state/browser_provider.dart';
@@ -72,15 +73,10 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = pal(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
       child: Text(
-        label.toUpperCase(),
-        style: TextStyle(
-          color: palette.textDim,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
-        ),
+        label,
+        style: Ui.text(palette, size: 14, weight: FontWeight.w700),
       ),
     );
   }
