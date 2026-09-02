@@ -50,7 +50,7 @@ class HistoryEntry {
 
 /// A colored tab group (Chrome-style).
 class TabGroup {
-  const TabGroup({
+  TabGroup({
     required this.id,
     required this.name,
     required this.colorIndex,
@@ -187,7 +187,7 @@ class SiteRule {
 
 /// A speed-dial folder.
 class SpeedDialFolder {
-  const SpeedDialFolder({required this.id, required this.name});
+  SpeedDialFolder({required this.id, required this.name});
 
   final String id;
   String name;
