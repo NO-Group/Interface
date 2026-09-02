@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../models.dart';
 import '../services/downloader.dart';
 
@@ -45,7 +46,7 @@ class DownloadsList extends StatelessWidget {
           color: palette.surface,
           margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(Ui.rCard),
             side: BorderSide(color: palette.border),
           ),
           child: ListTile(

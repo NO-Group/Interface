@@ -26,7 +26,6 @@ abstract final class Ui {
   static const double rCard = 14;
   static const double rSheet = 18;
 
-  static const double gap = 8;
   static const double pad = 12;
   static const double padLg = 16;
   static const double hair = 1;

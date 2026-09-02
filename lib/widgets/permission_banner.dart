@@ -46,7 +46,7 @@ class PermissionBanner extends StatelessWidget {
                   style: Ui.text(
                     palette,
                     size: Ui.sizeBody,
-                    fontWeight: FontWeight.w600,
+                    weight: FontWeight.w600,
                   ),
                 ),
               ),

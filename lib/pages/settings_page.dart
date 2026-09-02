@@ -355,16 +355,17 @@ class _ThemeCard extends StatelessWidget {
     final palette = pal(context);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(13),
+      borderRadius: BorderRadius.circular(Ui.rCard),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+        duration: Ui.quick,
+        curve: Ui.curve,
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
         decoration: BoxDecoration(
-          color: palette.surface,
-          borderRadius: BorderRadius.circular(13),
+          color: selected ? palette.activeFill : palette.surface,
+          borderRadius: BorderRadius.circular(Ui.rCard),
           border: Border.all(
             color: selected ? palette.accent : palette.border,
-            width: selected ? 2 : 1,
+            width: selected ? 1.4 : 1,
           ),
         ),
         child: Column(

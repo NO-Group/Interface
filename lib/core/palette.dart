@@ -326,7 +326,6 @@ ThemeData buildMaterialTheme(BrowserPalette p) {
     colorScheme: scheme,
     scaffoldBackgroundColor: p.background,
     canvasColor: p.surface,
-    selectionColor: p.accent.withValues(alpha: 0.24),
     splashColor: p.accent.withValues(alpha: 0.10),
     highlightColor: p.accent.withValues(alpha: 0.06),
     splashFactory: InkRipple.splashFactory,
@@ -341,7 +340,7 @@ ThemeData buildMaterialTheme(BrowserPalette p) {
       scrolledUnderElevation: 0,
       centerTitle: false,
       toolbarHeight: 52,
-      titleTextStyle: const TextStyle(
+      titleTextStyle: TextStyle(
         color: p.text,
         fontSize: 16,
         fontWeight: FontWeight.w700,
@@ -384,7 +383,7 @@ ThemeData buildMaterialTheme(BrowserPalette p) {
         borderRadius: rCard,
         side: BorderSide(color: p.border),
       ),
-      titleTextStyle: const TextStyle(
+      titleTextStyle: TextStyle(
         color: p.text,
         fontSize: 17,
         fontWeight: FontWeight.w700,
@@ -439,7 +438,7 @@ ThemeData buildMaterialTheme(BrowserPalette p) {
       selectedTileColor: p.accent.withValues(alpha: 0.10),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14),
       minVerticalPadding: 8,
-      titleTextStyle: const TextStyle(
+      titleTextStyle: TextStyle(
         color: p.text,
         fontSize: 13.5,
         fontWeight: FontWeight.w500,
