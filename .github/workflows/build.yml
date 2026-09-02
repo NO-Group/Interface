@@ -1,0 +1,125 @@
+name: Build
+
+on:
+  push:
+    branches: [main, "arena/**"]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze & test (fast gate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Pub get
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Unit & widget tests
+        run: flutter test
+
+  android:
+    name: Android APK
+    needs: analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Pub get
+        run: flutter pub get
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Stage artifact
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk \
+             Interface-Browser-Android.apk
+          ls -lh Interface-Browser-Android.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Interface-Browser-Android-apk
+          path: Interface-Browser-Android.apk
+          retention-days: 90
+          if-no-files-found: error
+
+  windows:
+    name: Windows EXE
+    needs: analyze
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Pub get
+        run: flutter pub get
+
+      - name: Build Windows release
+        run: flutter build windows --release
+
+      - name: Package portable zip
+        shell: pwsh
+        run: |
+          Compress-Archive -Path build/windows/x64/runner/Release/* `
+            -DestinationPath Interface-Browser-Windows-x64.zip
+          Get-Item Interface-Browser-Windows-x64.zip | Select-Object Name,Length
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Interface-Browser-Windows-x64-exe
+          path: Interface-Browser-Windows-x64.zip
+          retention-days: 90
+          if-no-files-found: error
+
+  release:
+    name: GitHub Release (on v* tags)
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [android, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Attach artifacts to release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/*/Interface-Browser-Android.apk
+            dist/*/Interface-Browser-Windows-x64.zip
