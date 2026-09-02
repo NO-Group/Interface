@@ -60,3 +60,9 @@ lib/
   widgets/    omnibox, tab strip, toolbar, speed dial, find bar, …
   pages/      browser shells (desktop/mobile), settings, history, …
 ```
+
+## Building the apps
+
+See **[BUILD.md](BUILD.md)** — both the Android APK and Windows EXE build
+on GitHub Actions; you can trigger a build yourself from the
+**Actions → Build → Run workflow** button, no toolchain required.

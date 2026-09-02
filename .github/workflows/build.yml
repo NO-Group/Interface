@@ -7,6 +7,15 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      build_android:
+        description: "Build the Android APK"
+        type: boolean
+        default: true
+      build_windows:
+        description: "Build the Windows EXE"
+        type: boolean
+        default: true
 
 concurrency:
   group: build-${{ github.ref }}
@@ -75,6 +84,7 @@ jobs:
   android:
     name: Android APK
     needs: analyze
+    if: inputs.build_android != false
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -140,6 +150,7 @@ jobs:
   windows:
     name: Windows EXE
     needs: analyze
+    if: inputs.build_windows != false
     runs-on: windows-latest
     timeout-minutes: 60
     permissions:
