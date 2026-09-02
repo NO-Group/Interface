@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'icons.dart';
 
 import '../core/pal.dart';
-import '../core/palette.dart';
 import '../core/ui.dart';
 import '../pages/bookmarks_page.dart';
 import '../pages/downloads_page.dart';

@@ -282,7 +282,7 @@ class _OmniboxState extends State<Omnibox> {
     if (calc != null) {
       items.add(_Suggestion(
         _Kind.search,
-        '${Calculator.pretty(calc)}',
+        Calculator.pretty(calc),
         '$query = — tap to copy',
         'calc:${Calculator.pretty(calc)}',
       ));

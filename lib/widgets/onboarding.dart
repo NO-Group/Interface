@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'icons.dart';
 
 import '../core/pal.dart';
-import '../core/palette.dart';
 import '../core/ui.dart';
 import 'logo.dart';
 import '../state/settings_provider.dart';

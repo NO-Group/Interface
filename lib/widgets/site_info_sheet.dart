@@ -199,6 +199,7 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                           domain: host,
                         );
                       } catch (_) {}
+                      if (!context.mounted) return;
                       final messenger = ScaffoldMessenger.of(context);
                       messenger.hideCurrentSnackBar();
                       messenger.showSnackBar(SnackBar(

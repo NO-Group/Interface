@@ -17,7 +17,7 @@ class LogoMark extends StatelessWidget {
       height: size,
       fit: BoxFit.contain,
       filterQuality: FilterQuality.medium,
-      errorBuilder: (_, __, ___) => _GlobeTile(size: size),
+      errorBuilder: (_, _, _) => _GlobeTile(size: size),
     );
   }
 }

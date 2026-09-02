@@ -175,6 +175,7 @@ class HistoryRoute extends StatelessWidget {
               );
               if (ok == true) {
                 profile.clearHistory();
+                if (!context.mounted) return;
                 final messenger = ScaffoldMessenger.of(context);
                 messenger.hideCurrentSnackBar();
                 messenger.showSnackBar(

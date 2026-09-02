@@ -8,7 +8,6 @@ import '../widgets/icons.dart';
 
 import '../core/pal.dart';
 import '../core/ui.dart';
-import '../core/palette.dart';
 import '../core/urls.dart';
 import '../state/browser_provider.dart';
 import '../state/profile_provider.dart';
@@ -474,7 +473,7 @@ class _WallpaperCard extends StatelessWidget {
                   width: 74,
                   height: 48,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, _) => Container(
                     width: 74,
                     height: 48,
                     color: palette.surfaceAlt,

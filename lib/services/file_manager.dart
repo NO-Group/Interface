@@ -169,7 +169,8 @@ String formatBytes(int bytes) {
 
 String formatWhen(DateTime time, {DateTime? now, String s = '/'}) {
   final t = now ?? DateTime.now();
-  final sameDay = (a, b) => a.year == b.year && a.month == b.month && a.day == b.day;
+  bool sameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
   if (sameDay(t, time)) {
     final hh = time.hour.toString().padLeft(2, '0');
     final mm = time.minute.toString().padLeft(2, '0');

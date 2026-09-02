@@ -1,4 +1,6 @@
 /// URL detection + search engines.
+library;
+
 
 class SearchEngine {
   const SearchEngine(this.id, this.name, this.homepage, this.queryTemplate);

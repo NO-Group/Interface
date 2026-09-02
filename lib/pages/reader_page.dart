@@ -266,7 +266,7 @@ class _ArticleBody extends StatelessWidget {
             child: Image.network(
               hero,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
             ),
           ),
         ],
@@ -289,7 +289,7 @@ class _ArticleBody extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           child: Image.network(
             value,
-            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
           ),
         ),
       );

@@ -45,7 +45,8 @@ void main() {
       expect(isRoot(r'C:\', s: r'\'), isTrue);
       expect(isRoot('/a'), isFalse);
       expect(isInside('/a/b/c', '/a'), isTrue);
-      expect(isInside('/a', '/a'), isFalse);
+      // Equal counts as inside, so "move a folder into itself" gets refused.
+      expect(isInside('/a', '/a'), isTrue);
       expect(isInside('/other', '/a'), isFalse);
     });
   });

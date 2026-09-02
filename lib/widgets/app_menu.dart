@@ -149,6 +149,7 @@ Future<void> runMenuAction(BuildContext context, String id) async {
       try {
         await tab.controller?.printCurrentPage();
       } catch (_) {
+        if (!context.mounted) return;
         _snack(context, 'Printing is not available for this page');
       }
     case 'block_ads':
@@ -279,7 +280,9 @@ Future<void> showMobileMenu(BuildContext context) {
                       : null,
                   onTap: () {
                     Navigator.of(sheetContext).pop();
-                    Future.microtask(() => runMenuAction(context, e.id));
+                    Future.microtask(() {
+                      if (context.mounted) runMenuAction(context, e.id);
+                    });
                   },
                 ),
           ],
