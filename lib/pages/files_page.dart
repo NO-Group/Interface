@@ -638,10 +638,13 @@ Future<void> openNode(
   await browserOpen(context, node.path);
 }
 
+/// Reading a file is done in a browser tab, so the tab is opened and the
+/// sidebar steps aside to show it.
 Future<void> browserOpen(BuildContext context, String path) async {
   final url = Uri.file(path).toString();
   final browser = context.read<BrowserProvider>();
   browser.newTab(url: url);
+  browser.setSidePanel(SidePanel.none);
   if (context.mounted) Navigator.of(context).maybePop();
 }
 
