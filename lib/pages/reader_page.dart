@@ -366,7 +366,7 @@ class _ArticleBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: fontSize * 0.55),
+              padding: EdgeInsets.only(top: fontSize * 0.55),
               child: Container(
                 width: 5,
                 height: 5,

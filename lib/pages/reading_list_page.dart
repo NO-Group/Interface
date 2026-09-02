@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
 import '../core/urls.dart';
-import '../models.dart';
 import '../state/browser_provider.dart';
 import '../state/profile_provider.dart';
 import '../widgets/favicon.dart';
