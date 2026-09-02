@@ -37,7 +37,7 @@ class Ico extends StatelessWidget {
 
 /// Turns an icon spec (an [Ico] name, any widget, or a font glyph) into a
 /// widget, so both icon styles keep working everywhere.
-Widget uiGlyph(Object spec, {double size = 20, Color? color, double? opacity}) {
+Widget uiGlyph(Object? spec, {double size = 20, Color? color, double? opacity}) {
   if (spec is String) return Ico(spec, size: size, color: color, opacity: opacity);
   if (spec is Widget) return spec;
   if (spec is IconData) {

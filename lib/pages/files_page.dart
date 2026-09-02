@@ -399,14 +399,20 @@ class _SelectionBar extends StatelessWidget {
         children: [
           Ico('check-circle', size: 16, color: p.accent),
           Ui.gap(8),
-          Text('${Ui.count(paths.length)} selected',
-              style: Ui.text(p, size: Ui.sizeSmall, weight: FontWeight.w600)),
+          Flexible(
+            child: Text('${Ui.count(paths.length)} selected',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Ui.text(p,
+                    size: Ui.sizeSmall, weight: FontWeight.w600)),
+          ),
           const Spacer(),
           if (single.isNotEmpty)
-            UiButton(
-              label: 'Rename',
+            UiIconButton(
               icon: 'pencil',
-              compact: true,
+              tooltip: 'Rename',
+              size: 32,
+              iconSize: 16,
               onTap: () async {
                 final name = await askName(context,
                     title: 'Name this ${single.first.isDir ? 'folder' : 'file'}',
@@ -414,49 +420,38 @@ class _SelectionBar extends StatelessWidget {
                 if (name != null) await files.rename(single.first, name);
               },
             ),
-          Ui.gap(6),
-          UiButton(
-            label: 'Copy',
+          UiIconButton(
             icon: 'copy',
-            compact: true,
+            tooltip: 'Copy these',
+            size: 32,
+            iconSize: 16,
             onTap: () => files.take(FileClip.copy, paths),
           ),
-          Ui.gap(6),
-          UiButton(
-            label: 'Move',
+          UiIconButton(
             icon: 'move',
-            compact: true,
+            tooltip: 'Move these to…',
+            size: 32,
+            iconSize: 16,
             onTap: () async {
               final dest = await pickFolder(context, files);
               if (dest != null) await files.moveTo(dest);
             },
           ),
-          Ui.gap(6),
-          UiButton(
-            label: 'Copy to',
-            icon: 'folder',
-            compact: true,
-            onTap: () async {
-              final dest = await pickFolder(context, files);
-              if (dest != null) await files.copyTo(dest);
-            },
-          ),
-          Ui.gap(6),
-          UiButton(
-            label: 'Delete',
+          UiIconButton(
             icon: 'trash',
-            compact: true,
+            tooltip: 'Delete these',
+            size: 32,
+            iconSize: 16,
             onTap: () async {
               final ok = await confirmDelete(context, paths.length);
               if (ok == true) await files.remove(paths);
             },
           ),
-          Ui.gap(4),
           UiIconButton(
             icon: 'close',
             tooltip: 'Stop selecting',
+            size: 32,
             iconSize: 15,
-            size: 30,
             onTap: files.clearSelection,
           ),
         ],

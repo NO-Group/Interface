@@ -418,7 +418,12 @@ class UiSection extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(title, style: Ui.section(p)),
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Ui.section(p),
+                  ),
                 ),
                 ...?actions,
               ],

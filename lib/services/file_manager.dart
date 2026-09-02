@@ -28,6 +28,17 @@ class FileNode {
 
 }
 
+/// What went wrong, in words a person can act on.
+class FileOpException implements Exception {
+  FileOpException(this.message, [this.detail]);
+
+  final String message;
+  final String? detail;
+
+  @override
+  String toString() => detail == null ? message : '$message ($detail)';
+}
+
 // ---------------------------------------------------------------- paths
 // Everything below is pure so it can be unit-tested without a device.
 
