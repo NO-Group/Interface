@@ -11,6 +11,7 @@ import '../core/palette.dart';
 import '../core/urls.dart';
 import '../state/browser_provider.dart';
 import '../state/profile_provider.dart';
+import '../pages/privacy_page.dart';
 import '../state/settings_provider.dart';
 import '../widgets/logo.dart';
 
@@ -42,12 +43,77 @@ class SettingsBody extends StatelessWidget {
             value: settings.grayscaleInMono,
             onChanged: settings.setGrayscaleInMono,
           ),
-        if (desktop)
+        if (desktop) ...[
           SwitchListTile(
             title: const Text('Show bookmarks bar'),
             value: settings.showBookmarksBar,
             onChanged: settings.setShowBookmarksBar,
           ),
+          SwitchListTile(
+            title: const Text('Vertical tabs'),
+            subtitle: const Text('Show tabs in a side rail instead of on top'),
+            value: settings.verticalTabs,
+            onChanged: settings.setVerticalTabs,
+          ),
+        ],
+        ListTile(
+          leading: Icon(Icons.format_size_rounded, color: palette.textDim),
+          title: Text('Interface size',
+              style: TextStyle(color: palette.text, fontSize: 14)),
+          subtitle: Slider(
+            value: settings.fontScale,
+            min: 0.85,
+            max: 1.3,
+            divisions: 9,
+            label: '${(settings.fontScale * 100).round()}%',
+            activeColor: palette.accent,
+            onChanged: settings.setFontScale,
+          ),
+          trailing: Text(
+            '${(settings.fontScale * 100).round()}%',
+            style: TextStyle(color: palette.textDim, fontSize: 12.5),
+          ),
+        ),
+        _Section(title: 'Reading'),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Row(
+            children: [
+              for (final t in ReaderTheme.values)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text(switch (t) {
+                      ReaderTheme.paper => 'Paper',
+                      ReaderTheme.sepia => 'Sepia',
+                      ReaderTheme.night => 'Night',
+                    }),
+                    selected: settings.readerTheme == t,
+                    onSelected: (_) => settings.setReaderTheme(t),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        ListTile(
+          leading:
+              Icon(Icons.text_fields_rounded, color: palette.textDim),
+          title: Text('Reader text size',
+              style: TextStyle(color: palette.text, fontSize: 14)),
+          subtitle: Slider(
+            value: settings.readerFontSize,
+            min: 14,
+            max: 26,
+            divisions: 12,
+            label: '${settings.readerFontSize.round()}',
+            activeColor: palette.accent,
+            onChanged: settings.setReaderFontSize,
+          ),
+          trailing: Text(
+            '${settings.readerFontSize.round()}',
+            style: TextStyle(color: palette.textDim, fontSize: 12.5),
+          ),
+        ),
         _Section(title: 'Search & startup'),
         for (final engine in SearchEngine.all)
           RadioListTile<String>(
@@ -87,6 +153,13 @@ class SettingsBody extends StatelessWidget {
                   .refreshWebViews();
             },
           ),
+        ListTile(
+          leading: Icon(Icons.shield_rounded, color: palette.accent),
+          title: const Text('Privacy dashboard'),
+          subtitle:
+              const Text('Per-site rules, permissions and blocked stats'),
+          onTap: () => _openPrivacy(context),
+        ),
         const Divider(indent: 16, endIndent: 16),
         ListTile(
           leading: Icon(Icons.cleaning_services_outlined,
@@ -99,7 +172,12 @@ class SettingsBody extends StatelessWidget {
         const ListTile(
           leading: LogoMark(size: 34),
           title: Text('Interface Browser'),
-          subtitle: Text('Version 1.0.0 · Flutter + WebView'),
+          subtitle: Text('Version 1.1.0 · Flutter + WebView'),
+        ),
+        ListTile(
+          leading: Icon(Icons.waving_hand_outlined, color: palette.textDim),
+          title: const Text('Replay welcome tour'),
+          onTap: () => settings.setOnboardingSeen(false),
         ),
         ListTile(
           leading: Icon(Icons.description_outlined, color: palette.textDim),
@@ -113,6 +191,16 @@ class SettingsBody extends StatelessWidget {
         const SizedBox(height: 24),
       ],
     );
+  }
+
+  void _openPrivacy(BuildContext context) {
+    final browser = context.read<BrowserProvider>();
+    if (MediaQuery.sizeOf(context).width >= 840) {
+      browser.setSidePanel(SidePanel.privacy);
+    } else {
+      Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => const PrivacyRoute()));
+    }
   }
 
   Future<void> _clearBrowsingData(BuildContext context) async {

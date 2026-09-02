@@ -6,7 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/urls.dart';
 import '../models.dart';
 
-/// Bookmarks, browsing history and the speed dial. JSON in SharedPreferences.
+/// Bookmarks, history, reading list and the speed dial.
+/// JSON in SharedPreferences.
 class ProfileProvider extends ChangeNotifier {
   ProfileProvider({SharedPreferences? prefs}) : _prefs = prefs;
 
@@ -14,7 +15,9 @@ class ProfileProvider extends ChangeNotifier {
 
   final List<Bookmark> bookmarks = [];
   final List<HistoryEntry> history = [];
+  final List<ReadingEntry> readingList = [];
   List<SpeedDialItem> speedDial = [];
+  List<SpeedDialFolder> dialFolders = [];
 
   static const _maxHistory = 600;
 
@@ -116,26 +119,70 @@ class ProfileProvider extends ChangeNotifier {
         .toList();
   }
 
+  // ---- Reading list ----
+
+  bool onReadingList(String url) => readingList.any((r) => r.url == url);
+
+  void addReading({required String url, required String title}) {
+    if (url.isEmpty || onReadingList(url)) return;
+    readingList.insert(
+      0,
+      ReadingEntry(
+        id: 'rl-${DateTime.now().millisecondsSinceEpoch}',
+        url: url,
+        title: title.isEmpty ? url : title,
+        addedAt: DateTime.now().millisecondsSinceEpoch,
+      ),
+    );
+    _saveReading();
+  }
+
+  void removeReading(ReadingEntry e) {
+    readingList.remove(e);
+    _saveReading();
+  }
+
+  void markReadingRead(ReadingEntry e, {bool read = true}) {
+    final i = readingList.indexOf(e);
+    if (i < 0) return;
+    readingList[i] = e.copyWith(read: read);
+    _saveReading();
+  }
+
+  int get unreadReadingCount =>
+      readingList.where((r) => !r.read).length;
+
   // ---- Speed dial ----
 
   bool _dialCustomized = false;
 
-  void addSpeedDial({required String title, required String url}) {
+  List<SpeedDialItem> dialItemsIn(String? folderId) => speedDial
+      .where((s) => (s.folderId ?? '') == (folderId ?? ''))
+      .toList(growable: false);
+
+  void addSpeedDial({required String title, required String url, String? folderId}) {
     if (url.isEmpty) return;
     final item = SpeedDialItem(
       id: 'sd-${DateTime.now().millisecondsSinceEpoch}',
       title: title.isEmpty ? hostOf(url) : title,
       url: url,
+      folderId: folderId,
     );
     speedDial.add(item);
     _dialCustomized = true;
     _saveDial();
   }
 
-  void updateSpeedDial(SpeedDialItem item, {String? title, String? url}) {
+  void updateSpeedDial(SpeedDialItem item,
+      {String? title, String? url, String? folderId, bool clearFolder = false}) {
     final i = speedDial.indexOf(item);
     if (i < 0) return;
-    speedDial[i] = item.copyWith(title: title, url: url);
+    speedDial[i] = SpeedDialItem(
+      id: item.id,
+      title: title ?? item.title,
+      url: url ?? item.url,
+      folderId: clearFolder ? null : (folderId ?? item.folderId),
+    );
     _saveDial();
   }
 
@@ -145,8 +192,56 @@ class ProfileProvider extends ChangeNotifier {
     _saveDial();
   }
 
+  /// Drag-and-drop reorder inside the current folder view.
+  void reorderDial(int oldIndex, int newIndex, String? folderId) {
+    final items = speedDial
+        .asMap()
+        .entries
+        .where((e) => (e.value.folderId ?? '') == (folderId ?? ''))
+        .map((e) => e.key)
+        .toList(growable: false);
+    if (oldIndex < 0 || oldIndex >= items.length) return;
+    if (newIndex > oldIndex) newIndex--;
+    final globalOld = items[oldIndex];
+    if (newIndex < 0 || newIndex >= items.length) return;
+    final globalNew = items[newIndex];
+    final moved = speedDial.removeAt(globalOld);
+    speedDial.insert(globalNew, moved);
+    _dialCustomized = true;
+    _saveDial();
+  }
+
+  SpeedDialFolder addDialFolder(String name) {
+    final f = SpeedDialFolder(
+      id: 'fld-${DateTime.now().millisecondsSinceEpoch}',
+      name: name.isEmpty ? 'Folder' : name,
+    );
+    dialFolders.add(f);
+    _dialCustomized = true;
+    _saveDial();
+    return f;
+  }
+
+  void renameDialFolder(SpeedDialFolder f, String name) {
+    f.name = name;
+    _saveDial();
+  }
+
+  void deleteDialFolder(SpeedDialFolder f) {
+    dialFolders.remove(f);
+    // Folder contents move back to the dial root.
+    speedDial = speedDial
+        .map((s) => s.folderId == f.id
+            ? SpeedDialItem(id: s.id, title: s.title, url: s.url)
+            : s)
+        .toList();
+    _dialCustomized = true;
+    _saveDial();
+  }
+
   void resetSpeedDial() {
     speedDial = List.of(kDefaultSpeedDial);
+    dialFolders = const [];
     _dialCustomized = false;
     _saveDial();
   }
@@ -203,8 +298,17 @@ class ProfileProvider extends ChangeNotifier {
     _dialCustomized = p.getBool('data.dialCustomized') ?? false;
     if (sd != null) {
       try {
-        speedDial = (jsonDecode(sd) as List)
+        final decoded = jsonDecode(sd) as List;
+        speedDial = decoded
             .map((e) => SpeedDialItem.fromJson(e as Map<String, dynamic>))
+            .toList();
+        final folders =
+            p.getStringList('data.dialFolders') ?? const <String>[];
+        dialFolders = folders
+            .map((s) => SpeedDialFolder(
+                  id: s.split('|').first,
+                  name: s.split('|').length > 1 ? s.split('|')[1] : 'Folder',
+                ))
             .toList();
       } catch (e) {
         debugPrint('speeddial decode: $e');
@@ -212,6 +316,20 @@ class ProfileProvider extends ChangeNotifier {
     }
     if (!_dialCustomized && speedDial.isEmpty) {
       speedDial = List.of(kDefaultSpeedDial);
+    }
+
+    final rl = p.getString('data.reading');
+    if (rl != null) {
+      try {
+        readingList
+          ..clear()
+          ..addAll(
+            (jsonDecode(rl) as List)
+                .map((e) => ReadingEntry.fromJson(e as Map<String, dynamic>)),
+          );
+      } catch (e) {
+        debugPrint('reading list decode: $e');
+      }
     }
     notifyListeners();
   }
@@ -241,7 +359,20 @@ class ProfileProvider extends ChangeNotifier {
       'data.speeddial',
       jsonEncode(speedDial.map((s) => s.toJson()).toList()),
     );
+    await p.setStringList(
+      'data.dialFolders',
+      dialFolders.map((f) => '${f.id}|${f.name}').toList(),
+    );
     await p.setBool('data.dialCustomized', _dialCustomized);
+  }
+
+  Future<void> _saveReading() async {
+    notifyListeners();
+    final p = _prefs ??= await SharedPreferences.getInstance();
+    await p.setString(
+      'data.reading',
+      jsonEncode(readingList.map((r) => r.toJson()).toList()),
+    );
   }
 }
 

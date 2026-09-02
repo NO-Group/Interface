@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../core/calc.dart';
 import '../core/pal.dart';
 import '../core/urls.dart';
 import '../services/suggestions.dart';
+import 'site_info_sheet.dart';
 import '../state/browser_provider.dart';
 import '../state/profile_provider.dart';
 import '../state/settings_provider.dart';
@@ -131,7 +133,14 @@ class _OmniboxState extends State<Omnibox> {
           ),
           child: Row(
             children: [
-              _leadingIcon(palette, tab),
+              InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () => showSiteInfoSheet(context),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: _leadingIcon(palette, tab),
+                ),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: TextField(
@@ -255,6 +264,17 @@ class _OmniboxState extends State<Omnibox> {
 
     final items = <_Suggestion>[];
     final seen = <String>{};
+
+    // Omnibox calculator.
+    final calc = Calculator.tryEval(query);
+    if (calc != null) {
+      items.add(_Suggestion(
+        _Kind.search,
+        '${Calculator.pretty(calc)}',
+        '$query = — tap to copy',
+        'calc:${Calculator.pretty(calc)}',
+      ));
+    }
 
     // Direct URL or search intent — always first.
     final parsed = urlFromInput(query);
@@ -380,6 +400,15 @@ class _OmniboxState extends State<Omnibox> {
 
   void _submit(_Suggestion s) {
     _focus.unfocus();
+    if (s.value.startsWith('calc:')) {
+      Clipboard.setData(ClipboardData(text: s.value.substring(5)));
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      messenger?.hideCurrentSnackBar();
+      messenger?.showSnackBar(
+        const SnackBar(content: Text('Result copied')),
+      );
+      return;
+    }
     context.read<BrowserProvider>().navigate(s.value);
   }
 }

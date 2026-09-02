@@ -3,15 +3,20 @@ import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
 import '../core/urls.dart';
+import '../pages/reader_page.dart';
+import '../services/downloader.dart';
 import '../state/browser_provider.dart';
+import '../state/privacy_provider.dart';
 import '../state/profile_provider.dart';
+import '../state/settings_provider.dart';
 import 'app_menu.dart';
 import 'favicon.dart';
 import 'glass.dart';
 import 'omnibox.dart';
+import 'site_info_sheet.dart';
 
 /// Chrome-style desktop navigation row under the tab strip,
-/// with an Opera-style sidebar toggle.
+/// with Opera-style extras: sidebar, split view, privacy shield.
 class DesktopToolbar extends StatelessWidget {
   const DesktopToolbar({super.key});
 
@@ -19,10 +24,16 @@ class DesktopToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     final browser = context.watch<BrowserProvider>();
     final profile = context.watch<ProfileProvider>();
+    final privacy = context.watch<PrivacyProvider>();
+    final settings = context.watch<SettingsProvider>();
+    final downloads = context.watch<DownloadService>();
     final palette = pal(context);
     final tab = browser.current;
 
     final bookmarked = !tab.onSpeedDial && profile.isBookmarked(tab.url);
+    final blocked = tab.onSpeedDial ? 0 : privacy.blockedFor(tab.host);
+    final activeDownloads =
+        downloads.downloads.where((d) => d.isRunning).length;
 
     return GlassBox(
       enabled: palette.chromeTranslucent,
@@ -47,9 +58,7 @@ class DesktopToolbar extends StatelessWidget {
             IconButton(
               tooltip: tab.loading ? 'Stop (Esc)' : 'Reload (Ctrl+R)',
               icon: Icon(
-                tab.loading
-                    ? Icons.close_rounded
-                    : Icons.refresh_rounded,
+                tab.loading ? Icons.close_rounded : Icons.refresh_rounded,
                 size: 19,
               ),
               color: palette.text,
@@ -57,7 +66,7 @@ class DesktopToolbar extends StatelessWidget {
                   tab.loading ? browser.stopLoading : () => browser.reload(),
             ),
             IconButton(
-              tooltip: 'Home',
+              tooltip: 'Home / Speed dial',
               icon: const Icon(Icons.home_outlined, size: 20),
               color: palette.text,
               onPressed: () => browser.goHome(),
@@ -65,8 +74,53 @@ class DesktopToolbar extends StatelessWidget {
             const SizedBox(width: 6),
             Expanded(child: Omnibox()),
             const SizedBox(width: 6),
+            _ToolbarIconButton(
+              tooltip: 'Command palette (Ctrl+K)',
+              icon: Icons.bolt_rounded,
+              color: palette.text,
+              onTap: browser.openPalette,
+            ),
+            _ShieldBadge(
+              blocked: blocked,
+              enabled: privacy.effectiveBlockAds(
+                  tab.siteUrl, settings.blockAds),
+            ),
+            _ToolbarIconButton(
+              tooltip: 'Reader mode',
+              icon: Icons.menu_book_rounded,
+              color: tab.onSpeedDial ? palette.textDim : palette.text,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                    builder: (_) => const ReaderPage()),
+              ),
+            ),
             IconButton(
-              tooltip: bookmarked ? 'Edit bookmark' : 'Bookmark (Ctrl+D)',
+              tooltip: browser.splitActive
+                  ? 'Close split view'
+                  : 'Split view — two tabs side by side',
+              isSelected: browser.splitActive,
+              icon: const Icon(Icons.vertical_split_outlined, size: 19),
+              selectedIcon: Icon(Icons.vertical_split_rounded,
+                  size: 19, color: palette.accent),
+              color: palette.text,
+              onPressed: () => browser.splitActive
+                  ? browser.closeSplit()
+                  : browser.openSplit(),
+            ),
+            if (activeDownloads > 0)
+              Badge.count(
+                count: activeDownloads,
+                backgroundColor: palette.accent,
+                textColor: palette.onAccent,
+                child: _ToolbarIconButton(
+                  tooltip: 'Downloads in progress',
+                  icon: Icons.download_rounded,
+                  color: palette.accent,
+                  onTap: () => browser.setSidePanel(SidePanel.downloads),
+                ),
+              ),
+            IconButton(
+              tooltip: bookmarked ? 'Remove bookmark (Ctrl+D)' : 'Bookmark (Ctrl+D)',
               icon: Icon(
                 bookmarked ? Icons.star_rounded : Icons.star_border_rounded,
                 size: 21,
@@ -83,9 +137,8 @@ class DesktopToolbar extends StatelessWidget {
                       messenger.hideCurrentSnackBar();
                       messenger.showSnackBar(
                         SnackBar(
-                          content: Text(
-                            added ? 'Bookmark added' : 'Bookmark removed',
-                          ),
+                          content:
+                              Text(added ? 'Bookmark added' : 'Bookmark removed'),
                           duration: const Duration(seconds: 2),
                         ),
                       );
@@ -114,6 +167,91 @@ class DesktopToolbar extends StatelessWidget {
             const SizedBox(width: 2),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Small stateless toolbar icon button.
+class _ToolbarIconButton extends StatelessWidget {
+  const _ToolbarIconButton({
+    required this.tooltip,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      waitDuration: const Duration(milliseconds: 600),
+      child: IconButton(
+        icon: Icon(icon, size: 19),
+        color: color,
+        onPressed: onTap,
+      ),
+    );
+  }
+}
+
+/// Privacy shield with live per-site blocked counter.
+class _ShieldBadge extends StatelessWidget {
+  const _ShieldBadge({required this.blocked, required this.enabled});
+
+  final int blocked;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = pal(context);
+    final active = enabled && blocked > 0;
+    return Tooltip(
+      message: blocked > 0
+          ? '$blocked trackers & ads blocked on this site'
+          : 'Site information',
+      waitDuration: const Duration(milliseconds: 600),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          IconButton(
+            icon: Icon(
+              Icons.shield_outlined,
+              size: 20,
+              color: active ? palette.accent : palette.text,
+            ),
+            onPressed: () => showSiteInfoSheet(context),
+          ),
+          if (blocked > 0)
+            Positioned(
+              top: 5,
+              right: 3,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 4, vertical: 1),
+                constraints:
+                    const BoxConstraints(minWidth: 14, minHeight: 13),
+                decoration: BoxDecoration(
+                  color: palette.accent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  blocked > 99 ? '99+' : '$blocked',
+                  style: TextStyle(
+                    color: palette.onAccent,
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -2,9 +2,27 @@ import 'package:flutter/material.dart';
 
 import '../core/palette.dart';
 
-/// The Interface Browser mark: a navy rounded square with a cyan globe.
+/// The Interface Browser mark: the uploaded brand logo, with a painted
+/// navy-and-cyan globe as fallback (e.g. in unit tests without assets).
 class LogoMark extends StatelessWidget {
   const LogoMark({super.key, this.size = 48});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      'assets/brand/app_logo.png',
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => _GlobeTile(size: size),
+    );
+  }
+}
+
+class _GlobeTile extends StatelessWidget {
+  const _GlobeTile({required this.size});
 
   final double size;
 

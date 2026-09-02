@@ -9,8 +9,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/urls.dart';
+import '../models.dart';
 import '../services/blocklist.dart';
 import '../services/web_engine.dart';
+import 'privacy_provider.dart';
 import 'profile_provider.dart';
 import 'settings_provider.dart';
 
@@ -21,11 +23,13 @@ class BrowserTab {
     this.incognito = false,
     String? initialUrl,
     String initialTitle = '',
+    this.groupId,
   })  : _initialUrl = initialUrl,
         title = initialTitle;
 
   final String id;
   final bool incognito;
+  String? groupId;
 
   /// URL to load the first time the web view is created for this tab.
   String? _initialUrl;
@@ -56,6 +60,9 @@ class BrowserTab {
 
   InAppWebViewController? controller;
 
+  /// The URL that per-site rules apply to.
+  String get siteUrl => url.isNotEmpty ? url : (initialUrl ?? '');
+
   String get displayTitle {
     if (onSpeedDial) return incognito ? 'Incognito' : 'New tab';
     if (title.trim().isNotEmpty) return title.trim();
@@ -67,23 +74,44 @@ class BrowserTab {
 }
 
 /// Which page the desktop Opera-style sidebar shows (null = collapsed).
-enum SidePanel { none, bookmarks, history, downloads, settings }
+enum SidePanel { none, bookmarks, history, downloads, settings, reading, privacy }
 
-/// Owns tabs, navigation, find-in-page, fullscreen and session restore.
+/// A pending site permission prompt (camera / mic / location…).
+class PermissionAsk {
+  PermissionAsk({
+    required this.host,
+    required this.labels,
+    required this.completer,
+  });
+
+  final String host;
+  final List<String> labels;
+  final Completer<bool> completer;
+}
+
+/// Owns tabs, groups, split view, navigation, find-in-page, fullscreen,
+/// permission prompts and session restore.
 class BrowserProvider extends ChangeNotifier {
-  BrowserProvider({required this.settings, required this.profile})
-      : super() {
+  BrowserProvider({
+    required this.settings,
+    required this.profile,
+    required this.privacy,
+  }) : super() {
     _newTab(incognito: false, silent: true);
   }
 
   final SettingsProvider settings;
   final ProfileProvider profile;
+  final PrivacyProvider privacy;
 
   final List<BrowserTab> _tabs = [];
+  final List<TabGroup> groups = [];
+  final Set<String> collapsedGroups = {};
   int index = 0;
 
   List<BrowserTab> get tabs => List.unmodifiable(_tabs);
-  BrowserTab get current => _tabs.isEmpty ? _empty : _tabs[index.clamp(0, _tabs.length - 1)];
+  BrowserTab get current =>
+      _tabs.isEmpty ? _empty : _tabs[index.clamp(0, _tabs.length - 1)];
   int get tabCount => _tabs.length;
   bool get inIncognito => current.incognito;
 
@@ -97,7 +125,22 @@ class BrowserProvider extends ChangeNotifier {
   int findMatchCount = 0;
   SidePanel sidePanel = SidePanel.none;
 
-  /// Bumped to ask the omnibox to grab focus (Ctrl+L / Home).
+  /// Split view (Opera-style side-by-side tabs).
+  String? splitTabId;
+  double splitFraction = 0.5;
+  static const minSplitFraction = 0.25;
+  static const maxSplitFraction = 0.75;
+
+  /// Reader-mode overlay.
+  bool readerOpen = false;
+
+  /// Command palette overlay (desktop, Ctrl+K).
+  bool paletteOpen = false;
+
+  /// Pending permission prompt, shown as a top banner.
+  PermissionAsk? pendingPermission;
+
+  /// Bumped to ask the omnibox to grab focus (Ctrl+L).
   int omniboxFocusEpoch = 0;
 
   Timer? _sessionDebounce;
@@ -105,19 +148,29 @@ class BrowserProvider extends ChangeNotifier {
 
   // ---- Tab lifecycle ----
 
-  BrowserTab newTab({bool incognito = false, String? url}) {
-    final t = _newTab(incognito: incognito, url: url);
+  BrowserTab newTab({bool incognito = false, String? url, String? groupId}) {
+    final t = _newTab(
+      incognito: incognito,
+      url: url,
+      groupId: groupId ?? (incognito ? current.groupId : current.groupId),
+    );
     _scheduleSessionSave();
     return t;
   }
 
-  BrowserTab _newTab({required bool incognito, String? url, bool silent = false}) {
+  BrowserTab _newTab({
+    required bool incognito,
+    String? url,
+    bool silent = false,
+    String? groupId,
+  }) {
     final home = url ??
         (incognito || settings.homePage.isEmpty ? null : settings.homePage);
     final t = BrowserTab(
       id: 'tab-${DateTime.now().microsecondsSinceEpoch}-$incognito',
       incognito: incognito,
       initialUrl: home,
+      groupId: groupId,
     );
     t.onSpeedDial = t.initialUrl == null;
     _tabs.add(t);
@@ -133,9 +186,15 @@ class BrowserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void selectTab(BrowserTab tab) {
+    final i = _tabs.indexOf(tab);
+    if (i >= 0) select(i);
+  }
+
   void closeTab(BrowserTab tab) {
     final i = _tabs.indexOf(tab);
     if (i < 0) return;
+    if (splitTabId == tab.id) splitTabId = null;
     _tabs.removeAt(i);
     if (_tabs.isEmpty) {
       _newTab(incognito: false);
@@ -151,8 +210,8 @@ class BrowserProvider extends ChangeNotifier {
   void closeCurrent() => closeTab(current);
 
   void closeOthers(BrowserTab keep) {
-    _tabs.removeWhere((t) => t != keep);
-    index = 0;
+    _tabs.removeWhere((t) => t != keep && t.id != splitTabId);
+    index = _tabs.indexOf(keep);
     _scheduleSessionSave();
     notifyListeners();
   }
@@ -160,8 +219,11 @@ class BrowserProvider extends ChangeNotifier {
   void closeToTheRight(BrowserTab leftmost) {
     final i = _tabs.indexOf(leftmost);
     if (i < 0) return;
-    _tabs.removeRange(i + 1, _tabs.length);
-    if (index > i) index = i;
+    final splitId = splitTabId;
+    _tabs.removeWhere(
+      (t) => _tabs.indexOf(t) > i && t.id != splitId,
+    );
+    if (index >= _tabs.length) index = _tabs.length - 1;
     _scheduleSessionSave();
     notifyListeners();
   }
@@ -188,11 +250,101 @@ class BrowserProvider extends ChangeNotifier {
 
   void selectPrevious() => select((index - 1 + _tabs.length) % _tabs.length);
 
-  void moveCurrentToIndex(int target) {
-    final t = _tabs.removeAt(index);
-    _tabs.insert(target.clamp(0, _tabs.length), t);
-    index = _tabs.indexOf(t);
+  // ---- Tab groups ----
+
+  TabGroup? groupOf(BrowserTab tab) {
+    for (final g in groups) {
+      if (g.id == tab.groupId) return g;
+    }
+    return null;
+  }
+
+  List<BrowserTab> tabsInGroup(String groupId) =>
+      _tabs.where((t) => t.groupId == groupId).toList();
+
+  TabGroup newGroup(String name, int colorIndex) {
+    final g = TabGroup(
+      id: 'grp-${DateTime.now().millisecondsSinceEpoch}',
+      name: name.isEmpty ? 'New group' : name,
+      colorIndex: colorIndex,
+    );
+    groups.add(g);
     _scheduleSessionSave();
+    notifyListeners();
+    return g;
+  }
+
+  void renameGroup(TabGroup g, String name) {
+    g.name = name;
+    _scheduleSessionSave();
+    notifyListeners();
+  }
+
+  void deleteGroup(TabGroup g) {
+    groups.remove(g);
+    collapsedGroups.remove(g.id);
+    for (final t in _tabs) {
+      if (t.groupId == g.id) t.groupId = null;
+    }
+    _scheduleSessionSave();
+    notifyListeners();
+  }
+
+  void setTabGroup(BrowserTab tab, String? groupId) {
+    tab.groupId = groupId;
+    _scheduleSessionSave();
+    notifyListeners();
+  }
+
+  void toggleGroupCollapse(String groupId) {
+    if (!collapsedGroups.remove(groupId)) collapsedGroups.add(groupId);
+    notifyListeners();
+  }
+
+  void ungroupAll() {
+    for (final t in _tabs) {
+      t.groupId = null;
+    }
+    _scheduleSessionSave();
+    notifyListeners();
+  }
+
+  // ---- Split view ----
+
+  bool get splitActive => splitTabId != null;
+
+  BrowserTab? get splitTab {
+    final id = splitTabId;
+    if (id == null) return null;
+    for (final t in _tabs) {
+      if (t.id == id) return t;
+    }
+    return null;
+  }
+
+  /// Moves [tab] into the split pane (or creates one from a fresh tab).
+  void openSplit({BrowserTab? tab}) {
+    BrowserTab? target = tab;
+    if (target == null || target.id == splitTabId) {
+      target = newTab(incognito: current.incognito);
+    }
+    if (target.id == current.id && _tabs.length > 1) {
+      // Keep a sensible tab in the main pane.
+      select(_tabs.indexOf(target) == 0 ? 1 : _tabs.indexOf(target) - 1);
+    }
+    splitTabId = target.id;
+    _scheduleSessionSave();
+    notifyListeners();
+  }
+
+  void closeSplit() {
+    splitTabId = null;
+    _scheduleSessionSave();
+    notifyListeners();
+  }
+
+  void setSplitFraction(double f) {
+    splitFraction = f.clamp(minSplitFraction, maxSplitFraction);
     notifyListeners();
   }
 
@@ -202,10 +354,11 @@ class BrowserProvider extends ChangeNotifier {
   Future<void> navigate(String input) async {
     final value = input.trim();
     if (value.isEmpty) return;
-    final uri = urlFromInput(value);
+    final aliased = _applySearchAliases(value);
+    final uri = urlFromInput(aliased);
 
     if (uri == null) {
-      _load(current, settings.searchEngine.queryUrl(value));
+      _load(current, settings.searchEngine.queryUrl(aliased));
       return;
     }
     if (isExternalScheme(uri)) {
@@ -213,12 +366,32 @@ class BrowserProvider extends ChangeNotifier {
       return;
     }
     if (!isWebScheme(uri)) {
-      // Unknown scheme — let the OS try, otherwise search for the text.
       final ok = await _launchExternal(uri);
-      if (!ok) _load(current, settings.searchEngine.queryUrl(value));
+      if (!ok) _load(current, settings.searchEngine.queryUrl(aliased));
       return;
     }
     _load(current, uri.toString());
+  }
+
+  /// Omnibox search aliases: `g cats`, `w paris`, `yt lofi` …
+  String _applySearchAliases(String value) {
+    final space = value.indexOf(' ');
+    if (space <= 0 || space == value.length - 1) return value;
+    final bang = value.substring(0, space).toLowerCase();
+    final rest = value.substring(space + 1);
+    const map = <String, String>{
+      'g': 'https://www.google.com/search?q=%s',
+      'd': 'https://duckduckgo.com/?q=%s',
+      'b': 'https://www.bing.com/search?q=%s',
+      'w': 'https://en.wikipedia.org/wiki/Special:Search?search=%s',
+      'yt': 'https://www.youtube.com/results?search_query=%s',
+      'gh': 'https://github.com/search?q=%s',
+      'a': 'https://www.amazon.com/s?k=%s',
+      'm': 'https://maps.google.com/maps?q=%s',
+    };
+    final tpl = map[bang];
+    if (tpl == null) return value;
+    return tpl.replaceAll('%s', Uri.encodeComponent(rest));
   }
 
   Future<bool> launchExternal(Uri uri) => _launchExternal(uri);
@@ -238,11 +411,14 @@ class BrowserProvider extends ChangeNotifier {
     final c = tab.controller;
     if (c != null) {
       unawaited(
-        c.loadUrl(urlRequest: URLRequest(url: WebUri(url))).catchError((_) {}),
+        c
+            .loadUrl(urlRequest: URLRequest(url: WebUri(url)))
+            .catchError((_) {}),
       );
     } else {
       tab.initialUrl = url;
     }
+    if (readerOpen) readerOpen = false;
     notifyListeners();
     _scheduleSessionSave();
   }
@@ -302,12 +478,18 @@ class BrowserProvider extends ChangeNotifier {
   }
 
   /// Should the navigation be blocked (ads / pop-ups)?
-  NavigationActionPolicy? filterNavigation(NavigationAction action) {
-    if (!settings.blockAds) return null;
+  /// Returns the blocked host, or null when allowed.
+  String? filterNavigation(NavigationAction action, BrowserTab tab) {
     final uri = action.request.url;
     if (uri == null) return null;
     if (!uri.scheme.startsWith('http')) return null;
-    if (isBlockedHost(uri.host)) return NavigationActionPolicy.CANCEL;
+    if (!privacy.effectiveBlockAds(tab.siteUrl, settings.blockAds)) {
+      return null;
+    }
+    if (isBlockedHost(uri.host)) {
+      privacy.countBlocked(uri.host);
+      return uri.host;
+    }
     return null;
   }
 
@@ -383,10 +565,60 @@ class BrowserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ---- Omnibox focus requests ----
+  // ---- Overlays ----
+
+  void openReader() {
+    if (!current.onSpeedDial) {
+      readerOpen = true;
+      notifyListeners();
+    }
+  }
+
+  void closeReader() {
+    readerOpen = false;
+    notifyListeners();
+  }
+
+  void openPalette() {
+    paletteOpen = true;
+    notifyListeners();
+  }
+
+  void closePalette() {
+    paletteOpen = false;
+    notifyListeners();
+  }
 
   void requestOmniboxFocus() {
     omniboxFocusEpoch++;
+    notifyListeners();
+  }
+
+  // ---- Permission prompts ----
+
+  Future<bool> askPermission(String host, List<String> labels) {
+    final ask = PermissionAsk(
+      host: host,
+      labels: labels,
+      completer: Completer<bool>(),
+    );
+    pendingPermission = ask;
+    notifyListeners();
+    return ask.completer.future;
+  }
+
+  void resolvePermission(bool allow, {bool always = false}) {
+    final ask = pendingPermission;
+    if (ask == null) return;
+    if (always) {
+      final existing = privacy.ruleFor(ask.host);
+      privacy.updateRule(
+        ask.host,
+        (existing ?? SiteRule(host: ask.host)).copyWith(media: allow),
+      );
+    }
+    ask.completer.complete(allow);
+    pendingPermission = null;
     notifyListeners();
   }
 
@@ -398,23 +630,29 @@ class BrowserProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString('session.tabs');
       if (raw == null || raw.isEmpty) return;
-      final list = (const JsonCodec().decode(raw) as List)
+      final data = jsonDecode(raw) as Map<String, dynamic>;
+      final list = (data['tabs'] as List? ?? [])
           .map((e) => e as Map<String, dynamic>)
           .toList(growable: false);
       if (list.isEmpty) return;
       _restoring = true;
       _tabs.clear();
+      groups.clear();
+      for (final g in (data['groups'] as List? ?? [])) {
+        groups.add(TabGroup.fromJson(g as Map<String, dynamic>));
+      }
       for (final e in list) {
         final url = e['url'] as String? ?? '';
         final title = e['title'] as String? ?? '';
+        final groupId = e['group'] as String?;
         final incog = e['incognito'] as bool? ?? false;
         if (url.isEmpty) continue;
         final t = BrowserTab(
-          id:
-              'tab-r${DateTime.now().microsecondsSinceEpoch}-${_tabs.length}',
+          id: 'tab-r${DateTime.now().microsecondsSinceEpoch}-${_tabs.length}',
           incognito: incog,
           initialUrl: url,
           initialTitle: title,
+          groupId: groups.any((g) => g.id == groupId) ? groupId : null,
         );
         t.onSpeedDial = false;
         _tabs.add(t);
@@ -422,8 +660,14 @@ class BrowserProvider extends ChangeNotifier {
       if (_tabs.isEmpty) {
         _newTab(incognito: false);
       } else {
-        final saved = prefs.getInt('session.index') ?? 0;
-        index = saved.clamp(0, _tabs.length - 1);
+        final saved = (data['index'] as int? ?? 0).clamp(0, _tabs.length - 1);
+        index = saved;
+        final splitId = data['split'] as String?;
+        if (splitId != null && _tabs.any((t) => t.id != splitId && t.id == splitId)) {
+          splitTabId = splitId;
+        } else if (splitId != null && _tabs.any((t) => t.id == splitId)) {
+          splitTabId = splitId;
+        }
       }
       _restoring = false;
       notifyListeners();
@@ -448,15 +692,18 @@ class BrowserProvider extends ChangeNotifier {
             (t) => {
               'url': t.url,
               'title': t.title,
+              'group': t.groupId,
               'incognito': false,
             },
           )
           .toList();
-      await prefs.setString('session.tabs', jsonEncode(open));
-      await prefs.setInt(
-        'session.index',
-        open.isEmpty ? 0 : index.clamp(0, open.length - 1),
-      );
+      final data = {
+        'tabs': open,
+        'groups': groups.map((g) => g.toJson()).toList(),
+        'index': open.isEmpty ? 0 : index.clamp(0, open.length - 1),
+        'split': splitTabId,
+      };
+      await prefs.setString('session.tabs', jsonEncode(data));
     } catch (e) {
       debugPrint('saveSession: $e');
     }
@@ -468,13 +715,12 @@ class BrowserProvider extends ChangeNotifier {
       final c = t.controller;
       if (c == null) continue;
       try {
-        // Best effort — dynamic call keeps us safe across plugin versions.
         final dynamic cc = c;
         await cc.setSettings(
           settings: buildSettingsFor(
             tab: t,
-            desktopMode: settings.desktopMode,
-            blockAds: settings.blockAds,
+            settings: settings,
+            privacy: privacy,
           ),
         );
         await c.reload();
@@ -489,26 +735,51 @@ class BrowserProvider extends ChangeNotifier {
   }
 }
 
+/// Friendly labels for permission resource types.
+String permissionLabel(PermissionResourceType t) {
+  switch (t.name) {
+    case 'CAMERA':
+      return 'camera';
+    case 'MICROPHONE':
+      return 'microphone';
+    case 'CAMERA_AND_MICROPHONE':
+      return 'camera and microphone';
+    case 'GEOLOCATION':
+      return 'location';
+    case 'NOTIFICATIONS':
+      return 'notifications';
+    case 'CLIPBOARD_READ':
+      return 'clipboard';
+    case 'MIDI':
+    case 'MIDI_SYSEX':
+      return 'MIDI devices';
+    case 'PROTECTED_MEDIA_ID':
+      return 'protected media';
+    case 'AUTOPLAY':
+      return 'autoplay';
+    default:
+      return 'device access';
+  }
+}
+
 /// Shared web-view settings builder (used by TabWebView + refreshWebViews).
 InAppWebViewSettings buildSettingsFor({
   required BrowserTab tab,
-  required bool desktopMode,
-  required bool blockAds,
+  required SettingsProvider settings,
+  required PrivacyProvider privacy,
 }) {
+  final mobile = defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
+  final siteUrl = tab.siteUrl;
   return InAppWebViewSettings(
-    javaScriptEnabled: true,
+    javaScriptEnabled: privacy.effectiveJavaScript(siteUrl, true),
     useShouldOverrideUrlLoading: true,
     useOnDownloadStart: true,
     transparentBackground: true,
     supportZoom: true,
     mediaPlaybackRequiresUserGesture: false,
-    incognito:
-        (defaultTargetPlatform == TargetPlatform.android ||
-            defaultTargetPlatform == TargetPlatform.iOS) &&
-        tab.incognito,
-    userAgent: desktopMode &&
-            (defaultTargetPlatform == TargetPlatform.android ||
-                defaultTargetPlatform == TargetPlatform.iOS)
+    incognito: mobile && tab.incognito,
+    userAgent: mobile && privacy.effectiveDesktopSite(siteUrl, settings.desktopMode)
         ? kDesktopUserAgent
         : null,
   );

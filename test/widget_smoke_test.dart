@@ -7,6 +7,8 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(home: Scaffold(body: Center(child: LogoMark(size: 48)))),
     );
+    // The asset isn't bundled in unit tests, so wait for the painted fallback.
+    await tester.pumpAndSettle();
     expect(find.byType(LogoMark), findsOneWidget);
     expect(find.descendant(
       of: find.byType(LogoMark),

@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +10,7 @@ import '../core/urls.dart';
 import '../pages/downloads_page.dart';
 import '../services/downloader.dart';
 import '../state/browser_provider.dart';
+import '../state/privacy_provider.dart';
 import '../state/profile_provider.dart';
 import '../state/settings_provider.dart';
 import 'new_tab_page.dart';
@@ -24,6 +28,37 @@ class TabWebView extends StatefulWidget {
 }
 
 class _TabWebViewState extends State<TabWebView> {
+  PullToRefreshController? _ptr;
+
+  @override
+  void initState() {
+    super.initState();
+    if (Platform.isAndroid || Platform.isIOS) {
+      _ptr = PullToRefreshController(
+        settings: PullToRefreshSettings(
+          enabled: true,
+          color: const Color(0xFF22D3EE),
+          backgroundColor: const Color(0xFF0A1424),
+        ),
+        onRefresh: () async {
+          try {
+            await widget.tab.controller?.reload();
+          } catch (_) {}
+          _ptr?.endRefreshing();
+        },
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.tab.controller = null;
+    try {
+      _ptr?.dispose();
+    } catch (_) {}
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     // Watches: rebuild when theme / settings change (e.g. grayscale content).
@@ -33,13 +68,14 @@ class _TabWebViewState extends State<TabWebView> {
 
     Widget view = InAppWebView(
       webViewEnvironment: webViewEnvironment,
+      pullToRefreshController: _ptr,
       initialUrlRequest: URLRequest(
         url: WebUri(tab.initialUrl ?? 'about:blank'),
       ),
       initialSettings: buildSettingsFor(
         tab: tab,
-        desktopMode: settings.desktopMode,
-        blockAds: settings.blockAds,
+        settings: settings,
+        privacy: context.read<PrivacyProvider>(),
       ),
       onWebViewCreated: _onCreated,
       onLoadStart: (c, url) => _onLoadStart(url?.toString() ?? ''),
@@ -77,12 +113,7 @@ class _TabWebViewState extends State<TabWebView> {
           context.read<BrowserProvider>().setFullscreen(true),
       onExitFullscreen: (c) =>
           context.read<BrowserProvider>().setFullscreen(false),
-      onPermissionRequest: (controller, request) async {
-        return PermissionResponse(
-          resources: request.resources,
-          action: PermissionResponseAction.GRANT,
-        );
-      },
+      onPermissionRequest: _onPermissionRequest,
     );
 
     if (settings.grayscaleContent) {
@@ -145,6 +176,8 @@ class _TabWebViewState extends State<TabWebView> {
     final tab = widget.tab;
     final browser = context.read<BrowserProvider>();
     final profile = context.read<ProfileProvider>();
+    final privacy = context.read<PrivacyProvider>();
+    final settings = context.read<SettingsProvider>();
     if (url != null && url.toString().isNotEmpty) {
       tab.url = url.toString();
       if (tab.url != 'about:blank') tab.onSpeedDial = false;
@@ -165,6 +198,14 @@ class _TabWebViewState extends State<TabWebView> {
     if (!tab.incognito && tab.url.startsWith('http')) {
       profile.addHistory(url: tab.url, title: tab.title);
     }
+    // Cosmetic ad-element hiding.
+    if (settings.cosmeticFiltering &&
+        privacy.effectiveBlockAds(tab.url, settings.blockAds) &&
+        tab.url.startsWith('http')) {
+      try {
+        await c.injectCSSCode(source: kCosmeticAdCSS);
+      } catch (_) {}
+    }
     browser.tabChanged(tab);
     browser.syncNavState(tab);
   }
@@ -182,10 +223,40 @@ class _TabWebViewState extends State<TabWebView> {
       return NavigationActionPolicy.CANCEL;
     }
 
-    final blocked = browser.filterNavigation(action);
-    if (blocked != null) return blocked;
+    final blockedHost = browser.filterNavigation(action, widget.tab);
+    if (blockedHost != null) return NavigationActionPolicy.CANCEL;
 
     return NavigationActionPolicy.ALLOW;
+  }
+
+  Future<PermissionResponse?> _onPermissionRequest(
+    InAppWebViewController controller,
+    PermissionRequest request,
+  ) async {
+    final browser = context.read<BrowserProvider>();
+    final privacy = context.read<PrivacyProvider>();
+    final host = request.origin.host;
+
+    // Site rule already answers?
+    final preset = privacy.effectiveMedia('https://$host/');
+    if (preset != null) {
+      return PermissionResponse(
+        resources: request.resources,
+        action: preset
+            ? PermissionResponseAction.GRANT
+            : PermissionResponseAction.DENY,
+      );
+    }
+
+    final labels =
+        request.resources.map(permissionLabel).toSet().toList();
+    final allowed = await browser.askPermission(host, labels);
+    return PermissionResponse(
+      resources: request.resources,
+      action: allowed
+          ? PermissionResponseAction.GRANT
+          : PermissionResponseAction.DENY,
+    );
   }
 
   void _onReceivedError(
@@ -223,13 +294,23 @@ class _TabWebViewState extends State<TabWebView> {
       ),
     );
   }
-
-  @override
-  void dispose() {
-    widget.tab.controller = null;
-    super.dispose();
-  }
 }
+
+/// Lightweight cosmetic filters — hide the most common ad slots after load.
+const kCosmeticAdCSS = '''
+[id*="google_ads"], [id*="googleAds"], [id*="div-gpt-ad"],
+[id*="taboola"], [id*="outbrain"], [class*="taboola"],
+[class*="OUTBRAIN"], [class*="ad-slot"], [class*="ad-slot__"],
+[class*="adsbygoogle"], [class*="advertisement"],
+[class*="dfp-ad"], [class*="pub_300x250"], [class*="text-ad"],
+[class*="ad-container"], [class*="ad-wrapper--ad"],
+iframe[src*="doubleclick.net"], iframe[src*="googlesyndication.com"],
+iframe[src*="amazon-adsystem.com"], iframe[src*="adnxs.com"] {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+}
+''';
 
 /// Friendly Chrome-style "can't reach this page" overlay.
 class _ErrorPage extends StatelessWidget {

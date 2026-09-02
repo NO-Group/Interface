@@ -7,6 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/palette.dart';
 import '../core/urls.dart';
 
+/// Reader color schemes.
+enum ReaderTheme { paper, sepia, night }
+
 /// User settings + theme resolution. Persisted to SharedPreferences.
 class SettingsProvider extends ChangeNotifier {
   SettingsProvider({SharedPreferences? prefs}) : _prefs = prefs;
@@ -21,10 +24,24 @@ class SettingsProvider extends ChangeNotifier {
   String homePage = '';
 
   bool blockAds = true;
+  bool cosmeticFiltering = true;
   bool desktopMode = false;
   bool showBookmarksBar = true;
   bool restoreSession = true;
   bool grayscaleInMono = true;
+
+  /// Desktop: tabs in a vertical rail instead of the top strip.
+  bool verticalTabs = false;
+
+  /// UI text scale multiplier (0.85 – 1.30).
+  double fontScale = 1.0;
+
+  /// First-run onboarding finished.
+  bool onboardingSeen = false;
+
+  /// Reader-mode preferences.
+  double readerFontSize = 18;
+  ReaderTheme readerTheme = ReaderTheme.paper;
 
   /// Absolute path of the chosen wallpaper (custom theme).
   String? customBgPath;
@@ -46,10 +63,19 @@ class SettingsProvider extends ChangeNotifier {
     searchEngineId = p.getString('ui.engine') ?? SearchEngine.google.id;
     homePage = p.getString('ui.home') ?? '';
     blockAds = p.getBool('ui.blockAds') ?? true;
+    cosmeticFiltering = p.getBool('ui.cosmetic') ?? true;
     desktopMode = p.getBool('ui.desktopMode') ?? false;
     showBookmarksBar = p.getBool('ui.bookmarksBar') ?? true;
     restoreSession = p.getBool('ui.restoreSession') ?? true;
     grayscaleInMono = p.getBool('ui.grayscaleMono') ?? true;
+    verticalTabs = p.getBool('ui.verticalTabs') ?? false;
+    fontScale = p.getDouble('ui.fontScale') ?? 1.0;
+    onboardingSeen = p.getBool('ui.onboarded') ?? false;
+    readerFontSize = p.getDouble('ui.readerFont') ?? 18;
+    final rt = p.getString('ui.readerTheme');
+    readerTheme = ReaderTheme.values
+        .where((t) => t.name == rt)
+        .firstOrNull ?? ReaderTheme.paper;
     customBgPath = p.getString('ui.customBg');
     loaded = true;
     notifyListeners();
@@ -61,6 +87,8 @@ class SettingsProvider extends ChangeNotifier {
       await p.remove(key);
     } else if (value is bool) {
       await p.setBool(key, value);
+    } else if (value is double) {
+      await p.setDouble(key, value);
     } else if (value is String) {
       await p.setString(key, value);
     }
@@ -87,6 +115,11 @@ class SettingsProvider extends ChangeNotifier {
     _set('ui.blockAds', v);
   }
 
+  void setCosmeticFiltering(bool v) {
+    cosmeticFiltering = v;
+    _set('ui.cosmetic', v);
+  }
+
   void setDesktopMode(bool v) {
     desktopMode = v;
     _set('ui.desktopMode', v);
@@ -105,6 +138,31 @@ class SettingsProvider extends ChangeNotifier {
   void setGrayscaleInMono(bool v) {
     grayscaleInMono = v;
     _set('ui.grayscaleMono', v);
+  }
+
+  void setVerticalTabs(bool v) {
+    verticalTabs = v;
+    _set('ui.verticalTabs', v);
+  }
+
+  void setFontScale(double v) {
+    fontScale = v.clamp(0.85, 1.3);
+    _set('ui.fontScale', fontScale);
+  }
+
+  void setOnboardingSeen([bool v = true]) {
+    onboardingSeen = v;
+    _set('ui.onboarded', v);
+  }
+
+  void setReaderFontSize(double v) {
+    readerFontSize = v.clamp(14.0, 26.0);
+    _set('ui.readerFont', readerFontSize);
+  }
+
+  void setReaderTheme(ReaderTheme t) {
+    readerTheme = t;
+    _set('ui.readerTheme', t.name);
   }
 
   /// Copies the picked picture into the app-support dir so it survives

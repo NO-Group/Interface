@@ -7,6 +7,9 @@ import '../core/pal.dart';
 import '../pages/bookmarks_page.dart';
 import '../pages/downloads_page.dart';
 import '../pages/history_page.dart';
+import '../pages/privacy_page.dart';
+import '../pages/reader_page.dart';
+import '../pages/reading_list_page.dart';
 import '../pages/settings_page.dart';
 import '../state/browser_provider.dart';
 import '../state/profile_provider.dart';
@@ -27,28 +30,38 @@ List<_Entry> _entriesFor(BuildContext context) {
   final settings = context.read<SettingsProvider>();
   final profile = context.read<ProfileProvider>();
   final tab = browser.current;
-  final desktop = MediaQuery.sizeOf(context).width >= 840;
+  final wide = MediaQuery.sizeOf(context).width >= 840;
   final onDial = tab.onSpeedDial;
 
   final dialAdded = !onDial && profile.isOnSpeedDial(tab.url);
   final bookmarked = !onDial && profile.isBookmarked(tab.url);
+  final onReadingList = !onDial && profile.onReadingList(tab.url);
 
   return [
     _Entry('new_tab', Icons.add_rounded, 'New tab'),
-    _Entry(
-        'new_incognito', Icons.shield_outlined, 'New incognito tab'),
-    const _Entry('div1', Icons.horizontal_rule, '', ),
+    _Entry('new_incognito', Icons.shield_outlined, 'New incognito tab'),
+    const _Entry('div1', Icons.horizontal_rule, ''),
     _Entry('bookmark', Icons.star_rounded,
         bookmarked ? 'Remove bookmark' : 'Bookmark this page'),
     _Entry('speed_dial', Icons.grid_view_rounded,
         dialAdded ? 'Remove from speed dial' : 'Add to speed dial'),
+    _Entry(
+        'reading_list',
+        Icons.auto_stories_outlined,
+        onReadingList
+            ? 'Saved — open reading list'
+            : 'Read later'),
+    if (!onDial) const _Entry('reader', Icons.menu_book_rounded, 'Reader mode'),
     const _Entry('div2', Icons.horizontal_rule, ''),
     const _Entry('bookmarks', Icons.bookmarks_outlined, 'Bookmarks'),
     const _Entry('history', Icons.history_rounded, 'History'),
     const _Entry('downloads', Icons.download_rounded, 'Downloads'),
+    const _Entry('privacy', Icons.shield_rounded, 'Privacy dashboard'),
     const _Entry('div3', Icons.horizontal_rule, ''),
     const _Entry('find', Icons.find_in_page_rounded, 'Find in page'),
-    if (desktop) ...[
+    if (wide) ...[
+      const _Entry('split', Icons.vertical_split_outlined, 'Split view'),
+      const _Entry('palette', Icons.bolt_rounded, 'Command palette  (Ctrl+K)'),
       const _Entry('print', Icons.print_rounded, 'Print page'),
     ],
     _Entry('block_ads', Icons.block_rounded, 'Block ads & pop-ups',
@@ -56,31 +69,31 @@ List<_Entry> _entriesFor(BuildContext context) {
     if (!Platform.isWindows)
       _Entry('desktop_site', Icons.desktop_windows_rounded, 'Desktop site',
           checkable: settings.desktopMode),
-    if (desktop)
-      _Entry('bookmarks_bar', Icons.bookmark_border_rounded,
-          'Bookmarks bar',
+    if (wide)
+      _Entry('bookmarks_bar', Icons.bookmark_border_rounded, 'Bookmarks bar',
           checkable: settings.showBookmarksBar),
+    if (wide)
+      _Entry('vertical_tabs', Icons.view_agenda_outlined, 'Vertical tabs',
+          checkable: settings.verticalTabs),
     const _Entry('div4', Icons.horizontal_rule, ''),
     const _Entry('settings', Icons.settings_outlined, 'Settings'),
     const _Entry('about', Icons.info_outline_rounded, 'About'),
   ];
 }
 
-Future<void> _run(BuildContext context, String id) async {
+Future<void> runMenuAction(BuildContext context, String id) async {
   final browser = context.read<BrowserProvider>();
   final settings = context.read<SettingsProvider>();
   final profile = context.read<ProfileProvider>();
   final tab = browser.current;
-  final desktop = MediaQuery.sizeOf(context).width >= 840;
+  final wide = MediaQuery.sizeOf(context).width >= 840;
   final navigator = Navigator.of(context);
 
   void openPanelOrRoute(Widget route, SidePanel panel) {
-    if (desktop) {
+    if (wide) {
       browser.setSidePanel(panel);
     } else {
-      navigator.push(
-        MaterialPageRoute<void>(builder: (_) => route),
-      );
+      navigator.push(MaterialPageRoute<void>(builder: (_) => route));
     }
   }
 
@@ -101,14 +114,31 @@ Future<void> _run(BuildContext context, String id) async {
         context,
         added ? 'Added to speed dial' : 'Removed from speed dial',
       );
+    case 'reading_list':
+      if (profile.onReadingList(tab.url)) {
+        openPanelOrRoute(const ReadingRoute(), SidePanel.reading);
+      } else {
+        profile.addReading(url: tab.url, title: tab.title);
+        _snack(context, 'Saved to reading list');
+      }
+    case 'reader':
+      navigator.push(
+        MaterialPageRoute<void>(builder: (_) => const ReaderPage()),
+      );
     case 'bookmarks':
       openPanelOrRoute(const BookmarksRoute(), SidePanel.bookmarks);
     case 'history':
       openPanelOrRoute(const HistoryRoute(), SidePanel.history);
     case 'downloads':
       openPanelOrRoute(const DownloadsRoute(), SidePanel.downloads);
+    case 'privacy':
+      openPanelOrRoute(const PrivacyRoute(), SidePanel.privacy);
     case 'find':
       browser.openFind();
+    case 'split':
+      browser.splitActive ? browser.closeSplit() : browser.openSplit();
+    case 'palette':
+      browser.openPalette();
     case 'print':
       try {
         await tab.controller?.printCurrentPage();
@@ -122,14 +152,17 @@ Future<void> _run(BuildContext context, String id) async {
       await browser.refreshWebViews();
     case 'bookmarks_bar':
       settings.setShowBookmarksBar(!settings.showBookmarksBar);
+    case 'vertical_tabs':
+      settings.setVerticalTabs(!settings.verticalTabs);
     case 'settings':
       openPanelOrRoute(const SettingsRoute(), SidePanel.settings);
     case 'about':
       showAboutDialog(
         context: context,
         applicationName: 'Interface Browser',
-        applicationVersion: '1.0.0',
-        applicationLegalese: 'A fast, themeable browser for phones & laptops.',
+        applicationVersion: '1.1.0',
+        applicationLegalese:
+            'A fast, themeable browser for phones & laptops.',
         applicationIcon: const LogoMark(size: 44),
       );
   }
@@ -188,7 +221,7 @@ class AppMenuButton extends StatelessWidget {
               ),
             ),
       ],
-      onSelected: (id) => _run(context, id),
+      onSelected: (id) => runMenuAction(context, id),
     );
   }
 }
@@ -229,9 +262,7 @@ Future<void> showMobileMenu(BuildContext context) {
                       : null,
                   onTap: () {
                     Navigator.of(sheetContext).pop();
-                    // Run after the sheet is dismissed so route pushes and
-                    // snacks attach to the browser scaffold.
-                    Future.microtask(() => _run(context, e.id));
+                    Future.microtask(() => runMenuAction(context, e.id));
                   },
                 ),
           ],

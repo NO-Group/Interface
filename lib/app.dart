@@ -22,6 +22,12 @@ class InterfaceApp extends StatelessWidget {
       title: 'Interface Browser',
       debugShowCheckedModeBanner: false,
       theme: buildMaterialTheme(palette),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(
+          textScaler: TextScaler.linear(settings.fontScale),
+        ),
+        child: child ?? const SizedBox.shrink(),
+      ),
       home: const BrowserPage(),
     );
   }

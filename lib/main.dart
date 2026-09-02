@@ -6,6 +6,7 @@ import 'app.dart';
 import 'services/downloader.dart';
 import 'services/web_engine.dart';
 import 'state/browser_provider.dart';
+import 'state/privacy_provider.dart';
 import 'state/profile_provider.dart';
 import 'state/settings_provider.dart';
 
@@ -18,10 +19,16 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final settings = SettingsProvider(prefs: prefs);
   final profile = ProfileProvider(prefs: prefs);
+  final privacy = PrivacyProvider(prefs: prefs);
   await settings.load();
   await profile.load();
+  await privacy.load();
 
-  final browser = BrowserProvider(settings: settings, profile: profile);
+  final browser = BrowserProvider(
+    settings: settings,
+    profile: profile,
+    privacy: privacy,
+  );
   await browser.restoreSession();
 
   runApp(
@@ -29,6 +36,7 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider.value(value: settings),
         ChangeNotifierProvider.value(value: profile),
+        ChangeNotifierProvider.value(value: privacy),
         ChangeNotifierProvider.value(value: browser),
         ChangeNotifierProvider.value(value: DownloadService()),
       ],

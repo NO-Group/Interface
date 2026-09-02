@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'package:interface_browser/core/calc.dart';
 import 'package:interface_browser/core/palette.dart';
 import 'package:interface_browser/models.dart';
 import 'package:interface_browser/services/blocklist.dart';
@@ -113,6 +115,30 @@ void main() {
         ..received = 1024 * 1024
         ..status = DownloadStatus.done;
       expect(d.statusLabel, contains('MB'));
+    });
+  });
+
+  group('Calculator', () {
+    test('evaluates basic arithmetic', () {
+      expect(Calculator.tryEval('2+2'), 4);
+      expect(Calculator.tryEval('10/4'), 2.5);
+      expect(Calculator.tryEval('2*(3+4)'), 14);
+      expect(Calculator.tryEval('2^10'), 1024);
+      expect(Calculator.tryEval('10 % 3'), 1);
+    });
+
+    test('accepts pretty symbols and whitespace', () {
+      expect(Calculator.tryEval('3 × 4'), 12);
+      expect(Calculator.tryEval('8 ÷ 2'), 4);
+      expect(Calculator.tryEval(' 1 + 1 '), 2);
+    });
+
+    test('rejects non-math input', () {
+      expect(Calculator.tryEval('hello'), isNull);
+      expect(Calculator.tryEval('example.com'), isNull);
+      expect(Calculator.tryEval('2+'), isNull);
+      expect(Calculator.tryEval(''), isNull);
+      expect(Calculator.tryEval('(1+2'), isNull);
     });
   });
 }
