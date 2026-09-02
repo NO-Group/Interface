@@ -2,6 +2,12 @@
 cmake_minimum_required(VERSION 3.14)
 project(interface_browser LANGUAGES CXX)
 
+# C++/WinRT glue (used by the webview plugins) still includes
+# <experimental/coroutine>; recent MSVC toolchains make that a hard error
+# (STL1011) unless explicitly silenced. Directory-scope so it also applies
+# to plugin subprojects added below.
+add_compile_definitions(_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
+
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
 set(BINARY_NAME "interface_browser")
