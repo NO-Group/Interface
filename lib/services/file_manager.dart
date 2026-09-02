@@ -48,7 +48,8 @@ String normalise(String path, {String s = '/'}) {
   if (path.isEmpty) return path;
   var p = path.replaceAll('\\', s);
   final isRootish = RegExp(r'^[A-Za-z]:$').hasMatch(p) || p == s;
-  final drivePrefix = RegExp(r'^[A-Za-z]:' + s).hasMatch(p) ? p.substring(0, 2) : '';
+  final drivePrefix =
+      RegExp(r'^[A-Za-z]:' + RegExp.escape(s)).hasMatch(p) ? p.substring(0, 2) : '';
   if (drivePrefix.isNotEmpty) p = p.substring(2);
   final absolute = p.startsWith(s);
   final out = <String>[];
