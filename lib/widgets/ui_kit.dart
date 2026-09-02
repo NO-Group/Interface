@@ -410,7 +410,7 @@ class UiSection extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            height: 42,
+            constraints: const BoxConstraints(minHeight: 42),
             padding: const EdgeInsets.symmetric(horizontal: Ui.padLg),
             decoration: BoxDecoration(
               border: Border(bottom: BorderSide(color: p.hairlineSoft)),

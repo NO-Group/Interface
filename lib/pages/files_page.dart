@@ -62,7 +62,7 @@ class _FilesBarState extends State<_FilesBar> {
     final p = pal(context);
     final files = widget.files;
     return Container(
-      height: 46,
+      constraints: const BoxConstraints(minHeight: 46),
       padding: const EdgeInsets.symmetric(horizontal: 6),
       decoration: BoxDecoration(
         color: p.chromeFill,
@@ -332,7 +332,7 @@ class _PlacesBar extends StatelessWidget {
     ];
     final places = [...pinned, ...files.places];
     return Container(
-      height: 38,
+      constraints: const BoxConstraints(minHeight: 38),
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: p.hairline))),
       child: Row(
@@ -389,7 +389,7 @@ class _SelectionBar extends StatelessWidget {
         ? files.nodes.where((n) => n.path == paths.first).toList()
         : const <FileNode>[];
     return Container(
-      height: 44,
+      constraints: const BoxConstraints(minHeight: 44),
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         color: p.accentSoft,

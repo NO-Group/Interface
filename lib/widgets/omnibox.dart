@@ -518,7 +518,8 @@ class _PanelCard extends StatelessWidget {
             child: AnimatedContainer(
               duration: Ui.quick,
               curve: Ui.curve,
-              height: 44,
+              // Grows instead of clipping when text size is turned up.
+              constraints: const BoxConstraints(minHeight: 44),
               margin: const EdgeInsets.symmetric(horizontal: 5),
               padding: const EdgeInsets.symmetric(horizontal: 9),
               decoration: BoxDecoration(

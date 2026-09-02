@@ -84,7 +84,7 @@ class _FindBarState extends State<FindBar> {
 
     return Container(
       width: widget.compact ? double.infinity : 460,
-      height: 46,
+      constraints: const BoxConstraints(minHeight: 46),
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: Ui.floating(palette, radius: Ui.rCard),
       child: Row(
