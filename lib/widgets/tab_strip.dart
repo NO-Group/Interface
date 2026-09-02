@@ -2,67 +2,64 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../models.dart';
 import '../state/browser_provider.dart';
 import 'favicon.dart';
-import 'glass.dart';
+import 'ui_kit.dart';
 
-/// Chrome-style desktop tab strip: favicon tabs, tab groups, close buttons,
-/// middle-click close, right-click context menu.
+/// Tabs live inside the one-row bar as compact pills: icon, title, close.
+/// Selected = lifted surface with a 2px accent underline, groups = a colour
+/// dot you can click to collapse the rest of the group.
 class TabStrip extends StatelessWidget {
   const TabStrip({super.key});
 
   @override
   Widget build(BuildContext context) {
     final browser = context.watch<BrowserProvider>();
-    final palette = pal(context);
 
-    final visible = <_StripEntry>[
+    final visible = <BrowserTab>[
       for (final tab in browser.tabs)
         if (!browser.collapsedGroups.contains(tab.groupId ?? '') ||
             tab.id == browser.current.id ||
             tab.id == browser.splitTabId)
-          _StripEntry(tab),
+          tab,
     ];
 
-    return GlassBox(
-      enabled: palette.chromeTranslucent,
-      color: palette.chromeFill,
-      child: SizedBox(
-        height: 38,
-        child: Row(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    for (final entry in visible)
-                      _ChromeTab(
-                        key: ValueKey(entry.tab.id),
-                        tab: entry.tab,
-                        group: browser.groupOf(entry.tab),
-                        selected: entry.tab.id == browser.current.id,
-                        isSplit: entry.tab.id == browser.splitTabId,
-                        onSelect: () => browser.selectTab(entry.tab),
-                        onClose: () => browser.closeTab(entry.tab),
-                        onSecondaryTap: (offset) =>
-                            _showMenu(context, entry.tab, offset),
-                      ),
-                  ],
-                ),
-              ),
+    return Row(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            reverse: false,
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: Row(
+              children: [
+                for (final tab in visible)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: _TabPill(
+                      key: ValueKey(tab.id),
+                      tab: tab,
+                      group: browser.groupOf(tab),
+                      selected: tab.id == browser.current.id,
+                      isSplit: tab.id == browser.splitTabId,
+                      onSelect: () => browser.selectTab(tab),
+                      onClose: () => browser.closeTab(tab),
+                      onMenu: (offset) => _showMenu(context, tab, offset),
+                    ),
+                  ),
+              ],
             ),
-            IconButton(
-              visualDensity: VisualDensity.compact,
-              tooltip: 'New tab (Ctrl+T)',
-              icon: Icon(Icons.add_rounded, size: 20, color: palette.textDim),
-              onPressed: () => browser.newTab(),
-            ),
-            const SizedBox(width: 4),
-          ],
+          ),
         ),
-      ),
+        Ui.gap(2),
+        UiIconButton(
+          icon: Icons.add_rounded,
+          tooltip: 'New tab (Ctrl+T)',
+          onTap: () => browser.newTab(),
+        ),
+      ],
     );
   }
 
@@ -84,43 +81,65 @@ class TabStrip extends StatelessWidget {
       ),
       items: [
         const PopupMenuItem(
-            value: 'new',
-            height: 40,
-            child: _Row(icon: Icons.add_rounded, label: 'New tab to the right')),
+          value: 'new',
+          height: Ui.menuRowHeight,
+          child: _MenuRow(icon: Icons.add_rounded, label: 'New tab to the right'),
+        ),
         const PopupMenuItem(
-            value: 'duplicate',
-            height: 40,
-            child: _Row(icon: Icons.copy_rounded, label: 'Duplicate')),
+          value: 'duplicate',
+          height: Ui.menuRowHeight,
+          child: _MenuRow(icon: Icons.copy_rounded, label: 'Duplicate'),
+        ),
         const PopupMenuItem(
-            value: 'split',
-            height: 40,
-            child: _Row(
-                icon: Icons.vertical_split_outlined,
-                label: 'Open in split view')),
+          value: 'split',
+          height: Ui.menuRowHeight,
+          child: _MenuRow(
+            icon: Icons.vertical_split_outlined,
+            label: 'Open in split view',
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'pin',
+          height: Ui.menuRowHeight,
+          child: _MenuRow(icon: Icons.push_pin_rounded, label: 'Keep this tab'),
+        ),
         const PopupMenuDivider(),
-        const PopupMenuItem(
-            value: 'group',
-            height: 40,
-            child: _Row(icon: Icons.folder_outlined, label: 'Add to group…')),
+        PopupMenuItem(
+          value: 'group',
+          height: Ui.menuRowHeight,
+          child: const _MenuRow(
+            icon: Icons.folder_rounded,
+            label: 'Add to group…',
+          ),
+        ),
         if (tab.groupId != null)
           const PopupMenuItem(
-              value: 'ungroup',
-              height: 40,
-              child: _Row(icon: Icons.folder_off_outlined, label: 'Remove from group')),
+            value: 'ungroup',
+            height: Ui.menuRowHeight,
+            child: _MenuRow(
+              icon: Icons.folder_off_rounded,
+              label: 'Remove from group',
+            ),
+          ),
         const PopupMenuDivider(),
         const PopupMenuItem(
-            value: 'close',
-            height: 40,
-            child: _Row(icon: Icons.close_rounded, label: 'Close tab')),
+          value: 'close',
+          height: Ui.menuRowHeight,
+          child: _MenuRow(icon: Icons.close_rounded, label: 'Close tab'),
+        ),
         const PopupMenuItem(
-            value: 'others',
-            height: 40,
-            child: _Row(icon: Icons.tab_rounded, label: 'Close other tabs')),
+          value: 'others',
+          height: Ui.menuRowHeight,
+          child: _MenuRow(icon: Icons.tab_rounded, label: 'Close other tabs'),
+        ),
         const PopupMenuItem(
-            value: 'right',
-            height: 40,
-            child: _Row(
-                icon: Icons.keyboard_tab_rounded, label: 'Close tabs to the right')),
+          value: 'right',
+          height: Ui.menuRowHeight,
+          child: _MenuRow(
+            icon: Icons.keyboard_tab_rounded,
+            label: 'Close tabs to the right',
+          ),
+        ),
       ],
     );
     if (!context.mounted) return;
@@ -156,8 +175,15 @@ class TabStrip extends StatelessWidget {
       context: context,
       builder: (d) => StatefulBuilder(
         builder: (d2, setD) => SimpleDialog(
-          title: const Text('Add tab to group'),
           backgroundColor: palette.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(Ui.rSheet),
+            side: BorderSide(color: palette.border),
+          ),
+          title: Text(
+            'Add tab to a group',
+            style: Ui.text(palette, size: Ui.sizeTitle, weight: FontWeight.w700),
+          ),
           children: [
             for (final g in browser.groups)
               SimpleDialogOption(
@@ -168,8 +194,8 @@ class TabStrip extends StatelessWidget {
                 child: Row(
                   children: [
                     Container(
-                      width: 12,
-                      height: 12,
+                      width: 11,
+                      height: 11,
                       decoration: BoxDecoration(
                         color: Color(g.colorValue),
                         shape: BoxShape.circle,
@@ -178,36 +204,42 @@ class TabStrip extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        '${g.name} (${browser.tabsInGroup(g.id).length})',
-                        style: TextStyle(color: palette.text),
+                        '${g.name}  (${browser.tabsInGroup(g.id).length})',
+                        style: Ui.text(palette),
                       ),
                     ),
                     if (tab.groupId == g.id)
-                      Icon(Icons.check_rounded, size: 16, color: palette.accent),
+                      Icon(Icons.check_rounded,
+                          size: 16, color: palette.accent),
                   ],
                 ),
               ),
             if (browser.groups.isNotEmpty) const Divider(height: 1),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: name,
-                      decoration: const InputDecoration(
+                      style: Ui.text(palette),
+                      decoration: InputDecoration(
                         isDense: true,
+                        isCollapsed: false,
                         hintText: 'New group name',
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
                       ),
                     ),
                   ),
                   const SizedBox(width: 10),
-                  IconButton.filled(
-                    icon: const Icon(Icons.add_rounded, size: 19),
-                    onPressed: () {
+                  UiButton(
+                    label: 'Create',
+                    filled: true,
+                    onTap: () {
                       final g = browser.newGroup(
                         name.text.trim().isEmpty ? 'Group' : name.text.trim(),
-        browser.groups.length % TabGroup.colors.length,
+                        browser.groups.length % TabGroup.colors.length,
                       );
                       browser.setTabGroup(tab, g.id);
                       Navigator.of(d2).pop();
@@ -224,11 +256,10 @@ class TabStrip extends StatelessWidget {
                 },
                 child: Row(
                   children: [
-                    Icon(Icons.folder_off_outlined,
-                        size: 17, color: palette.textDim),
+                    Icon(Icons.folder_off_rounded,
+                        size: 16, color: palette.textDim),
                     const SizedBox(width: 10),
-                    Text('No group',
-                        style: TextStyle(color: palette.textDim)),
+                    Text('No group', style: Ui.text(palette, color: palette.textDim)),
                   ],
                 ),
               ),
@@ -240,13 +271,51 @@ class TabStrip extends StatelessWidget {
   }
 }
 
-class _StripEntry {
-  const _StripEntry(this.tab);
-  final BrowserTab tab;
+/// Narrow-bar fallback: one pill that says how many tabs are open and opens
+/// the grid switcher.
+class TabCountButton extends StatelessWidget {
+  const TabCountButton({
+    super.key,
+    required this.count,
+    required this.onTap,
+  });
+
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = pal(context);
+    return Tooltip(
+      message: 'All tabs',
+      child: UiHoverable(
+        onTap: onTap,
+        builder: (context, hovering, pressed) => AnimatedContainer(
+          duration: Ui.quick,
+          curve: Ui.curve,
+          height: Ui.tabHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: hovering || pressed ? p.hoverFill : Colors.transparent,
+            borderRadius: BorderRadius.circular(Ui.rField),
+            border: Border.all(color: p.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.grid_view_rounded, size: 15, color: p.textDim),
+              Ui.gap(7),
+              Text('$count', style: Ui.text(p, weight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-class _Row extends StatelessWidget {
-  const _Row({required this.icon, required this.label});
+class _MenuRow extends StatelessWidget {
+  const _MenuRow({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
@@ -256,16 +325,16 @@ class _Row extends StatelessWidget {
     final palette = pal(context);
     return Row(
       children: [
-        Icon(icon, size: 18, color: palette.textDim),
-        const SizedBox(width: 10),
-        Text(label, style: TextStyle(color: palette.text)),
+        Icon(icon, size: 17, color: palette.textDim),
+        const SizedBox(width: 11),
+        Text(label, style: Ui.text(palette)),
       ],
     );
   }
 }
 
-class _ChromeTab extends StatefulWidget {
-  const _ChromeTab({
+class _TabPill extends StatelessWidget {
+  const _TabPill({
     super.key,
     required this.tab,
     required this.group,
@@ -273,7 +342,7 @@ class _ChromeTab extends StatefulWidget {
     required this.isSplit,
     required this.onSelect,
     required this.onClose,
-    required this.onSecondaryTap,
+    required this.onMenu,
   });
 
   final BrowserTab tab;
@@ -282,147 +351,121 @@ class _ChromeTab extends StatefulWidget {
   final bool isSplit;
   final VoidCallback onSelect;
   final VoidCallback onClose;
-  final void Function(Offset globalPosition) onSecondaryTap;
-
-  @override
-  State<_ChromeTab> createState() => _ChromeTabState();
-}
-
-class _ChromeTabState extends State<_ChromeTab> {
-  bool _hovering = false;
+  final void Function(Offset globalPosition) onMenu;
 
   @override
   Widget build(BuildContext context) {
-    final palette = pal(context);
-    final browser = context.watch<BrowserProvider>();
-    final w = widget.selected;
-    final group = widget.group;
-    final groupColor = group == null ? null : Color(group.colorValue);
+    final p = pal(context);
+    final browser = context.read<BrowserProvider>();
+    final groupColor = group == null ? null : Color(group!.colorValue);
 
-    Widget tabWidget = GestureDetector(
-      onTertiaryTapUp: (_) => widget.onClose(),
-      child: InkWell(
-        onTap: widget.onSelect,
-        onSecondaryTapUp: (d) => widget.onSecondaryTap(d.globalPosition),
-        onHover: (v) => setState(() => _hovering = v),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          width: widget.tab.displayTitle.length > 24 ? 220.0 : 168.0,
-          margin: const EdgeInsets.fromLTRB(2, 6, 2, 0),
-          padding: const EdgeInsets.only(left: 10, right: 4),
-          decoration: BoxDecoration(
-            color: w
-                ? palette.surface
-                : (_hovering
-                    ? palette.surfaceAlt.withValues(alpha: 0.55)
-                    : Colors.transparent),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(10),
-              topRight: Radius.circular(10),
-            ),
-            border: Border(
-              top: BorderSide(
-                color: groupColor ?? Colors.transparent,
-                width: group == null ? 0 : 2.5,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 96, maxWidth: 208),
+      child: UiHoverable(
+        onTap: onSelect,
+        builder: (context, hovering, pressed) {
+          return GestureDetector(
+            onTertiaryTapUp: (_) => onClose(),
+            onSecondaryTapUp: (d) => onMenu(d.globalPosition),
+            child: AnimatedContainer(
+              duration: Ui.quick,
+              curve: Ui.curve,
+              height: Ui.tabHeight,
+              padding: const EdgeInsets.only(left: 9, right: 4),
+              decoration: BoxDecoration(
+                color: selected
+                    ? p.surface
+                    : (pressed
+                        ? p.activeFill
+                        : (hovering ? p.hoverFill : Colors.transparent)),
+                borderRadius: BorderRadius.circular(Ui.rField),
+                border: Border.all(
+                  color: groupColor?.withValues(alpha: 0.5) ??
+                      (selected ? p.border : Colors.transparent),
+                ),
               ),
-            ),
-          ),
-          child: Row(
-            children: [
-              if (widget.tab.incognito)
-                Icon(Icons.shield_rounded, size: 14, color: palette.accent)
-              else if (widget.tab.onSpeedDial)
-                Icon(Icons.add_rounded, size: 14, color: palette.textDim)
-              else
-                Favicon(
-                    host: widget.tab.host,
-                    url: widget.tab.faviconUrl,
-                    size: 15),
-              const SizedBox(width: 7),
-              Expanded(
-                child: Text(
-                  widget.tab.displayTitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12.3,
-                    color: w ? palette.text : palette.textDim,
-                    fontWeight: w ? FontWeight.w500 : FontWeight.w400,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (groupColor != null)
+                    Tooltip(
+                      message: '${group!.name} — click to '
+                          '${browser.collapsedGroups.contains(group!.id) ? 'expand' : 'collapse'}',
+                      child: GestureDetector(
+                        onTap: () =>
+                            browser.toggleGroupCollapse(group!.id),
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 7, left: 1),
+                          child: Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: groupColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (tab.loading)
+                    SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.8,
+                        color: p.accent,
+                        value: tab.progress > 0 ? tab.progress / 100 : null,
+                      ),
+                    )
+                  else if (tab.incognito)
+                    Icon(Icons.shield_rounded, size: 14, color: p.accent)
+                  else if (tab.onSpeedDial)
+                    Icon(Icons.add_rounded, size: 14, color: p.textDim)
+                  else
+                    Favicon(host: tab.host, url: tab.faviconUrl, size: 15),
+                  const SizedBox(width: 8),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 132),
+                    child: Text(
+                      tab.displayTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Ui.text(
+                        p,
+                        size: 12.5,
+                        weight: selected ? FontWeight.w600 : FontWeight.w400,
+                        color: selected ? p.text : p.textDim,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              if (widget.isSplit)
-                Padding(
-                  padding: const EdgeInsets.only(right: 2),
-                  child: Icon(Icons.vertical_split_rounded,
-                      size: 13, color: palette.accent),
-                ),
-              const SizedBox(width: 2),
-              SizedBox(
-                width: 22,
-                height: 22,
-                child: IconButton(
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  splashRadius: 11,
-                  icon: Icon(
-                    Icons.close_rounded,
-                    size: 14,
-                    color:
-                        _hovering || w ? palette.textDim : Colors.transparent,
+                  if (isSplit)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 2),
+                      child: Icon(Icons.vertical_split_rounded,
+                          size: 13, color: p.accent),
+                    ),
+                  SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: IconButton(
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      splashRadius: 11,
+                      tooltip: 'Close tab (Ctrl+W)',
+                      icon: Icon(
+                        Icons.close_rounded,
+                        size: 13,
+                        color: hovering || selected ? p.textDim : Colors.transparent,
+                      ),
+                      onPressed: onClose,
+                    ),
                   ),
-                  onPressed: widget.onClose,
-                ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
-    );
-
-    if (group == null) return tabWidget;
-
-    final count = browser.tabsInGroup(group.id).length;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        tabWidget,
-        InkWell(
-          onTap: () => browser.toggleGroupCollapse(group.id),
-          onSecondaryTapUp: (d) => widget.onSecondaryTap(d.globalPosition),
-          child: Container(
-            height: 24,
-            padding: const EdgeInsets.symmetric(horizontal: 9),
-            margin: const EdgeInsets.only(top: 2),
-            decoration: BoxDecoration(
-              color: groupColor?.withValues(alpha: 0.18) ??
-                  Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: groupColor ?? Colors.transparent),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  browser.collapsedGroups.contains(group.id)
-                      ? Icons.keyboard_arrow_right_rounded
-                      : Icons.keyboard_arrow_down_rounded,
-                  size: 15,
-                  color: groupColor,
-                ),
-                const SizedBox(width: 3),
-                Text(
-                  '${group.name} · $count',
-                  style: TextStyle(
-                    color: groupColor,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

@@ -6,8 +6,11 @@ import 'package:provider/provider.dart';
 
 import '../core/calc.dart';
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../core/urls.dart';
 import '../services/suggestions.dart';
+import 'ui_kit.dart';
+import 'favicon.dart';
 import 'site_info_sheet.dart';
 import '../state/browser_provider.dart';
 import '../state/profile_provider.dart';
@@ -112,7 +115,8 @@ class _OmniboxState extends State<Omnibox> {
     }
 
     final focused = _focus.hasFocus;
-    final height = widget.compact ? 46.0 : 34.0;
+    final compact = widget.compact;
+    final height = compact ? 46.0 : 36.0;
 
     return CompositedTransformTarget(
       link: _link,
@@ -120,35 +124,31 @@ class _OmniboxState extends State<Omnibox> {
         onTap: () {
           if (!_focus.hasFocus) _focus.requestFocus();
         },
-        child: Container(
+        child: AnimatedContainer(
+          duration: Ui.quick,
+          curve: Ui.curve,
           height: height,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: palette.omniboxFill,
-            borderRadius: BorderRadius.circular(height / 2),
-            border: Border.all(
-              color: focused ? palette.accent : Colors.transparent,
-              width: focused ? 1.6 : 1,
-            ),
-          ),
+          padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 11),
+          decoration: compact
+              ? const BoxDecoration(color: Colors.transparent)
+              : Ui.field(p: palette, focused: focused),
           child: Row(
             children: [
-              InkWell(
-                customBorder: const CircleBorder(),
-                onTap: () => showSiteInfoSheet(context),
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: _leadingIcon(palette, tab),
-                ),
+              _SiteButton(
+                onTap: tab.onSpeedDial || tab.url.isEmpty
+                    ? null
+                    : () => showSiteInfoSheet(context),
+                child: _leadingIcon(palette, tab),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: compact ? 8 : 9),
               Expanded(
                 child: TextField(
                   controller: _controller,
                   focusNode: _focus,
-                  style: TextStyle(
+                  style: Ui.text(
+                    palette,
+                    size: widget.compact ? 15 : 13.5,
                     color: palette.text,
-                    fontSize: widget.compact ? 15 : 14,
                   ),
                   cursorColor: palette.accent,
                   textInputAction: TextInputAction.go,
@@ -158,10 +158,18 @@ class _OmniboxState extends State<Omnibox> {
                     isDense: true,
                     border: InputBorder.none,
                     hintText: 'Search or enter address',
-                    hintStyle: TextStyle(color: palette.textDim),
+                    hintStyle: Ui.text(palette, color: palette.textDim),
                   ),
                 ),
               ),
+              if (!compact && focused && _controller.text.isNotEmpty)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: Icon(Icons.close_rounded,
+                      size: 16, color: palette.textDim),
+                  tooltip: 'Clear',
+                  onPressed: () => _controller.clear(),
+                ),
               if (widget.compact) ...[
                 _trailingButton(palette, tab),
               ],
@@ -174,12 +182,15 @@ class _OmniboxState extends State<Omnibox> {
 
   Widget _leadingIcon(BrowserPalette palette, BrowserTab tab) {
     if (tab.onSpeedDial || tab.url.isEmpty) {
-      return Icon(Icons.search_rounded, size: 18, color: palette.textDim);
+      return Icon(Icons.search_rounded, size: 17, color: palette.textDim);
     }
     if (tab.url.startsWith('https://')) {
-      return Icon(Icons.lock_rounded, size: 15, color: palette.success);
+      return Icon(Icons.lock_rounded, size: 14, color: palette.success);
     }
-    return Icon(Icons.info_outline_rounded, size: 17, color: palette.textDim);
+    if (tab.url.startsWith('http://')) {
+      return Icon(Icons.info_outline_rounded, size: 16, color: palette.danger);
+    }
+    return Icon(Icons.language_rounded, size: 16, color: palette.textDim);
   }
 
   Widget _trailingButton(BrowserPalette palette, BrowserTab tab) {
@@ -357,6 +368,7 @@ class _OmniboxState extends State<Omnibox> {
               width: _fieldWidth,
               items: _items,
               selected: _sel,
+              query: _controller.text,
               onHover: (i) => _overlay?.markNeedsBuild(),
               onSelected: (i) => _submit(_items[i]),
             ),
@@ -413,11 +425,48 @@ class _OmniboxState extends State<Omnibox> {
   }
 }
 
+/// The lock / info / search glyph, tappable, with the same hover language as
+/// everything else in the bar.
+class _SiteButton extends StatelessWidget {
+  const _SiteButton({required this.child, this.onTap});
+
+  final Widget child;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = pal(context);
+    return UiHoverable(
+      onTap: onTap,
+      builder: (context, hovering, pressed) => AnimatedContainer(
+        duration: Ui.quick,
+        curve: Ui.curve,
+        width: 26,
+        height: 26,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: pressed
+              ? palette.activeFill
+              : (hovering ? palette.hoverFill : Colors.transparent),
+          borderRadius: BorderRadius.circular(Ui.rControl),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+String _hostOf(String url) {
+  final m = RegExp(r'^[a-z]+://([^/]+)').firstMatch(url);
+  return m?.group(1) ?? '';
+}
+
 class _PanelCard extends StatelessWidget {
   const _PanelCard({
     required this.width,
     required this.items,
     required this.selected,
+    required this.query,
     required this.onHover,
     required this.onSelected,
   });
@@ -425,8 +474,27 @@ class _PanelCard extends StatelessWidget {
   final double width;
   final List<_Suggestion> items;
   final int selected;
+  final String query;
   final ValueChanged<int> onHover;
   final ValueChanged<int> onSelected;
+
+  /// Bolds the part the user actually typed, so the match is obvious.
+  TextSpan _highlight(String text, BrowserPalette palette) {
+    final q = query.trim();
+    if (q.isEmpty) return TextSpan(text: text);
+    final i = text.toLowerCase().indexOf(q.toLowerCase());
+    if (i < 0) return TextSpan(text: text);
+    return TextSpan(
+      children: [
+        TextSpan(text: text.substring(0, i)),
+        TextSpan(
+          text: text.substring(i, i + q.length),
+          style: TextStyle(fontWeight: FontWeight.w700, color: palette.accent),
+        ),
+        TextSpan(text: text.substring(i + q.length)),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -434,23 +502,11 @@ class _PanelCard extends StatelessWidget {
     if (items.isEmpty) return const SizedBox.shrink();
     return Container(
       width: width,
-      constraints: const BoxConstraints(maxHeight: 5 * 50 + 12),
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      decoration: BoxDecoration(
-        color: palette.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: palette.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: palette.isDark ? 0.5 : 0.18),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+      constraints: const BoxConstraints(maxHeight: 5 * 44 + 12),
+      decoration: Ui.floating(palette),
       child: ListView.builder(
         shrinkWrap: true,
-        padding: EdgeInsets.zero,
+        padding: const EdgeInsets.symmetric(vertical: 5),
         itemCount: items.length,
         itemBuilder: (_, i) {
           final s = items[i];
@@ -458,44 +514,54 @@ class _PanelCard extends StatelessWidget {
           return InkWell(
             onTap: () => onSelected(i),
             onHover: (_) => onHover(i),
-            child: Container(
-              height: 50,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              color: isSel ? palette.surfaceAlt : Colors.transparent,
+            child: AnimatedContainer(
+              duration: Ui.quick,
+              curve: Ui.curve,
+              height: 44,
+              margin: const EdgeInsets.symmetric(horizontal: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 9),
+              decoration: BoxDecoration(
+                color: isSel ? palette.activeFill : Colors.transparent,
+                borderRadius: BorderRadius.circular(Ui.rControl),
+              ),
               child: Row(
                 children: [
-                  Icon(s.icon, size: 19, color: palette.textDim),
-                  const SizedBox(width: 12),
+                  Container(
+                    width: 26,
+                    height: 26,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: palette.surfaceAlt,
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: s.kind == _Kind.url
+                        ? Favicon(host: _hostOf(s.value), size: 15)
+                        : Icon(s.icon, size: 15, color: palette.textDim),
+                  ),
+                  const SizedBox(width: 11),
                   Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          s.primary,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: palette.text,
-                          ),
-                        ),
-                        if (s.secondary != null &&
-                            s.secondary!.isNotEmpty &&
-                            s.secondary != s.primary)
-                          Text(
-                            s.secondary!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              color: palette.textDim,
-                            ),
-                          ),
-                      ],
+                    child: Text.rich(
+                      _highlight(s.primary, palette),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Ui.text(palette, size: Ui.sizeBody),
                     ),
                   ),
+                  if (s.secondary != null &&
+                      s.secondary!.isNotEmpty &&
+                      s.secondary != s.primary) ...[
+                    const SizedBox(width: 12),
+                    Text(
+                      s.secondary!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Ui.text(
+                        palette,
+                        size: Ui.sizeCaption,
+                        color: palette.textFaint,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

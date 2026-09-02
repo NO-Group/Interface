@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../services/web_engine.dart';
 import '../state/browser_provider.dart';
 import '../state/privacy_provider.dart';
@@ -17,9 +18,9 @@ import '../widgets/omnibox.dart';
 import '../widgets/onboarding.dart';
 import '../widgets/permission_banner.dart';
 import '../widgets/site_info_sheet.dart';
-import '../widgets/tab_strip.dart';
 import '../widgets/tab_switcher.dart';
 import '../widgets/toolbar.dart';
+import '../widgets/ui_kit.dart';
 import '../widgets/vertical_tab_rail.dart';
 import '../widgets/tab_web_view.dart';
 import '../widgets/view_stack.dart';
@@ -195,11 +196,9 @@ class DesktopShell extends StatelessWidget {
           children: [
             Column(
               children: [
-                if (!settings.verticalTabs) const TabStrip(),
-                const DesktopToolbar(),
+                TopBar(showTabs: !settings.verticalTabs),
                 if (!settings.verticalTabs && settings.showBookmarksBar)
                   const BookmarksBar(),
-                Container(height: 1, color: palette.border),
                 Expanded(
                   child: Row(
                     children: [
@@ -227,7 +226,8 @@ class DesktopShell extends StatelessWidget {
                         clipBehavior: Clip.hardEdge,
                         child: browser.sidePanel == SidePanel.none
                             ? const SizedBox.shrink()
-                            : const SizedBox(width: 356, child: _SidePanel()),
+                            : const SizedBox(
+                                width: 372, child: _SidePanel()),
                       ),
                     ],
                   ),
@@ -437,31 +437,28 @@ class _SidePanel extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
-                height: 44,
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 14),
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          color: palette.text,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
+                height: 46,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 16, right: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: Ui.text(palette,
+                              size: Ui.sizeTitle, weight: FontWeight.w700),
                         ),
                       ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      icon: Icon(Icons.chevron_left_rounded,
-                          color: palette.textDim),
-                      onPressed: () => browser.setSidePanel(SidePanel.none),
-                    ),
-                  ],
+                      UiIconButton(
+                        icon: Icons.chevron_right_rounded,
+                        tooltip: 'Hide sidebar',
+                        onTap: () => browser.setSidePanel(SidePanel.none),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              Divider(height: 1, color: palette.border),
+              Divider(height: 1, color: palette.hairline),
               Expanded(
                 child: switch (page) {
                   SidePanel.bookmarks => const BookmarksList(embedded: true),
@@ -494,62 +491,37 @@ class _SideRail extends StatelessWidget {
 
     Widget railButton(SidePanel target, IconData icon, String tip,
         {int badge = 0}) {
-      final active = page == target;
-      return Tooltip(
-        message: tip,
-        waitDuration: const Duration(milliseconds: 500),
-        child: InkWell(
-          onTap: () => browser.toggleSidePanel(target),
-          customBorder: const CircleBorder(),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 130),
-            margin: const EdgeInsets.all(6),
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              color: active
-                  ? palette.accent.withValues(alpha: 0.16)
-                  : Colors.transparent,
-              shape: BoxShape.circle,
-            ),
-            child: badge > 0
-                ? Badge.count(
-                    count: badge,
-                    backgroundColor: palette.accent,
-                    textColor: palette.onAccent,
-                    child: Icon(
-                      icon,
-                      size: 20,
-                      color: active ? palette.accent : palette.textDim,
-                    ),
-                  )
-                : Icon(
-                    icon,
-                    size: 20,
-                    color: active ? palette.accent : palette.textDim,
-                  ),
-          ),
-        ),
+      return UiIconButton(
+        icon: icon,
+        tooltip: tip,
+        size: 40,
+        iconSize: 20,
+        badge: badge,
+        selected: page == target,
+        onTap: () => browser.toggleSidePanel(target),
       );
     }
 
     return SizedBox(
-      width: 46,
+      width: 48,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           railButton(SidePanel.bookmarks, Icons.star_border_rounded,
               'Bookmarks'),
-          railButton(SidePanel.history, Icons.history_rounded, 'History (Ctrl+H)'),
+          railButton(SidePanel.history, Icons.history_rounded,
+              'History (Ctrl+H)'),
           railButton(SidePanel.downloads, Icons.download_rounded,
               'Downloads (Ctrl+J)'),
           railButton(SidePanel.reading, Icons.auto_stories_outlined,
               'Reading list',
               badge: profile.unreadReadingCount),
           const Spacer(),
-          railButton(SidePanel.privacy, Icons.shield_outlined, 'Privacy dashboard'),
+          railButton(SidePanel.privacy, Icons.shield_outlined,
+              'Privacy dashboard'),
           railButton(SidePanel.settings, Icons.settings_outlined, 'Settings'),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -595,48 +567,28 @@ class MobileShell extends StatelessWidget {
             if (tab.incognito)
               Container(
                 width: double.infinity,
-                color: const Color(0xFF171B21),
+                color: palette.surfaceAlt,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 child: Row(
                   children: [
-                    const Icon(Icons.shield_rounded,
-                        size: 15, color: Color(0xFF8AB4F8)),
+                    Icon(Icons.shield_rounded, size: 14, color: palette.accent),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Incognito — history is not saved',
-                        style: TextStyle(
-                          color: palette.text,
-                          fontSize: 12,
-                        ),
+                        'Private tab — nothing is saved',
+                        style: Ui.text(palette, size: Ui.sizeSmall),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    InkWell(
-                      onTap: () => browser.newTab(),
-                      child: Text(
-                        'New tab',
-                        style: TextStyle(
-                          color: palette.accent,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                    TextButton(
+                      onPressed: () => browser.newTab(incognito: true),
+                      child: const Text('New private tab'),
                     ),
                   ],
                 ),
               ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              height: tab.loading ? 3 : 0,
-              child: LinearProgressIndicator(
-                value: tab.progress / 100,
-                minHeight: 3,
-                backgroundColor: Colors.transparent,
-                color: palette.accent,
-              ),
-            ),
+            UiProgressLine(active: tab.loading, progress: tab.progress),
             const Expanded(child: ViewStack()),
             if (browser.findOpen)
               Padding(
@@ -644,46 +596,8 @@ class MobileShell extends StatelessWidget {
                 child: FindBar(compact: true),
               ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-              child: Omnibox(compact: true),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(6, 0, 6, 6),
-              child: Row(
-                children: [
-                  _NavButton(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    enabled: tab.canBack,
-                    onTap: () => browser.goBack(),
-                  ),
-                  _NavButton(
-                    icon: Icons.arrow_forward_ios_rounded,
-                    enabled: tab.canForward,
-                    onTap: () => browser.goForward(),
-                  ),
-                  _NavButton(
-                    icon: Icons.home_outlined,
-                    onTap: () => browser.goHome(),
-                  ),
-                  _ShieldNavButton(
-                    blocked: blocked,
-                    onTap: () => showSiteInfoSheet(context),
-                  ),
-                  _TabsButton(
-                    count: browser.tabCount,
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        fullscreenDialog: true,
-                        builder: (_) => const TabSwitcherPage(),
-                      ),
-                    ),
-                  ),
-                  _NavButton(
-                    icon: Icons.more_vert_rounded,
-                    onTap: () => showMobileMenu(context),
-                  ),
-                ],
-              ),
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+              child: _MobileDock(tab: tab, blocked: blocked),
             ),
           ],
         ),
@@ -692,78 +606,139 @@ class MobileShell extends StatelessWidget {
   }
 }
 
-class _NavButton extends StatelessWidget {
-  const _NavButton({
-    required this.icon,
-    required this.onTap,
-    this.enabled = true,
-  });
+/// The phone's whole control surface: address, then one row of actions, in a
+/// single rounded dock so nothing floats over the page.
+class _MobileDock extends StatelessWidget {
+  const _MobileDock({required this.tab, required this.blocked});
 
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool enabled;
+  final BrowserTab tab;
+  final int blocked;
 
   @override
   Widget build(BuildContext context) {
-    final palette = pal(context);
-    return Expanded(
-      child: IconButton(
-        icon: Icon(icon, size: 20),
-        color: palette.text,
-        disabledColor: palette.textDim.withValues(alpha: 0.35),
-        onPressed: enabled ? onTap : null,
+    final browser = context.read<BrowserProvider>();
+    final p = pal(context);
+
+    return Container(
+      decoration: Ui.card(p),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(8, 4, 8, 0),
+            child: Omnibox(compact: true),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 2, 4, 4),
+            child: Row(
+              children: [
+                _Key(
+                  icon: Icons.arrow_back_ios_new_rounded,
+                  enabled: tab.canBack,
+                  onTap: browser.goBack,
+                ),
+                _Key(
+                  icon: Icons.arrow_forward_ios_rounded,
+                  enabled: tab.canForward,
+                  onTap: browser.goForward,
+                ),
+                _Key(
+                  icon: tab.loading ? Icons.close_rounded : Icons.refresh_rounded,
+                  onTap: tab.loading ? browser.stopLoading : browser.reload,
+                ),
+                _Key(
+                  icon: Icons.shield_outlined,
+                  badge: blocked,
+                  onTap: () => showSiteInfoSheet(context),
+                ),
+                _TabKey(
+                  count: browser.tabCount,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      fullscreenDialog: true,
+                      builder: (_) => const TabSwitcherPage(),
+                    ),
+                  ),
+                ),
+                _Key(
+                  icon: Icons.more_horiz_rounded,
+                  onTap: () => showMobileMenu(context),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _ShieldNavButton extends StatelessWidget {
-  const _ShieldNavButton({required this.blocked, required this.onTap});
+class _Key extends StatelessWidget {
+  const _Key({
+    required this.onTap,
+    this.icon,
+    this.enabled = true,
+    this.badge = 0,
+  });
 
-  final int blocked;
   final VoidCallback onTap;
+  final IconData? icon;
+  final bool enabled;
+  final int badge;
 
   @override
   Widget build(BuildContext context) {
-    final palette = pal(context);
     return Expanded(
       child: Center(
-        child: IconButton(
-          onPressed: onTap,
-          icon: Badge.count(
-            count: blocked,
-            isLabelVisible: blocked > 0,
-            backgroundColor: palette.accent,
-            textColor: palette.onAccent,
-            child: Icon(Icons.shield_outlined, size: 21, color: palette.text),
-          ),
+        child: UiIconButton(
+          icon: icon ?? Icons.close_rounded,
+          size: 44,
+          iconSize: 20,
+          badge: badge,
+          onTap: enabled ? onTap : null,
         ),
       ),
     );
   }
 }
 
-class _TabsButton extends StatelessWidget {
-  const _TabsButton({required this.count, required this.onTap});
+class _TabKey extends StatelessWidget {
+  const _TabKey({required this.count, required this.onTap});
 
   final int count;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final palette = pal(context);
+    final p = pal(context);
     return Expanded(
       child: Center(
-        child: IconButton(
-          onPressed: onTap,
-          icon: Badge.count(
-            count: count,
-            backgroundColor: palette.accent,
-            textColor: palette.onAccent,
-            child: Icon(Icons.tab_rounded, size: 21, color: palette.text),
+        child: UiHoverable(
+          onTap: onTap,
+          builder: (context, hovering, pressed) => AnimatedContainer(
+            duration: Ui.quick,
+            curve: Ui.curve,
+            height: 32,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: hovering || pressed ? p.hoverFill : Colors.transparent,
+              borderRadius: BorderRadius.circular(Ui.rControl),
+              border: Border.all(color: p.border),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.grid_view_rounded, size: 16, color: p.textDim),
+                Ui.gap(6),
+                Text('$count',
+                    style: Ui.text(p, size: Ui.sizeSmall, weight: FontWeight.w600)),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
+
+

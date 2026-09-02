@@ -128,37 +128,37 @@ class BrowserPalette {
   static const light = BrowserPalette(
     id: 'light',
     brightness: Brightness.light,
-    background: Color(0xFFF5F7FC),
+    background: Color(0xFFF1F4FA),
     surface: Color(0xFFFFFFFF),
-    surfaceAlt: Color(0xFFE9EEF8),
-    omniboxFill: Color(0xFFECF1FA),
-    chromeFill: Color(0xFFE3EAF6),
-    text: Color(0xFF101B2E),
-    textDim: Color(0xFF5A6B87),
+    surfaceAlt: Color(0xFFE8EEF8),
+    omniboxFill: Color(0xFFEDF2FA),
+    chromeFill: Color(0xFFE6ECF7),
+    text: Color(0xFF0D1A2B),
+    textDim: Color(0xFF566583),
     primary: navy,
     onPrimary: Colors.white,
     accent: cyanDeep,
     onAccent: Colors.white,
-    border: Color(0xFFD8E0EF),
-    danger: Color(0xFFD32F2F),
-    success: Color(0xFF1E8E3E),
+    border: Color(0xFFD5DFEE),
+    danger: Color(0xFFC62828),
+    success: Color(0xFF1B7F3B),
   );
 
   static const dark = BrowserPalette(
     id: 'dark',
     brightness: Brightness.dark,
-    background: Color(0xFF0A1424),
-    surface: Color(0xFF101E36),
-    surfaceAlt: Color(0xFF17264A),
-    omniboxFill: Color(0xFF0E1B31),
-    chromeFill: Color(0xFF0C172A),
-    text: Color(0xFFE9F0FB),
-    textDim: Color(0xFF93A4C3),
+    background: Color(0xFF070F1D),
+    surface: Color(0xFF0E1A2C),
+    surfaceAlt: Color(0xFF16263C),
+    omniboxFill: Color(0xFF0B1626),
+    chromeFill: Color(0xFF0A1523),
+    text: Color(0xFFE7EEFA),
+    textDim: Color(0xFF8FA2C0),
     primary: Color(0xFF14336B),
     onPrimary: Colors.white,
     accent: cyan,
     onAccent: Color(0xFF04222B),
-    border: Color(0xFF1E3054),
+    border: Color(0xFF1C2C45),
     danger: Color(0xFFFF6B6B),
     success: Color(0xFF4CD97B),
   );
@@ -166,11 +166,11 @@ class BrowserPalette {
   static const red = BrowserPalette(
     id: 'red',
     brightness: Brightness.dark,
-    background: Color(0xFF150709),
-    surface: Color(0xFF200C0F),
-    surfaceAlt: Color(0xFF2B1114),
-    omniboxFill: Color(0xFF1B090C),
-    chromeFill: Color(0xFF180609),
+    background: Color(0xFF12070A),
+    surface: Color(0xFF1C0B0E),
+    surfaceAlt: Color(0xFF261014),
+    omniboxFill: Color(0xFF180809),
+    chromeFill: Color(0xFF150709),
     text: Color(0xFFF7E9EA),
     textDim: Color(0xFFC79DA1),
     primary: Color(0xFF8E1B24),
@@ -185,11 +185,11 @@ class BrowserPalette {
   static const green = BrowserPalette(
     id: 'green',
     brightness: Brightness.dark,
-    background: Color(0xFF04140C),
-    surface: Color(0xFF0A2117),
-    surfaceAlt: Color(0xFF0F2C1F),
-    omniboxFill: Color(0xFF081B12),
-    chromeFill: Color(0xFF061710),
+    background: Color(0xFF04120B),
+    surface: Color(0xFF081B13),
+    surfaceAlt: Color(0xFF0D2419),
+    omniboxFill: Color(0xFF061610),
+    chromeFill: Color(0xFF05140D),
     text: Color(0xFFE8F7EE),
     textDim: Color(0xFF9CC6AC),
     primary: Color(0xFF0B5E3B),
@@ -225,10 +225,10 @@ class BrowserPalette {
     id: 'custom',
     brightness: Brightness.dark,
     background: Color(0xFF0A1424),
-    surface: Color(0xC2182440),
-    surfaceAlt: Color(0x991A2C52),
-    omniboxFill: Color(0x660E1B31),
-    chromeFill: Color(0x330C172A),
+    surface: Color(0xCC101C30),
+    surfaceAlt: Color(0x9916243C),
+    omniboxFill: Color(0x660B1626),
+    chromeFill: Color(0x400A1523),
     text: Color(0xFFE9F0FB),
     textDim: Color(0xFF9FB0CE),
     primary: Color(0xFF14336B),
@@ -289,7 +289,20 @@ class BrowserPalette {
 }
 
 /// Builds the Material [ThemeData] that follows the browser palette.
+///
+/// This is what makes the app read as one product rather than a stack of
+/// default widgets: gentle, consistent rounding, hairline borders instead of
+/// elevation, and shadows only where something actually floats.
+///
+/// The numbers below mirror `lib/core/ui.dart` on purpose — `Ui` cannot be
+/// imported here without a cycle.
 ThemeData buildMaterialTheme(BrowserPalette p) {
+  const rControl = BorderRadius.all(Radius.circular(8));
+  const rField = BorderRadius.all(Radius.circular(10));
+  const rCard = BorderRadius.all(Radius.circular(14));
+  const rMenu = BorderRadius.all(Radius.circular(12));
+  const rSheet = BorderRadius.vertical(top: Radius.circular(18));
+
   final scheme = ColorScheme(
     brightness: p.brightness,
     primary: p.primary,
@@ -301,58 +314,226 @@ ThemeData buildMaterialTheme(BrowserPalette p) {
     surface: p.surface,
     onSurface: p.text,
     onSurfaceVariant: p.textDim,
+    outline: p.border,
+    outlineVariant: p.border,
     surfaceContainerHighest: p.surfaceAlt,
   );
   final base = p.isDark ? ThemeData.dark() : ThemeData.light();
+  final ui = TextStyle(color: p.text, fontSize: 13.5, height: 1.35);
+
   return base.copyWith(
     useMaterial3: true,
     colorScheme: scheme,
     scaffoldBackgroundColor: p.background,
     canvasColor: p.surface,
+    selectionColor: p.accent.withValues(alpha: 0.24),
     splashColor: p.accent.withValues(alpha: 0.10),
     highlightColor: p.accent.withValues(alpha: 0.06),
+    splashFactory: InkRipple.splashFactory,
+    visualDensity: VisualDensity.compact,
     dividerColor: p.border,
+    textTheme: base.textTheme.apply(bodyColor: p.text, displayColor: p.text),
+    primaryTextTheme: base.primaryTextTheme.apply(bodyColor: p.text),
     appBarTheme: AppBarTheme(
-      backgroundColor: p.chromeFill,
+      backgroundColor: p.background,
       foregroundColor: p.text,
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-      titleTextStyle: TextStyle(
+      toolbarHeight: 52,
+      titleTextStyle: const TextStyle(
         color: p.text,
         fontSize: 16,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
+        height: 1.2,
       ),
+      iconTheme: IconThemeData(color: p.text, size: 20),
+      actionsIconTheme: IconThemeData(color: p.textDim, size: 20),
+    ),
+    cardTheme: CardThemeData(
+      color: p.surface,
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: rCard,
+        side: BorderSide(color: p.border),
+      ),
+    ),
+    dividerTheme: DividerThemeData(
+      color: p.border,
+      thickness: 1,
+      space: 1,
     ),
     popupMenuTheme: PopupMenuThemeData(
       color: p.surface,
       surfaceTintColor: p.surface,
+      elevation: 0,
+      shadowColor: Colors.black.withValues(alpha: p.isDark ? 0.5 : 0.14),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: rMenu,
         side: BorderSide(color: p.border),
       ),
-      textStyle: TextStyle(color: p.text, fontSize: 14),
+      textStyle: ui,
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: p.surface,
+      surfaceTintColor: p.surface,
+      elevation: 0,
+      shadowColor: Colors.black.withValues(alpha: p.isDark ? 0.5 : 0.14),
+      shape: RoundedRectangleBorder(
+        borderRadius: rCard,
+        side: BorderSide(color: p.border),
+      ),
+      titleTextStyle: const TextStyle(
+        color: p.text,
+        fontSize: 17,
+        fontWeight: FontWeight.w700,
+      ),
+      contentTextStyle: ui,
+    ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: p.surface,
+      surfaceTintColor: p.surface,
+      elevation: 0,
+      shape: const RoundedRectangleBorder(borderRadius: rSheet),
+      showDragHandle: true,
+      dragHandleColor: p.border,
+    ),
+    drawerTheme: DrawerThemeData(
+      backgroundColor: p.surface,
+      surfaceTintColor: p.surface,
+      shape: const RoundedRectangleBorder(borderRadius: rCard),
     ),
     tooltipTheme: TooltipThemeData(
-      textStyle: TextStyle(color: p.text, fontSize: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: p.surfaceAlt,
-        borderRadius: BorderRadius.circular(6),
+        color: p.surface,
+        borderRadius: rControl,
+        border: Border.all(color: p.border),
+      ),
+      textStyle: TextStyle(color: p.text, fontSize: 12, fontWeight: FontWeight.w500),
+      waitDuration: const Duration(milliseconds: 450),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: p.omniboxFill,
+      hintStyle: TextStyle(color: p.textDim, fontSize: 13.5),
+      labelStyle: TextStyle(color: p.textDim, fontSize: 13.5),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: rField,
+        borderSide: BorderSide(color: p.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: rField,
+        borderSide: BorderSide(color: p.accent, width: 1.4),
+      ),
+      border: OutlineInputBorder(
+        borderRadius: rField,
+        borderSide: BorderSide(color: p.border),
       ),
     ),
-    dividerTheme: DividerThemeData(color: p.border, thickness: 1, space: 1),
-    navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: p.chromeFill,
-      indicatorColor: p.accent.withValues(alpha: 0.18),
+    listTileTheme: ListTileThemeData(
+      iconColor: p.textDim,
+      selectedColor: p.accent,
+      selectedTileColor: p.accent.withValues(alpha: 0.10),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+      minVerticalPadding: 8,
+      titleTextStyle: const TextStyle(
+        color: p.text,
+        fontSize: 13.5,
+        fontWeight: FontWeight.w500,
+      ),
+      subtitleTextStyle: TextStyle(color: p.textDim, fontSize: 12),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: p.accent,
+        shape: const RoundedRectangleBorder(borderRadius: rControl),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: p.text,
+        side: BorderSide(color: p.border),
+        shape: const RoundedRectangleBorder(borderRadius: rControl),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      ),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: p.primary,
+        foregroundColor: p.onPrimary,
+        elevation: 0,
+        shape: const RoundedRectangleBorder(borderRadius: rControl),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      ),
+    ),
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(
+        minimumSize: const Size(34, 34),
+        padding: const EdgeInsets.all(5),
+        shape: const RoundedRectangleBorder(borderRadius: rControl),
+      ),
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: p.surfaceAlt,
+      selectedColor: p.accent.withValues(alpha: 0.18),
+      disabledColor: p.surfaceAlt.withValues(alpha: 0.5),
+      side: BorderSide(color: p.border),
+      shape: const RoundedRectangleBorder(borderRadius: rControl),
+      labelStyle: TextStyle(color: p.text, fontSize: 12.5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    ),
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: p.surface,
+      contentTextStyle: TextStyle(color: p.text, fontSize: 13),
+      actionTextColor: p.accent,
+      behavior: SnackBarBehavior.floating,
+      elevation: 0,
+      shape: const RoundedRectangleBorder(borderRadius: rControl),
+    ),
+    progressIndicatorTheme: ProgressIndicatorThemeData(
+      color: p.accent,
+      linearTrackColor: p.surfaceAlt,
+      circularTrackColor: p.border,
+    ),
+    sliderTheme: SliderThemeData(
+      activeTrackColor: p.accent,
+      inactiveTrackColor: p.surfaceAlt,
+      thumbColor: p.accent,
+      overlayColor: p.accent.withValues(alpha: 0.12),
+      trackHeight: 3,
+    ),
+    scrollbarTheme: ScrollbarThemeData(
+      thickness: const WidgetStatePropertyAll(9),
+      radius: const Radius.circular(9),
+      mainAxisMargin: 6,
+      interactive: true,
+      thumbColor: WidgetStateProperty.resolveWith(
+        (s) => p.textDim.withValues(
+          alpha: s.contains(WidgetState.hovered) ? 0.55 : 0.28,
+        ),
+      ),
+    ),
+    textSelectionTheme: TextSelectionThemeData(
+      cursorColor: p.accent,
+      selectionColor: p.accent.withValues(alpha: 0.26),
+      selectionHandleColor: p.accent,
     ),
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith(
         (s) => s.contains(WidgetState.selected) ? p.onAccent : p.textDim,
       ),
       trackColor: WidgetStateProperty.resolveWith(
-        (s) => s.contains(WidgetState.selected)
-            ? p.accent
-            : p.surfaceAlt,
+        (s) => s.contains(WidgetState.selected) ? p.accent : p.surfaceAlt,
+      ),
+      trackOutlineColor: WidgetStateProperty.resolveWith(
+        (s) => s.contains(WidgetState.selected) ? p.accent : p.border,
       ),
     ),
     radioTheme: RadioThemeData(
@@ -362,32 +543,27 @@ ThemeData buildMaterialTheme(BrowserPalette p) {
     ),
     checkboxTheme: CheckboxThemeData(
       fillColor: WidgetStateProperty.resolveWith(
-        (s) => s.contains(WidgetState.selected) ? p.accent : Colors.transparent,
+        (s) =>
+            s.contains(WidgetState.selected) ? p.accent : Colors.transparent,
       ),
-      checkColor: WidgetStatePropertyAll(p.onAccent),
-      side: BorderSide(color: p.textDim, width: 1.4),
+      checkColor: const WidgetStatePropertyAll(Colors.white),
+      side: BorderSide(color: p.textDim, width: 1.3),
     ),
-    snackBarTheme: SnackBarThemeData(
-      backgroundColor: p.surfaceAlt,
-      contentTextStyle: TextStyle(color: p.text),
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    tabBarTheme: TabBarThemeData(
+      labelColor: p.text,
+      unselectedLabelColor: p.textDim,
+      indicatorColor: p.accent,
+      indicatorSize: TabBarIndicatorSize.tab,
+      dividerColor: Colors.transparent,
+      labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      unselectedLabelStyle: const TextStyle(fontSize: 13),
     ),
-    dialogTheme: DialogThemeData(
-      backgroundColor: p.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: p.border),
-      ),
-      titleTextStyle: TextStyle(
-        color: p.text,
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-      ),
-    ),
-    textTheme: base.textTheme.apply(
-      bodyColor: p.text,
-      displayColor: p.text,
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: p.chromeFill,
+      indicatorColor: p.accent.withValues(alpha: 0.16),
+      indicatorShape: const RoundedRectangleBorder(borderRadius: rControl),
+      height: 58,
+      labelTextStyle: WidgetStatePropertyAll(TextStyle(fontSize: 11.5, color: p.textDim)),
     ),
   );
 }

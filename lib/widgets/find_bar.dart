@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../state/browser_provider.dart';
+import 'ui_kit.dart';
 
 /// Chrome-style find-in-page bar (Ctrl+F).
 class FindBar extends StatefulWidget {
@@ -80,31 +82,20 @@ class _FindBarState extends State<FindBar> {
     final label = browser.findQuery.isEmpty ? '' : '$ordinal/$count';
 
     return Container(
-      width: widget.compact ? double.infinity : 480,
-      height: 44,
+      width: widget.compact ? double.infinity : 460,
+      height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: palette.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: palette.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: palette.isDark ? 0.45 : 0.15),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
+      decoration: Ui.floating(palette, radius: Ui.rCard),
       child: Row(
         children: [
-          Icon(Icons.search_rounded, size: 18, color: palette.textDim),
+          Icon(Icons.search_rounded, size: 17, color: palette.textDim),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
               controller: _controller,
               focusNode: _focus,
               autofocus: true,
-              style: TextStyle(color: palette.text, fontSize: 14),
+              style: Ui.text(palette, color: palette.text),
               cursorColor: palette.accent,
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => _next(true),
@@ -113,7 +104,7 @@ class _FindBarState extends State<FindBar> {
                 isDense: true,
                 border: InputBorder.none,
                 hintText: 'Find in page',
-                hintStyle: TextStyle(color: palette.textDim),
+                hintStyle: Ui.text(palette, color: palette.textDim),
               ),
             ),
           ),
@@ -122,25 +113,34 @@ class _FindBarState extends State<FindBar> {
               padding: const EdgeInsets.symmetric(horizontal: 6),
               child: Text(
                 label,
-                style: TextStyle(color: palette.textDim, fontSize: 12.5),
+                style: Ui.text(
+                  palette,
+                  size: Ui.sizeSmall,
+                  weight: FontWeight.w600,
+                  color: count == 0 ? palette.danger : palette.textDim,
+                ),
               ),
             ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            icon: Icon(Icons.keyboard_arrow_up_rounded,
-                color: palette.textDim),
-            onPressed: () => _next(false),
+          UiIconButton(
+            icon: Icons.arrow_upward_rounded,
+            iconSize: 16,
+            size: 32,
+            tooltip: 'Previous match',
+            onTap: () => _next(false),
           ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            icon:
-                Icon(Icons.keyboard_arrow_down_rounded, color: palette.textDim),
-            onPressed: () => _next(true),
+          UiIconButton(
+            icon: Icons.arrow_downward_rounded,
+            iconSize: 16,
+            size: 32,
+            tooltip: 'Next match',
+            onTap: () => _next(true),
           ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            icon: Icon(Icons.close_rounded, color: palette.text),
-            onPressed: () => context.read<BrowserProvider>().closeFind(),
+          UiIconButton(
+            icon: Icons.close_rounded,
+            iconSize: 16,
+            size: 32,
+            tooltip: 'Close',
+            onTap: () => context.read<BrowserProvider>().closeFind(),
           ),
         ],
       ),
