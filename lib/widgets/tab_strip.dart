@@ -222,6 +222,7 @@ class TabStrip extends StatelessWidget {
                 children: [
                   Expanded(
                     child: TextField(
+                      spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
                       controller: name,
                       style: Ui.text(palette),
                       decoration: InputDecoration(

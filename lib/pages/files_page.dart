@@ -156,6 +156,7 @@ class _FilesBarState extends State<_FilesBar> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
       child: TextField(
+        spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
         controller: _query,
         autofocus: true,
         style: Ui.text(p, size: Ui.sizeSmall),
@@ -767,6 +768,7 @@ Future<String?> askName(BuildContext context,
             Ui.vgap(10),
           ],
           TextField(
+            spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
             controller: controller,
             autofocus: true,
             style: Ui.text(p, size: Ui.sizeBody),

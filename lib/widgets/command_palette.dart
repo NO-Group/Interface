@@ -173,6 +173,7 @@ class _CommandPaletteState extends State<CommandPalette> {
                         const SizedBox(width: 11),
                         Expanded(
                           child: TextField(
+                            spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
                             controller: _controller,
                             autofocus: true,
                             style: Ui.text(palette, size: 14.5, color: palette.text),

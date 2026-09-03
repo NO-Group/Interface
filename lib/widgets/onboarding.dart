@@ -121,12 +121,15 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
                           settings.setOnboardingSeen();
                         }
                       },
-                      child: Text(
-                        _index < slides.length - 1
-                            ? 'Next'
-                            : 'Start browsing',
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w600),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          _index < slides.length - 1
+                              ? 'Next'
+                              : 'Start browsing',
+                          style: const TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ),
                   ),
@@ -173,11 +176,17 @@ class _Slide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 34),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+    // Centred when the window is tall enough, scrollable when it is not, so
+    // the slide can never spill out of the page and be painted with overflow
+    // stripes.
+    return LayoutBuilder(
+      builder: (context, box) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 18),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: (box.maxHeight - 36).clamp(0.0, double.infinity)),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
           // The app's own artwork for the welcome slide; the other slides get
           // an icon, drawn on nothing.
           if (logo)
@@ -209,7 +218,9 @@ class _Slide extends StatelessWidget {
             const SizedBox(height: 26),
             extra!,
           ],
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }

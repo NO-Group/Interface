@@ -115,10 +115,14 @@ class _NewTabPageState extends State<NewTabPage> {
                               uiGlyph('shield-on',
                                   size: 16, color: palette.accent),
                               const SizedBox(width: 8),
-                              Text(
-                                'Private tab — nothing is saved here',
-                                style: TextStyle(
-                                    color: palette.text, fontSize: 12.5),
+                              Flexible(
+                                child: Text(
+                                  'Private tab — nothing is saved here',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      color: palette.text, fontSize: 12.5),
+                                ),
                               ),
                             ],
                           ),
@@ -131,6 +135,7 @@ class _NewTabPageState extends State<NewTabPage> {
                             const SizedBox(width: 10),
                             Text(
                               'Interface',
+                              maxLines: 1,
                               style: Ui.text(
                                 palette,
                                 size: 16,
@@ -142,7 +147,9 @@ class _NewTabPageState extends State<NewTabPage> {
                         const SizedBox(height: 10),
                         Text(
                           '$_greetingWord  ·  $date',
+                          maxLines: 2,
                           textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
                           style: Ui.text(
                             palette,
                             size: Ui.sizeTitle,
@@ -156,6 +163,9 @@ class _NewTabPageState extends State<NewTabPage> {
                         child: TextField(
                           controller: _search,
                           textInputAction: TextInputAction.search,
+                          spellCheckConfiguration:
+                              const SpellCheckConfiguration.disabled(),
+                          autofillHints: const <String>[],
                           onSubmitted: _go,
                           style: Ui.text(palette, size: 15, color: palette.text),
                           cursorColor: palette.accent,
@@ -293,7 +303,12 @@ class _NewTabPageState extends State<NewTabPage> {
       context: context,
       builder: (d) => AlertDialog(
         title: const Text('Rename folder'),
-        content: TextField(controller: name, autofocus: true),
+        content: TextField(
+          controller: name,
+          autofocus: true,
+          spellCheckConfiguration:
+              const SpellCheckConfiguration.disabled(),
+        ),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(d).pop(),
@@ -320,6 +335,7 @@ class _NewTabPageState extends State<NewTabPage> {
       builder: (d) => AlertDialog(
         title: const Text('New folder'),
         content: TextField(
+          spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
           controller: name,
           autofocus: true,
           decoration: const InputDecoration(hintText: 'e.g. Work, Social…'),
@@ -482,6 +498,7 @@ class _NewTabPageState extends State<NewTabPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
+              spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
               controller: title,
               autofocus: item == null,
               decoration: const InputDecoration(
@@ -491,6 +508,7 @@ class _NewTabPageState extends State<NewTabPage> {
             ),
             const SizedBox(height: 12),
             TextField(
+              spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
               controller: url,
               decoration: const InputDecoration(
                 labelText: 'Address',
@@ -709,12 +727,15 @@ class _DialTile extends StatelessWidget {
               child: Favicon(host: hostOf(item.url), size: 30),
             ),
             const SizedBox(height: 7),
-            Text(
-              item.title.isEmpty ? hostOf(item.url) : item.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: Ui.text(palette, size: Ui.sizeCaption + 0.5),
+            SizedBox(
+              width: 88,
+              child: Text(
+                item.title.isEmpty ? hostOf(item.url) : item.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: Ui.text(palette, size: Ui.sizeCaption + 0.5),
+              ),
             ),
           ],
         ),
@@ -769,15 +790,18 @@ class _FolderTile extends StatelessWidget {
                   size: 28, color: palette.accent),
             ),
             const SizedBox(height: 7),
-            Text(
-              folder.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: palette.text,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+            SizedBox(
+              width: 88,
+              child: Text(
+                folder.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: palette.text,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             Text(

@@ -607,6 +607,7 @@ class _HomepagePickerState extends State<_HomepagePicker> {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
             child: TextField(
+              spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
               controller: _controller,
               style: const TextStyle(fontSize: 13.5),
               decoration: InputDecoration(

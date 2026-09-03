@@ -118,11 +118,13 @@ class _BookmarkTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
+              spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
               controller: title,
               decoration: const InputDecoration(labelText: 'Name', isDense: true),
             ),
             const SizedBox(height: 12),
             TextField(
+              spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
               controller: url,
               decoration:
                   const InputDecoration(labelText: 'Address', isDense: true),

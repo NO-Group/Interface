@@ -144,6 +144,7 @@ class _OmniboxState extends State<Omnibox> {
               SizedBox(width: compact ? 8 : 9),
               Expanded(
                 child: TextField(
+                  spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
                   controller: _controller,
                   focusNode: _focus,
                   style: Ui.text(

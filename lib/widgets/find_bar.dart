@@ -93,6 +93,7 @@ class _FindBarState extends State<FindBar> {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
+              spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
               controller: _controller,
               focusNode: _focus,
               autofocus: true,
