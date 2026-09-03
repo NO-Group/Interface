@@ -194,7 +194,7 @@ class TopBar extends StatelessWidget {
                         ),
                       ),
                       UiIconButton(
-                        icon: 'shield',
+                        icon: 'private',
                         tooltip: 'New private tab (Ctrl+Shift+N)',
                         onTap: () => browser.newTab(incognito: true),
                       ),

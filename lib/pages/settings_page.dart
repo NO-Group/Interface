@@ -480,7 +480,7 @@ class _WallpaperCard extends StatelessWidget {
                     width: 74,
                     height: 48,
                     color: palette.surfaceAlt,
-                    child: uiGlyph('image',
+                    child: uiGlyph('wallpaper',
                         color: palette.textDim),
                   ),
                 ),
@@ -493,7 +493,7 @@ class _WallpaperCard extends StatelessWidget {
                   color: palette.surfaceAlt,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: uiGlyph('image', color: palette.textDim),
+                child: uiGlyph('wallpaper', color: palette.textDim),
               ),
             const SizedBox(width: 12),
             Expanded(

@@ -8,6 +8,7 @@ import '../state/browser_provider.dart';
 
 /// Top banner for pending site permission requests (camera / microphone /
 /// location).
+
 class PermissionBanner extends StatelessWidget {
   const PermissionBanner({super.key});
 
@@ -35,8 +36,9 @@ class PermissionBanner extends StatelessWidget {
                 height: 32,
                 alignment: Alignment.center,
                 decoration: Ui.tint(palette, palette.accent, radius: 9),
-                child:
-                    uiGlyph('video', size: 17, color: palette.accent),
+                child: uiGlyph(_glyphFor(ask.labels),
+                    size: 17,
+                    color: palette.accent),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -78,4 +80,17 @@ class PermissionBanner extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The mark at the left is the thing being asked for, so a microphone prompt
+/// does not show a camera.
+String _glyphFor(List<String> labels) {
+  final s = labels.join(' and ').toLowerCase();
+  if (s.contains('camera')) return 'camera';
+  if (s.contains('microphone')) return 'mic';
+  if (s.contains('location')) return 'location';
+  if (s.contains('clipboard')) return 'copy';
+  if (s.contains('media')) return 'video';
+  if (s.contains('midi')) return 'keyboard';
+  return 'info';
 }

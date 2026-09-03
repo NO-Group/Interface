@@ -147,7 +147,7 @@ class DownloadsList extends StatelessWidget {
       icon = 'image';
     }
     if (n.endsWith('.apk')) icon = 'device';
-    if (n.endsWith('.exe')) icon = 'grid';
+    if (n.endsWith('.exe') || n.endsWith('.msi')) icon = 'file-code';
     return Container(
       width: 40,
       height: 40,

@@ -65,25 +65,25 @@ String fileIconName(String name, {required bool isDir}) {
     case 'bmp':
     case 'heic':
     case 'svg':
-      return 'image';
+      return 'file-image';
     case 'mp4':
     case 'mkv':
     case 'mov':
     case 'avi':
     case 'webm':
-      return 'video';
+      return 'file-video';
     case 'mp3':
     case 'm4a':
     case 'flac':
     case 'wav':
     case 'ogg':
-      return 'music';
+      return 'file-audio';
     case 'zip':
     case 'rar':
     case '7z':
     case 'tar':
     case 'gz':
-      return 'archive';
+      return 'file-zip';
     case 'pdf':
       return 'file-pdf';
     case 'dart':
@@ -110,6 +110,18 @@ String fileIconName(String name, {required bool isDir}) {
     case 'sh':
     case 'bat':
       return 'file-code';
+    case 'exe':
+    case 'msi':
+    case 'apk':
+    case 'aab':
+    case 'deb':
+    case 'rpm':
+      return 'device';
+    case 'ttf':
+    case 'otf':
+    case 'woff':
+    case 'woff2':
+      return 'text';
     case 'txt':
     case 'md':
     case 'rtf':
