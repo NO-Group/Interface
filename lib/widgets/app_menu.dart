@@ -202,7 +202,7 @@ class AppMenuButton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 6),
       icon: uiGlyph('dots', color: palette.text, size: 22),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(Ui.rMenu),
+        borderRadius: Ui.petal(Ui.rMenu, at: UiCorner.topLeft),
         side: BorderSide(color: palette.border),
       ),
       itemBuilder: (_) => [

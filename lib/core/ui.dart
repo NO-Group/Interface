@@ -20,11 +20,19 @@ abstract final class Ui {
   static const double menuRowHeight = 40;
   static const double listItemHeight = 52;
 
-  static const double rControl = 8;
-  static const double rField = 10;
-  static const double rMenu = 12;
-  static const double rCard = 14;
-  static const double rSheet = 18;
+  static const double rControl = 9;
+  static const double rField = 11;
+  static const double rMenu = 13;
+  static const double rCard = 15;
+  static const double rSheet = 19;
+
+  /// How much tighter the one chamfered corner of a surface is. Every surface
+  /// in the app keeps three soft corners and one tight one, which points at
+  /// whatever the surface belongs to.
+  static const double tight = 0.3;
+
+  /// The accent keyline drawn on the inside of a selected or active surface.
+  static const double keyline = 2.5;
 
   static const double pad = 12;
   static const double padLg = 16;
@@ -59,7 +67,7 @@ abstract final class Ui {
       fontSize: size,
       fontWeight: weight,
       height: height,
-      letterSpacing: 0,
+      letterSpacing: size <= sizeCaption ? 0.15 : (size < sizeTitle ? 0.08 : 0),
     );
   }
 
@@ -128,21 +136,46 @@ abstract final class Ui {
   }) {
     return BoxDecoration(
       color: focused ? p.surface : (fill ?? p.omniboxFill),
-      borderRadius: BorderRadius.circular(radius),
+      borderRadius: petal(radius, at: UiCorner.bottomRight),
       border: Border.all(
-        color: focused ? p.accent : p.border.withValues(alpha: 0.0),
+        color: focused ? p.accent : p.border,
         width: focused ? 1.4 : hair,
       ),
+      boxShadow: focused
+          ? [
+              BoxShadow(
+                color: p.accent.withValues(alpha: p.isDark ? 0.26 : 0.18),
+                blurRadius: 16,
+                spreadRadius: 0.5,
+              ),
+            ]
+          : null,
     );
   }
 
   /// A raised, floating surface: menus, popovers, sheets, dialogs.
-  static BoxDecoration floating(BrowserPalette p, {double radius = rMenu}) {
+  static BoxDecoration floating(BrowserPalette p,
+      {double radius = rMenu, UiCorner at = UiCorner.topLeft}) {
     return BoxDecoration(
-      color: p.surface,
-      borderRadius: BorderRadius.circular(radius),
+      borderRadius: petal(radius, at: at),
+      gradient: lift(p, p.surface),
       border: Border.all(color: p.border),
       boxShadow: float(p),
+    );
+  }
+
+  /// The lit top edge every raised surface carries: the first sliver of the
+  /// fill is brightened, which is what makes navy plate read as milled metal
+  /// rather than a coloured rectangle. A gradient does this because a
+  /// chamfered surface must keep a uniform border.
+  static LinearGradient lift(BrowserPalette p, Color base) {
+    final lit = Color.alphaBlend(
+        Colors.white.withValues(alpha: p.isDark ? 0.10 : 0.55), base);
+    return LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      stops: const <double>[0, 0.035, 1],
+      colors: <Color>[lit, base, base],
     );
   }
 
@@ -154,14 +187,20 @@ abstract final class Ui {
   }) {
     return BoxDecoration(
       color: color ?? p.chromeFill,
-      border: border ?? Border(bottom: BorderSide(color: p.border)),
+      border: border ??
+          Border(
+            top: BorderSide(
+                color: Colors.white.withValues(alpha: p.isDark ? 0.06 : 0.7)),
+            bottom: BorderSide(color: p.border),
+          ),
     );
   }
 
   static BoxDecoration card(BrowserPalette p, {Color? color, bool outlined = true}) {
+    final base = color ?? p.surface;
     return BoxDecoration(
-      color: color ?? p.surface,
-      borderRadius: BorderRadius.circular(rCard),
+      borderRadius: petal(rCard),
+      gradient: lift(p, base),
       border: outlined ? Border.all(color: p.border) : null,
     );
   }
@@ -169,7 +208,7 @@ abstract final class Ui {
   static BoxDecoration tint(BrowserPalette p, Color color, {double radius = rControl}) {
     return BoxDecoration(
       color: color.withValues(alpha: p.isDark ? 0.18 : 0.12),
-      borderRadius: BorderRadius.circular(radius),
+      borderRadius: petal(radius, at: UiCorner.topRight),
       border: Border.all(color: color.withValues(alpha: 0.45)),
     );
   }
@@ -189,7 +228,26 @@ abstract final class Ui {
 
   static BorderRadius radius(double v) => BorderRadius.circular(v);
 
+  /// Three soft corners, one tight one. `at` names the corner that faces the
+  /// content the surface belongs to.
+  static BorderRadius petal(double v, {UiCorner at = UiCorner.bottomRight}) {
+    final t = v * tight;
+    return switch (at) {
+      UiCorner.topLeft => BorderRadius.fromLTRB(t, v, v, v),
+      UiCorner.topRight => BorderRadius.fromLTRB(v, t, v, v),
+      UiCorner.bottomRight => BorderRadius.fromLTRB(v, v, t, v),
+      UiCorner.bottomLeft => BorderRadius.fromLTRB(v, v, v, t),
+    };
+  }
+
+  /// A petal that matches `Ui.radius`, for call sites that only know a number.
+  static BorderRadius shape(double v,
+          {UiCorner at = UiCorner.bottomRight}) =>
+      petal(v, at: at);
 }
+
+/// Which corner of a surface carries the tight radius.
+enum UiCorner { topLeft, topRight, bottomRight, bottomLeft }
 
 /// Derived colours so no widget invents its own alpha values.
 extension UiPalette on BrowserPalette {
@@ -221,14 +279,23 @@ extension UiPalette on BrowserPalette {
   Color get successSoft => success.withValues(alpha: isDark ? 0.16 : 0.10);
   Color get accentSoft => activeFill;
 
-  ShapeBorder get fieldShape =>
-      RoundedRectangleBorder(borderRadius: BorderRadius.circular(Ui.rField));
-  ShapeBorder get controlShape =>
-      RoundedRectangleBorder(borderRadius: BorderRadius.circular(Ui.rControl));
-  ShapeBorder get cardShape =>
-      RoundedRectangleBorder(borderRadius: BorderRadius.circular(Ui.rCard));
-  ShapeBorder get menuShape =>
-      RoundedRectangleBorder(borderRadius: BorderRadius.circular(Ui.rMenu));
+  ShapeBorder get fieldShape => RoundedRectangleBorder(
+        borderRadius: Ui.petal(Ui.rField, at: UiCorner.bottomRight),
+      );
+  ShapeBorder get controlShape => RoundedRectangleBorder(
+        borderRadius: Ui.petal(Ui.rControl, at: UiCorner.bottomRight),
+      );
+  ShapeBorder get cardShape => RoundedRectangleBorder(
+        borderRadius: Ui.petal(Ui.rCard),
+      );
+  ShapeBorder get menuShape => RoundedRectangleBorder(
+        borderRadius: Ui.petal(Ui.rMenu, at: UiCorner.topLeft),
+      );
+
+  /// Tab pills: the tight corners sit on the side that faces the page.
+  ShapeBorder get tabShape => RoundedRectangleBorder(
+        borderRadius: Ui.petal(Ui.tabHeight / 2, at: UiCorner.bottomRight),
+      );
   ShapeBorder get pillShape =>
       const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(999)));
 

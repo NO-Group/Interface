@@ -178,7 +178,7 @@ class TabStrip extends StatelessWidget {
         builder: (d2, setD) => SimpleDialog(
           backgroundColor: palette.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Ui.rSheet),
+            borderRadius: Ui.petal(Ui.rSheet, at: UiCorner.topLeft),
             side: BorderSide(color: palette.border),
           ),
           title: Text(
@@ -299,7 +299,7 @@ class TabCountButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
             color: hovering || pressed ? p.hoverFill : Colors.transparent,
-            borderRadius: BorderRadius.circular(Ui.rField),
+            borderRadius: Ui.petal(Ui.rField),
             border: Border.all(color: p.border),
           ),
           child: Row(
@@ -389,11 +389,22 @@ class _TabPill extends StatelessWidget {
                     : (pressed
                         ? p.activeFill
                         : (hovering ? p.hoverFill : Colors.transparent)),
-                borderRadius: BorderRadius.circular(Ui.rField),
+                borderRadius: Ui.petal(Ui.rField),
                 border: Border.all(
                   color: groupColor?.withValues(alpha: 0.5) ??
                       (selected ? p.border : Colors.transparent),
                 ),
+                // The tab you are on lifts a little off the bar.
+                boxShadow: selected
+                    ? <BoxShadow>[
+                        BoxShadow(
+                          color: p.accent.withValues(
+                              alpha: p.isDark ? 0.14 : 0.10),
+                          blurRadius: 16,
+                          spreadRadius: 0.5,
+                        ),
+                      ]
+                    : null,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,

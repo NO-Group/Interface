@@ -746,7 +746,7 @@ class _TabKey extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
               color: hovering || pressed ? p.hoverFill : Colors.transparent,
-              borderRadius: BorderRadius.circular(Ui.rControl),
+              borderRadius: Ui.petal(Ui.rControl),
               border: Border.all(color: p.border),
             ),
             child: Row(

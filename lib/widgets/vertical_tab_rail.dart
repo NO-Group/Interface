@@ -71,7 +71,7 @@ class VerticalTabRail extends StatelessWidget {
                       color: selected
                           ? palette.surfaceAlt.withValues(alpha: 0.9)
                           : Colors.transparent,
-                      borderRadius: BorderRadius.circular(Ui.rField),
+                      borderRadius: Ui.petal(Ui.rField),
                       border: Border(
                         left: BorderSide(
                           color: selected

@@ -64,7 +64,7 @@ class DownloadsList extends StatelessWidget {
           color: palette.surface,
           margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Ui.rCard),
+            borderRadius: Ui.petal(Ui.rCard),
             side: BorderSide(color: palette.border),
           ),
           child: ListTile(
@@ -153,7 +153,7 @@ class DownloadsList extends StatelessWidget {
       height: 40,
       decoration: BoxDecoration(
         color: palette.surfaceAlt,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: Ui.petal(10),
       ),
       child: uiGlyph(icon, size: 20, color: palette.accent),
     );

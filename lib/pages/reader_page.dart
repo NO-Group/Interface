@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../widgets/icons.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../services/reader_extractor.dart';
 import '../state/browser_provider.dart';
 import '../state/settings_provider.dart';
@@ -262,7 +263,7 @@ class _ArticleBody extends StatelessWidget {
         if (hero.isNotEmpty) ...[
           const SizedBox(height: 18),
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: Ui.petal(12),
             child: Image.network(
               hero,
               fit: BoxFit.cover,
@@ -286,7 +287,7 @@ class _ArticleBody extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.only(bottom: 18),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: Ui.petal(10),
           child: Image.network(
             value,
             errorBuilder: (_, _, _) => const SizedBox.shrink(),
@@ -347,7 +348,7 @@ class _ArticleBody extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: scheme.foreground.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: Ui.petal(10),
         ),
         child: Text(
           value,

@@ -100,7 +100,7 @@ class UiIconButton extends StatelessWidget {
           color: pressed
               ? p.activeFill
               : (hovering ? p.hoverFill : Colors.transparent),
-          borderRadius: BorderRadius.circular(Ui.rControl),
+          borderRadius: Ui.petal(Ui.rControl),
           border: Border.all(
             color: selected ? p.ring : Colors.transparent,
           ),
@@ -196,7 +196,7 @@ class UiCluster extends StatelessWidget {
       padding: padding ?? const EdgeInsets.symmetric(horizontal: 2),
       decoration: BoxDecoration(
         color: p.blurredChrome ? Colors.black26 : p.clusterFill,
-        borderRadius: BorderRadius.circular(Ui.rField),
+        borderRadius: Ui.petal(Ui.rField),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: children),
     );
@@ -259,7 +259,21 @@ class _UiProgressLineState extends State<UiProgressLine>
                 duration: Ui.normal,
                 curve: Ui.curve,
                 widthFactor: (widget.progress / 100).clamp(0.02, 1.0).toDouble(),
-                child: ColoredBox(color: p.accent),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: p.accent,
+                    borderRadius: const BorderRadius.vertical(
+                      end: Radius.circular(2),
+                    ),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: p.accent.withValues(alpha: 0.65),
+                        blurRadius: 7,
+                      ),
+                    ],
+                  ),
+                  child: const ColoredBox(color: Colors.transparent),
+                ),
               ),
             )
           : LayoutBuilder(
@@ -282,7 +296,19 @@ class _UiProgressLineState extends State<UiProgressLine>
                           top: 0,
                           width: w,
                           height: Ui.progressHeight,
-                          child: ColoredBox(color: p.accent),
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: p.accent,
+                              borderRadius: BorderRadius.circular(2),
+                              boxShadow: <BoxShadow>[
+                                BoxShadow(
+                                  color: p.accent.withValues(alpha: 0.65),
+                                  blurRadius: 7,
+                                ),
+                              ],
+                            ),
+                            child: const SizedBox(height: Ui.progressHeight),
+                          ),
                         ),
                       ],
                     );
@@ -335,7 +361,9 @@ class UiRow extends StatelessWidget {
       builder: (context, hovering, pressed) => AnimatedContainer(
         duration: Ui.quick,
         curve: Ui.curve,
-        height: h,
+        // A minimum, not a fixed height: a long subtitle or a large text size
+        // grows the row instead of running past it.
+        constraints: BoxConstraints(minHeight: h),
         padding: padding ??
             EdgeInsets.symmetric(horizontal: dense ? 10 : Ui.padLg),
         decoration: BoxDecoration(
@@ -344,8 +372,15 @@ class UiRow extends StatelessWidget {
               : (selected
                   ? p.activeFill
                   : (hovering ? p.hoverFill : Colors.transparent)),
-          borderRadius: BorderRadius.circular(Ui.rControl),
+          borderRadius: Ui.petal(Ui.rControl),
         ),
+        // The selected row carries an accent bar down its leading edge, the
+        // one cue that says "this row is the one the window is showing".
+        foregroundDecoration: selected
+            ? BoxDecoration(
+                border: Border(left: BorderSide(color: p.accent, width: 2.6)),
+              )
+            : null,
         child: Row(
           children: [
             if (leading != null) ...[leading!, Ui.gap(10)],
@@ -485,7 +520,7 @@ class UiButton extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: bg,
-            borderRadius: BorderRadius.circular(Ui.rControl),
+            borderRadius: Ui.petal(Ui.rControl),
             border: Border.all(color: filled ? Colors.transparent : p.border),
           ),
           child: Row(
@@ -549,7 +584,7 @@ class UiChip extends StatelessWidget {
           color: selected
               ? p.activeFill
               : (hovering || pressed ? p.hoverFill : Colors.transparent),
-          borderRadius: BorderRadius.circular(Ui.rControl),
+          borderRadius: Ui.petal(Ui.rControl),
           border: Border.all(color: selected ? p.ring : p.border),
         ),
         child: Row(
@@ -614,7 +649,7 @@ class UiEmpty extends StatelessWidget {
                 height: 44,
                 decoration: BoxDecoration(
                   color: p.surfaceAlt,
-                  borderRadius: BorderRadius.circular(Ui.rCard),
+                  borderRadius: Ui.petal(Ui.rCard),
                   border: Border.all(color: p.border),
                 ),
                 child: uiGlyph(icon, size: 21, color: p.textDim),

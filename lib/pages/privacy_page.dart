@@ -42,7 +42,7 @@ class PrivacyPage extends StatelessWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: palette.surfaceAlt,
-                  borderRadius: BorderRadius.circular(Ui.rCard),
+                  borderRadius: Ui.petal(Ui.rCard),
                   border: Border.all(color: palette.border),
                 ),
                 child: uiGlyph('shield-on',
@@ -188,7 +188,7 @@ class _Stat extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: palette.surfaceAlt.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: Ui.petal(14),
           border: Border.all(color: palette.border),
         ),
         child: Row(

@@ -87,7 +87,17 @@ class _NewTabPageState extends State<NewTabPage> {
     final items = profile.dialItemsIn(_openFolder);
 
     return Container(
-      color: wallpaper ? Colors.transparent : palette.background,
+      decoration: BoxDecoration(
+        color: wallpaper ? null : palette.background,
+        gradient: RadialGradient(
+          center: const Alignment(0, -1.05),
+          radius: 1.25,
+          colors: <Color>[
+            palette.accent.withValues(alpha: wallpaper ? 0.16 : 0.10),
+            palette.accent.withValues(alpha: 0),
+          ],
+        ),
+      ),
       child: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -106,7 +116,8 @@ class _NewTabPageState extends State<NewTabPage> {
                               horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
                             color: palette.surface.withValues(alpha: 0.85),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: Ui.petal(20,
+                                at: UiCorner.topLeft),
                             border: Border.all(color: palette.border),
                           ),
                           child: Row(
@@ -182,17 +193,18 @@ class _NewTabPageState extends State<NewTabPage> {
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 15),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(Ui.rCard),
+                              borderRadius: Ui.petal(Ui.rCard),
                               borderSide: BorderSide(color: palette.border),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(Ui.rCard),
-                              borderSide: BorderSide(color: palette.border),
+                              borderRadius: Ui.petal(Ui.rCard),
+                              borderSide:
+                                  BorderSide(color: palette.border, width: 1.2),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(Ui.rCard),
+                              borderRadius: Ui.petal(Ui.rCard),
                               borderSide: BorderSide(
-                                  color: palette.accent, width: 1.4),
+                                  color: palette.accent, width: 1.6),
                             ),
                           ),
                         ),
@@ -203,7 +215,7 @@ class _NewTabPageState extends State<NewTabPage> {
                           if (folder != null) ...[
                             InkWell(
                               onTap: () => setState(() => _openFolder = null),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: Ui.petal(8),
                               child: Padding(
                                 padding: const EdgeInsets.all(4),
                                 child: Row(children: [
@@ -662,7 +674,7 @@ class _DraggableTile extends StatelessWidget {
           child: hovering
               ? Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: Ui.petal(16),
                     border: Border.all(color: palette.accent, width: 1.5),
                   ),
                   child: tile,
@@ -710,7 +722,7 @@ class _DialTile extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
       onSecondaryTap: onLongPress,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: Ui.petal(16),
       child: SizedBox(
         width: 88,
         child: Column(
@@ -721,7 +733,7 @@ class _DialTile extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: palette.surface.withValues(alpha: 0.92),
-                borderRadius: BorderRadius.circular(Ui.rCard),
+                borderRadius: Ui.petal(Ui.rCard),
                 border: Border.all(color: palette.border),
               ),
               child: Favicon(host: hostOf(item.url), size: 30),
@@ -765,7 +777,7 @@ class _FolderTile extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
       onSecondaryTap: onLongPress,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: Ui.petal(16),
       child: SizedBox(
         width: 88,
         child: Column(
@@ -783,7 +795,7 @@ class _FolderTile extends StatelessWidget {
                     palette.primary.withValues(alpha: 0.55),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(17),
+                borderRadius: Ui.petal(17),
                 border: Border.all(color: palette.border),
               ),
               child: uiGlyph('folder',
@@ -825,7 +837,7 @@ class _AddDialTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: Ui.petal(16),
       child: SizedBox(
         width: 88,
         child: Column(
@@ -836,7 +848,7 @@ class _AddDialTile extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: palette.surfaceAlt.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(17),
+                borderRadius: Ui.petal(17),
                 border: Border.all(color: palette.border),
               ),
               child: uiGlyph('plus', size: 26, color: palette.textDim),
@@ -863,7 +875,7 @@ class _AddFolderTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: Ui.petal(16),
       child: SizedBox(
         width: 88,
         child: Column(
@@ -874,7 +886,7 @@ class _AddFolderTile extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: palette.surfaceAlt.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(17),
+                borderRadius: Ui.petal(17),
                 border: Border.all(color: palette.border),
               ),
               child:
@@ -909,7 +921,7 @@ class _QuickLink extends StatelessWidget {
     final palette = pal(context);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: Ui.petal(10),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         child: Column(

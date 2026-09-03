@@ -227,7 +227,7 @@ class _CommandPaletteState extends State<CommandPalette> {
                                     color: selected
                                         ? palette.activeFill
                                         : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(Ui.rControl),
+                                    borderRadius: Ui.petal(Ui.rControl),
                                   ),
                                   child: Row(
                                     children: [

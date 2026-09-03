@@ -111,11 +111,11 @@ class _TabCard extends StatelessWidget {
     final palette = pal(context);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: Ui.petal(14),
       child: Container(
         decoration: BoxDecoration(
           color: palette.surface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: Ui.petal(14),
           boxShadow: selected ? Ui.float(palette, y: 4, blur: 14) : null,
           border: Border.all(
             color: selected ? palette.accent : palette.border,
@@ -193,11 +193,11 @@ class _NewTabCard extends StatelessWidget {
     final palette = pal(context);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: Ui.petal(14),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: Ui.petal(14),
           border: Border.all(color: palette.border),
         ),
         child: uiGlyph('plus', size: 34, color: palette.textDim),

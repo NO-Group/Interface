@@ -63,7 +63,17 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
     ];
 
     return Container(
-      color: palette.background.withValues(alpha: 0.98),
+      decoration: BoxDecoration(
+        color: palette.background.withValues(alpha: 0.98),
+        gradient: RadialGradient(
+          center: const Alignment(0, -0.9),
+          radius: 1.3,
+          colors: <Color>[
+            palette.accent.withValues(alpha: 0.12),
+            palette.accent.withValues(alpha: 0),
+          ],
+        ),
+      ),
       child: SafeArea(
         child: Column(
           children: [
@@ -84,13 +94,22 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
                       for (var i = 0; i < slides.length; i++)
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          width: _index == i ? 22 : 7,
-                          height: 7,
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          width: _index == i ? 26 : 10,
+                          height: 4,
                           decoration: BoxDecoration(
                             color:
                                 _index == i ? palette.accent : palette.border,
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(3),
+                            boxShadow: _index == i
+                                ? <BoxShadow>[
+                                    BoxShadow(
+                                      color: palette.accent
+                                          .withValues(alpha: 0.6),
+                                      blurRadius: 8,
+                                    ),
+                                  ]
+                                : null,
                           ),
                         ),
                     ],
@@ -104,7 +123,7 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
                         backgroundColor: palette.primary,
                         foregroundColor: palette.onPrimary,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(Ui.rField),
+                          borderRadius: Ui.petal(Ui.rField),
                         ),
                       ),
                       onPressed: () {
@@ -192,7 +211,13 @@ class _Slide extends StatelessWidget {
           if (logo)
             const LogoMark(size: 66)
           else
-            uiGlyph(icon, size: 34, color: palette.accent),
+            Container(
+              width: 64,
+              height: 64,
+              alignment: Alignment.center,
+              decoration: Ui.tint(palette, palette.accent, radius: 20),
+              child: uiGlyph(icon, size: 30, color: palette.accent),
+            ),
           const SizedBox(height: 30),
           Text(
             title,
@@ -264,13 +289,13 @@ class _ThemePicker extends StatelessWidget {
     final active = picked == i;
     return InkWell(
       onTap: () => onPicked(i),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: Ui.petal(12, at: UiCorner.topLeft),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: active ? palette.activeFill : p.background,
-          borderRadius: BorderRadius.circular(Ui.rField),
+          borderRadius: Ui.petal(Ui.rField, at: UiCorner.topLeft),
           border: Border.all(
             color: active ? palette.accent : palette.border,
             width: active ? 1.4 : 1,

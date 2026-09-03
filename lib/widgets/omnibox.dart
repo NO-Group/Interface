@@ -450,7 +450,7 @@ class _SiteButton extends StatelessWidget {
           color: pressed
               ? palette.activeFill
               : (hovering ? palette.hoverFill : Colors.transparent),
-          borderRadius: BorderRadius.circular(Ui.rControl),
+          borderRadius: Ui.petal(Ui.rControl),
         ),
         child: child,
       ),
@@ -525,7 +525,7 @@ class _PanelCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 9),
               decoration: BoxDecoration(
                 color: isSel ? palette.activeFill : Colors.transparent,
-                borderRadius: BorderRadius.circular(Ui.rControl),
+                borderRadius: Ui.petal(Ui.rControl),
               ),
               child: Row(
                 children: [

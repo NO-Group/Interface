@@ -111,7 +111,7 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                       const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
                   decoration: BoxDecoration(
                     color: blocked > 0 ? palette.accentSoft : palette.surfaceAlt,
-                    borderRadius: BorderRadius.circular(Ui.rField),
+                    borderRadius: Ui.petal(Ui.rField),
                     border: Border.all(color: palette.border),
                   ),
                   child: Row(

@@ -342,7 +342,7 @@ class _ErrorPage extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: palette.surfaceAlt,
-              borderRadius: BorderRadius.circular(Ui.rCard),
+              borderRadius: Ui.petal(Ui.rCard),
               border: Border.all(color: palette.border),
             ),
             child: uiGlyph('wifi-off', size: 30, color: palette.textDim),
