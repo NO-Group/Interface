@@ -124,16 +124,59 @@ void main() {
   });
 
   group('icon names', () {
-    test('file kinds map onto the shipped set', () {
-      expect(fileIconName('holiday.MP4', isDir: false), 'video');
-      expect(fileIconName('song.flac', isDir: false), 'music');
-      expect(fileIconName('backup.zip', isDir: false), 'archive');
+    // A file list shows documents, so media files read as pages with a mark
+    // rather than as bare media glyphs.
+    test('file kinds pick the right mark', () {
+      expect(fileIconName('holiday.MP4', isDir: false), 'file-video');
+      expect(fileIconName('song.flac', isDir: false), 'file-audio');
+      expect(fileIconName('backup.zip', isDir: false), 'file-zip');
       expect(fileIconName('report.pdf', isDir: false), 'file-pdf');
       expect(fileIconName('main.dart', isDir: false), 'file-code');
       expect(fileIconName('README.md', isDir: false), 'file-text');
+      expect(fileIconName('setup.exe', isDir: false), 'device');
+      expect(fileIconName('Inter.ttf', isDir: false), 'text');
       expect(fileIconName('LICENSE', isDir: false), 'file');
       expect(fileIconName('.hidden', isDir: false), 'file');
       expect(fileIconName('Pictures', isDir: true), 'folder');
+    });
+
+    test('every mark a row can ask for is on disk', () {
+      final shipped = Directory('assets/icons')
+          .listSync()
+          .whereType<File>()
+          .map((f) => f.uri.pathSegments.last.replaceAll('.svg', ''))
+          .toSet();
+      expect(shipped, isNotEmpty, reason: 'assets/icons did not resolve');
+      const asked = [
+        'folder', 'file', 'file-text', 'file-code', 'file-image', 'file-video',
+        'file-audio', 'file-zip', 'file-pdf', 'device', 'text', 'drive',
+        'folder-on', 'folder-open', 'folder-plus', 'folder-block', 'image',
+        'video', 'music', 'archive', 'code', 'pdf', 'zip',
+      ];
+      for (final name in asked) {
+        expect(shipped, contains(name), reason: '$name.svg is missing');
+      }
+    });
+
+    test('nothing in the app asks for a mark that was not shipped', () {
+      final shipped = Directory('assets/icons')
+          .listSync()
+          .whereType<File>()
+          .map((f) => f.uri.pathSegments.last.replaceAll('.svg', ''))
+          .toSet();
+      final wanted = <String>{};
+      final rx = RegExp(
+          r"(?:Ico\(\s*|uiGlyph\(\s*|icon:\s*)'([a-z0-9][a-z0-9-]*)'");
+      for (final f in Directory('lib').listSync(recursive: true)) {
+        if (f is! File || !f.path.endsWith('.dart')) continue;
+        for (final m in rx.allMatches(f.readAsStringSync())) {
+          wanted.add(m.group(1)!);
+        }
+      }
+      expect(wanted, isNotEmpty);
+      for (final name in wanted) {
+        expect(shipped, contains(name), reason: '$name is used but not drawn');
+      }
     });
   });
 
