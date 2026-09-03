@@ -262,8 +262,9 @@ class _UiProgressLineState extends State<UiProgressLine>
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: p.accent,
-                    borderRadius: const BorderRadius.vertical(
-                      end: Radius.circular(2),
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(2),
+                      bottomRight: Radius.circular(2),
                     ),
                     boxShadow: <BoxShadow>[
                       BoxShadow(

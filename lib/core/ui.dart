@@ -231,13 +231,14 @@ abstract final class Ui {
   /// Three soft corners, one tight one. `at` names the corner that faces the
   /// content the surface belongs to.
   static BorderRadius petal(double v, {UiCorner at = UiCorner.bottomRight}) {
-    final t = v * tight;
-    return switch (at) {
-      UiCorner.topLeft => BorderRadius.fromLTRB(t, v, v, v),
-      UiCorner.topRight => BorderRadius.fromLTRB(v, t, v, v),
-      UiCorner.bottomRight => BorderRadius.fromLTRB(v, v, t, v),
-      UiCorner.bottomLeft => BorderRadius.fromLTRB(v, v, v, t),
-    };
+    final soft = Radius.circular(v);
+    final cut = Radius.circular(v * tight);
+    return BorderRadius.only(
+      topLeft: at == UiCorner.topLeft ? cut : soft,
+      topRight: at == UiCorner.topRight ? cut : soft,
+      bottomRight: at == UiCorner.bottomRight ? cut : soft,
+      bottomLeft: at == UiCorner.bottomLeft ? cut : soft,
+    );
   }
 
   /// A petal that matches `Ui.radius`, for call sites that only know a number.

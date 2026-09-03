@@ -300,10 +300,30 @@ ThemeData buildMaterialTheme(BrowserPalette p) {
   // One corner on every surface is kept tight: it points at whatever the
   // surface belongs to, so the whole window reads as one designed thing
   // instead of a pile of rounded rectangles.
-  const rControl = BorderRadius.fromLTRB(9, 9, 3, 9);
-  const rField = BorderRadius.fromLTRB(11, 11, 3.5, 11);
-  const rCard = BorderRadius.fromLTRB(15, 15, 4.5, 15);
-  const rMenu = BorderRadius.fromLTRB(4, 13, 13, 13);
+  const rControl = BorderRadius.only(
+        topLeft: Radius.circular(9),
+        topRight: Radius.circular(9),
+        bottomRight: Radius.circular(3),
+        bottomLeft: Radius.circular(9),
+      );
+  const rField = BorderRadius.only(
+        topLeft: Radius.circular(11),
+        topRight: Radius.circular(11),
+        bottomRight: Radius.circular(3.5),
+        bottomLeft: Radius.circular(11),
+      );
+  const rCard = BorderRadius.only(
+        topLeft: Radius.circular(15),
+        topRight: Radius.circular(15),
+        bottomRight: Radius.circular(4.5),
+        bottomLeft: Radius.circular(15),
+      );
+  const rMenu = BorderRadius.only(
+        topLeft: Radius.circular(4),
+        topRight: Radius.circular(13),
+        bottomRight: Radius.circular(13),
+        bottomLeft: Radius.circular(13),
+      );
   const rSheet = BorderRadius.vertical(top: Radius.circular(19));
 
   final scheme = ColorScheme(
@@ -436,7 +456,12 @@ ThemeData buildMaterialTheme(BrowserPalette p) {
     ),
     listTileTheme: ListTileThemeData(
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.fromLTRB(10, 10, 3, 10),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(10),
+          topRight: Radius.circular(10),
+          bottomRight: Radius.circular(3),
+          bottomLeft: Radius.circular(10),
+        ),
       ),
       style: ListTileStyle.list,
       iconColor: p.textDim,
