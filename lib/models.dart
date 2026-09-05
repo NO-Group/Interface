@@ -1,4 +1,6 @@
 /// Small persisted data models (JSON-serializable).
+library;
+
 
 class Bookmark {
   const Bookmark({required this.url, required this.title});

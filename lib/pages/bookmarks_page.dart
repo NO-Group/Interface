@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../widgets/icons.dart';
 
 import '../core/pal.dart';
 import '../core/urls.dart';
@@ -24,9 +25,9 @@ class BookmarksList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.star_border_rounded, size: 52, color: palette.textDim),
+            uiGlyph('star', size: 52, color: palette.textDim),
             const SizedBox(height: 12),
-            Text('Tap ☆ in the toolbar to bookmark pages',
+            Text('Use the star in the toolbar to keep pages here',
                 style: TextStyle(color: palette.text, fontSize: 15)),
           ],
         ),
@@ -74,7 +75,7 @@ class _BookmarkTile extends StatelessWidget {
       trailing: embedded
           ? null
           : PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert_rounded,
+              icon: uiGlyph('menu',
                   size: 19, color: palette.textDim),
               itemBuilder: (_) => const [
                 PopupMenuItem(value: 'open', height: 40, child: Text('Open')),
@@ -117,11 +118,13 @@ class _BookmarkTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
+              spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
               controller: title,
               decoration: const InputDecoration(labelText: 'Name', isDense: true),
             ),
             const SizedBox(height: 12),
             TextField(
+              spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
               controller: url,
               decoration:
                   const InputDecoration(labelText: 'Address', isDense: true),

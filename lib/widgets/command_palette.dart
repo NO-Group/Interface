@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
-import '../core/palette.dart';
+import '../core/ui.dart';
 import '../pages/bookmarks_page.dart';
 import '../pages/downloads_page.dart';
 import '../pages/history_page.dart';
 import '../pages/privacy_page.dart';
+import '../pages/files_page.dart';
 import '../pages/reader_page.dart';
 import '../pages/reading_list_page.dart';
 import '../pages/settings_page.dart';
@@ -19,11 +21,11 @@ class _Command {
   const _Command(this.label, this.hint, this.icon, this.run);
   final String label;
   final String hint;
-  final IconData icon;
+  final Object icon;
   final void Function(BuildContext) run;
 }
 
-/// Power-user command palette (Ctrl+K): fuzzy-search every browser action.
+/// Quick actions (Ctrl+K): type to find a browser action.
 class CommandPalette extends StatefulWidget {
   const CommandPalette({super.key});
 
@@ -59,73 +61,74 @@ class _CommandPaletteState extends State<CommandPalette> {
     }
 
     return [
-      _Command('New tab', 'Ctrl+T', Icons.add_rounded, (_) => browser.newTab()),
-      _Command('New incognito tab', 'Ctrl+Shift+N', Icons.shield_outlined,
+      _Command('New tab', 'Ctrl+T', 'plus', (_) => browser.newTab()),
+      _Command('New private tab', 'Ctrl+Shift+N', 'shield',
           (_) => browser.newTab(incognito: true)),
-      _Command('Close current tab', 'Ctrl+W', Icons.close_rounded,
+      _Command('Close current tab', 'Ctrl+W', 'close',
           (_) => browser.closeCurrent()),
-      _Command('Find in page', 'Ctrl+F', Icons.find_in_page_rounded,
+      _Command('Find in page', 'Ctrl+F', 'find',
           (_) => browser.openFind()),
-      _Command('Enter Reader Mode', '', Icons.menu_book_rounded, (_) {
+      _Command('Open files', '', 'folder', (_) => openPanelOrRoute(
+            SidePanel.files, const FilesRoute())),
+      _Command('Reader view', '', 'reading-list', (_) {
         Navigator.of(context).push(
           MaterialPageRoute<void>(builder: (_) => const ReaderPage()),
         );
       }),
       _Command(
-          'Add to speed dial', '', Icons.grid_view_rounded, (_) => profile
+          'Add to speed dial', '', 'grid', (_) => profile
               .toggleSpeedDial(
                   url: tab.url,
                   title: tab.title.isEmpty ? tab.host : tab.title)),
-      _Command('Save to reading list', '', Icons.auto_stories_outlined,
+      _Command('Save to reading list', '', 'reader',
           (_) => profile.addReading(url: tab.url, title: tab.title)),
-      _Command('Bookmark this page', 'Ctrl+D', Icons.star_rounded,
+      _Command('Bookmark this page', 'Ctrl+D', 'star-on',
           (_) => profile.toggleBookmark(url: tab.url, title: tab.title)),
-      _Command('Downloads', 'Ctrl+J', Icons.download_rounded,
+      _Command('Downloads', 'Ctrl+J', 'download',
           (_) => openPanelOrRoute(
               SidePanel.downloads, const DownloadsRoute())),
-      _Command('History', 'Ctrl+H', Icons.history_rounded,
+      _Command('History', 'Ctrl+H', 'clock',
           (_) => openPanelOrRoute(SidePanel.history, const HistoryRoute())),
-      _Command('Bookmarks', '', Icons.bookmarks_outlined,
+      _Command('Bookmarks', '', 'bookmarks',
           (_) => openPanelOrRoute(
               SidePanel.bookmarks, const BookmarksRoute())),
-      _Command('Reading list', '', Icons.auto_stories_outlined,
+      _Command('Reading list', '', 'reader',
           (_) => openPanelOrRoute(
               SidePanel.reading, const ReadingRoute())),
-      _Command('Privacy dashboard', '', Icons.shield_rounded,
+      _Command('Privacy dashboard', '', 'shield-on',
           (_) => openPanelOrRoute(
               SidePanel.privacy, const PrivacyRoute())),
-      _Command('Settings', '', Icons.settings_outlined,
+      _Command('Settings', '', 'sliders',
           (_) => openPanelOrRoute(
               SidePanel.settings, const SettingsRoute())),
-      _Command('Theme: System', '', Icons.brightness_auto,
+      _Command('Theme: System', '', 'auto',
           (_) => settings.setThemeChoice(ThemeChoice.system)),
-      _Command('Theme: Light', '', Icons.light_mode_outlined,
+      _Command('Theme: Light', '', 'sun',
           (_) => settings.setThemeChoice(ThemeChoice.light)),
-      _Command('Theme: Dark', '', Icons.dark_mode_outlined,
+      _Command('Theme: Dark', '', 'moon',
           (_) => settings.setThemeChoice(ThemeChoice.dark)),
-      _Command('Theme: Red', '', Icons.local_fire_department_outlined,
+      _Command('Theme: Red', '', 'flame',
           (_) => settings.setThemeChoice(ThemeChoice.red)),
-      _Command('Theme: Green', '', Icons.eco_outlined,
+      _Command('Theme: Green', '', 'leaf',
           (_) => settings.setThemeChoice(ThemeChoice.green)),
-      _Command('Theme: Black & White', '', Icons.contrast,
+      _Command('Theme: Black & White', '', 'contrast',
           (_) => settings.setThemeChoice(ThemeChoice.mono)),
-      _Command('Theme: Custom picture', '', Icons.wallpaper,
+      _Command('Theme: Custom picture', '', 'image',
           (_) => settings.setThemeChoice(ThemeChoice.custom)),
-      _Command('Toggle ad blocking', '', Icons.block_rounded,
+      _Command('Toggle ad blocking', '', 'block',
           (_) => settings.setBlockAds(!settings.blockAds)),
-      _Command('Reload page', 'Ctrl+R', Icons.refresh_rounded,
+      _Command('Reload page', 'Ctrl+R', 'reload',
           (_) => browser.reload()),
-      _Command('Go to speed dial / home', '', Icons.home_outlined,
-          (_) => browser.goHome()),
+      _Command('New tab page', '', 'home', (_) => browser.goHome()),
       if (desktop) ...[
-        _Command('Toggle split view', '', Icons.vertical_split_rounded,
+        _Command('Toggle split view', '', 'split',
             (_) => browser.splitActive
                 ? browser.closeSplit()
                 : browser.openSplit()),
-        _Command('Toggle vertical tabs', '', Icons.view_agenda_outlined,
+        _Command('Toggle vertical tabs', '', 'list',
             (_) => settings.setVerticalTabs(!settings.verticalTabs)),
         _Command(
-            'Toggle bookmarks bar', '', Icons.bookmark_border_rounded, (_) {
+            'Toggle bookmarks bar', '', 'bookmark', (_) {
           settings.setShowBookmarksBar(!settings.showBookmarksBar);
         }),
       ],
@@ -151,21 +154,9 @@ class _CommandPaletteState extends State<CommandPalette> {
         child: GestureDetector(
           onTap: () {},
           child: Container(
-            width: 560,
-            constraints: const BoxConstraints(maxHeight: 460),
-            decoration: BoxDecoration(
-              color: palette.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: palette.border),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black
-                      .withValues(alpha: palette.isDark ? 0.6 : 0.25),
-                  blurRadius: 40,
-                  offset: const Offset(0, 12),
-                ),
-              ],
-            ),
+            width: 540,
+            constraints: const BoxConstraints(maxHeight: 440),
+            decoration: Ui.floating(palette, radius: Ui.rCard),
             child: CallbackShortcuts(
               bindings: {
                 const SingleActivator(LogicalKeyboardKey.escape):
@@ -178,40 +169,40 @@ class _CommandPaletteState extends State<CommandPalette> {
                     padding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
                     child: Row(
                       children: [
-                        Icon(Icons.bolt_rounded, size: 20, color: palette.accent),
-                        const SizedBox(width: 10),
+                        uiGlyph('search', size: 19, color: palette.textDim),
+                        const SizedBox(width: 11),
                         Expanded(
                           child: TextField(
+                            spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
                             controller: _controller,
                             autofocus: true,
-                            style: TextStyle(color: palette.text),
+                            style: Ui.text(palette, size: 14.5, color: palette.text),
                             cursorColor: palette.accent,
                             decoration: InputDecoration(
                               border: InputBorder.none,
-                              hintText:
-                                  'Type a command… "theme", "split", "reader"',
-                              hintStyle: TextStyle(color: palette.textDim),
+                              hintText: 'Search actions',
+                              hintStyle: Ui.text(palette, size: 14.5, color: palette.textDim),
                             ),
                             onChanged: (v) =>
                                 setState(() { _query = v; _sel = 0; }),
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.close_rounded,
+                          icon: uiGlyph('close',
                               size: 19, color: palette.textDim),
                           onPressed: browser.closePalette,
                         ),
                       ],
                     ),
                   ),
-                  Divider(height: 1, color: palette.border),
+                  Ui.rule(palette),
                   Flexible(
                     child: results.isEmpty
                         ? Padding(
                             padding: const EdgeInsets.all(24),
                             child: Text(
-                              'No matching command',
-                              style: TextStyle(color: palette.textDim),
+                              'Nothing matches that',
+                              style: Ui.text(palette, color: palette.textDim),
                             ),
                           )
                         : ListView.builder(
@@ -226,16 +217,22 @@ class _CommandPaletteState extends State<CommandPalette> {
                                 onHover: (h) {
                                   if (h) setState(() => _sel = i);
                                 },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 9),
-                                  color: selected
-                                      ? palette.surfaceAlt
-                                      : Colors.transparent,
+                                child: AnimatedContainer(
+                                  duration: Ui.quick,
+                                  curve: Ui.curve,
+                                  height: 42,
+                                  margin: const EdgeInsets.symmetric(horizontal: 6),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                  decoration: BoxDecoration(
+                                    color: selected
+                                        ? palette.activeFill
+                                        : Colors.transparent,
+                                    borderRadius: Ui.petal(Ui.rControl),
+                                  ),
                                   child: Row(
                                     children: [
-                                      Icon(cmd.icon,
-                                          size: 18,
+                                      uiGlyph(cmd.icon,
+                                          size: 17,
                                           color: selected
                                               ? palette.accent
                                               : palette.textDim),
@@ -243,10 +240,11 @@ class _CommandPaletteState extends State<CommandPalette> {
                                       Expanded(
                                         child: Text(
                                           cmd.label,
-                                          style: TextStyle(
-                                            color: palette.text,
-                                            fontSize: 13.5,
-                                            fontWeight: selected
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Ui.text(
+                                            palette,
+                                            weight: selected
                                                 ? FontWeight.w600
                                                 : FontWeight.w400,
                                           ),
@@ -255,9 +253,10 @@ class _CommandPaletteState extends State<CommandPalette> {
                                       if (cmd.hint.isNotEmpty)
                                         Text(
                                           cmd.hint,
-                                          style: TextStyle(
-                                            color: palette.textDim,
-                                            fontSize: 11,
+                                          style: Ui.text(
+                                            palette,
+                                            size: Ui.sizeCaption,
+                                            color: palette.textFaint,
                                           ),
                                         ),
                                     ],

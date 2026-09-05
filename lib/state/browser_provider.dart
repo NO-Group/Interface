@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -74,7 +73,7 @@ class BrowserTab {
 }
 
 /// Which page the desktop Opera-style sidebar shows (null = collapsed).
-enum SidePanel { none, bookmarks, history, downloads, settings, reading, privacy }
+enum SidePanel { none, bookmarks, history, downloads, settings, reading, privacy, files }
 
 /// A pending site permission prompt (camera / mic / location…).
 class PermissionAsk {

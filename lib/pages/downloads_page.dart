@@ -1,11 +1,16 @@
-import 'dart:io' show Platform;
+import 'dart:io' show Directory, Platform;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../widgets/icons.dart';
+import '../widgets/ui_kit.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../models.dart';
 import '../services/downloader.dart';
+import '../state/files_provider.dart';
+import 'files_page.dart';
 
 /// Downloads list — embeddable in the desktop side panel.
 class DownloadsList extends StatelessWidget {
@@ -19,11 +24,25 @@ class DownloadsList extends StatelessWidget {
     final palette = pal(context);
 
     if (downloads.downloads.isEmpty) {
-      return _Empty(
-        icon: Icons.download_rounded,
-        title: 'No downloads yet',
-        subtitle:
-            Platform.isWindows ? 'Files land in your Downloads folder.' : 'Files land in the app Downloads folder.',
+      return Column(
+        children: [
+          Expanded(
+            child: _Empty(
+              icon: 'download',
+              title: 'No downloads yet',
+              subtitle: 'Files land in your Downloads folder.',
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 18),
+            child: UiButton(
+              label: 'Open that folder',
+              icon: 'folder',
+              compact: true,
+              onTap: () => openDownloadsFolder(context, null),
+            ),
+          ),
+        ],
       );
     }
 
@@ -45,7 +64,7 @@ class DownloadsList extends StatelessWidget {
           color: palette.surface,
           margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: Ui.petal(Ui.rCard),
             side: BorderSide(color: palette.border),
           ),
           child: ListTile(
@@ -93,13 +112,13 @@ class DownloadsList extends StatelessWidget {
             trailing: item.isRunning
                 ? IconButton(
                     tooltip: 'Cancel',
-                    icon: Icon(Icons.close_rounded, color: palette.textDim),
+                    icon: uiGlyph('close', color: palette.textDim),
                     onPressed: () => downloads.cancel(item.id),
                   )
                 : (item.status == DownloadStatus.done && !Platform.isAndroid)
                     ? IconButton(
                         tooltip: 'Show in folder',
-                        icon: Icon(Icons.folder_open_rounded,
+                        icon: uiGlyph('folder-open',
                             color: palette.textDim),
                         onPressed: () => downloads.reveal(item),
                       )
@@ -112,31 +131,31 @@ class DownloadsList extends StatelessWidget {
 
   Widget _fileIcon(DownloadItem item, BrowserPalette palette) {
     final n = item.fileName.toLowerCase();
-    IconData icon = Icons.insert_drive_file_outlined;
-    if (n.endsWith('.pdf')) icon = Icons.picture_as_pdf_outlined;
+    Object icon = 'file';
+    if (n.endsWith('.pdf')) icon = 'file-pdf';
     if (n.endsWith('.zip') || n.endsWith('.rar') || n.endsWith('.7z')) {
-      icon = Icons.folder_zip_outlined;
+      icon = 'archive';
     }
     if (n.endsWith('.mp3') || n.endsWith('.wav') || n.endsWith('.m4a')) {
-      icon = Icons.music_note_outlined;
+      icon = 'music';
     }
     if (n.endsWith('.mp4') || n.endsWith('.mkv') || n.endsWith('.webm')) {
-      icon = Icons.movie_outlined;
+      icon = 'video';
     }
     if (n.endsWith('.jpg') || n.endsWith('.png') || n.endsWith('.webp') ||
         n.endsWith('.gif')) {
-      icon = Icons.image_outlined;
+      icon = 'image';
     }
-    if (n.endsWith('.apk')) icon = Icons.android_rounded;
-    if (n.endsWith('.exe')) icon = Icons.apps_rounded;
+    if (n.endsWith('.apk')) icon = 'device';
+    if (n.endsWith('.exe') || n.endsWith('.msi')) icon = 'file-code';
     return Container(
       width: 40,
       height: 40,
       decoration: BoxDecoration(
         color: palette.surfaceAlt,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: Ui.petal(10),
       ),
-      child: Icon(icon, size: 20, color: palette.accent),
+      child: uiGlyph(icon, size: 20, color: palette.accent),
     );
   }
 }
@@ -144,7 +163,7 @@ class DownloadsList extends StatelessWidget {
 class _Empty extends StatelessWidget {
   const _Empty({required this.icon, required this.title, this.subtitle});
 
-  final IconData icon;
+  final Object icon;
   final String title;
   final String? subtitle;
 
@@ -155,7 +174,7 @@ class _Empty extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 52, color: palette.textDim),
+          uiGlyph(icon, size: 52, color: palette.textDim),
           const SizedBox(height: 12),
           Text(title, style: TextStyle(color: palette.text, fontSize: 15)),
           if (subtitle != null)
@@ -186,8 +205,13 @@ class DownloadsRoute extends StatelessWidget {
         title: const Text('Downloads'),
         actions: [
           IconButton(
+            tooltip: 'Open the folder',
+            icon: uiGlyph('folder', color: palette.text),
+            onPressed: () => openDownloadsFolder(context, null),
+          ),
+          IconButton(
             tooltip: 'Clear finished',
-            icon: Icon(Icons.clear_all_rounded, color: palette.text),
+            icon: uiGlyph('clear', color: palette.text),
             onPressed: downloads.downloads.isEmpty
                 ? null
                 : () => downloads.clearFinished(),
@@ -198,4 +222,15 @@ class DownloadsRoute extends StatelessWidget {
       body: const DownloadsList(),
     );
   }
+}
+
+/// Open the file manager where downloads live.
+Future<void> openDownloadsFolder(BuildContext context, String? dir) async {
+  final files = context.read<FilesProvider>();
+  final wanted = dir == null || dir.isEmpty ? files.fs.startPath() : dir;
+  final exists = await Directory(wanted).exists();
+  await files.goTo(exists ? wanted : files.fs.startPath());
+  if (!context.mounted) return;
+  Navigator.of(context)
+      .push(MaterialPageRoute<void>(builder: (_) => const FilesRoute()));
 }

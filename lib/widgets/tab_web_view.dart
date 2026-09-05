@@ -4,8 +4,10 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../core/urls.dart';
 import '../pages/downloads_page.dart';
 import '../services/downloader.dart';
@@ -133,7 +135,7 @@ class _TabWebViewState extends State<TabWebView> {
           NewTabPage(key: ValueKey('nt-${tab.id}'), tab: tab),
         if (tab.error != null && !tab.onSpeedDial)
           _ErrorPage(
-            message: tab.error!,
+
             url: tab.url,
             onRetry: () {
               tab.error = null;
@@ -190,9 +192,9 @@ class _TabWebViewState extends State<TabWebView> {
     } catch (_) {}
     try {
       final favicons = await c.getFavicons();
-      if (favicons != null && favicons.isNotEmpty) {
+      if (favicons.isNotEmpty) {
         favicons.sort((a, b) => (b.height ?? 0).compareTo(a.height ?? 0));
-        tab.faviconUrl = favicons.first.url?.toString();
+        tab.faviconUrl = favicons.first.url.toString();
       }
     } catch (_) {}
     if (!tab.incognito && tab.url.startsWith('http')) {
@@ -315,13 +317,11 @@ iframe[src*="amazon-adsystem.com"], iframe[src*="adnxs.com"] {
 /// Friendly Chrome-style "can't reach this page" overlay.
 class _ErrorPage extends StatelessWidget {
   const _ErrorPage({
-    required this.message,
     required this.url,
     required this.onRetry,
     required this.onHome,
   });
 
-  final String message;
   final String url;
   final VoidCallback onRetry;
   final VoidCallback onHome;
@@ -337,38 +337,39 @@ class _ErrorPage extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(20),
+            width: 64,
+            height: 64,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
               color: palette.surfaceAlt,
-              shape: BoxShape.circle,
+              borderRadius: Ui.petal(Ui.rCard),
+              border: Border.all(color: palette.border),
             ),
-            child: Icon(Icons.wifi_off_rounded, size: 44, color: palette.accent),
+            child: uiGlyph('wifi-off', size: 30, color: palette.textDim),
           ),
           const SizedBox(height: 20),
           Text(
             "Can't reach this page",
-            style: TextStyle(
-              color: palette.text,
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
+            style: Ui.text(
+              palette,
+              size: Ui.sizeHeadline,
+              weight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            message,
+            url.isEmpty
+                ? 'Check your connection and try again.'
+                : displayUrl(url),
             textAlign: TextAlign.center,
-            style: TextStyle(color: palette.textDim, fontSize: 13),
+            style: Ui.text(palette, size: Ui.sizeSmall, color: palette.textDim),
           ),
           if (url.isNotEmpty) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 12),
             Text(
-              displayUrl(url),
+              'Check the address, your internet connection,\nor the site may be temporarily down.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: palette.textDim,
-                fontSize: 12,
-                fontStyle: FontStyle.italic,
-              ),
+              style: Ui.caption(palette),
             ),
           ],
           const SizedBox(height: 24),
@@ -377,13 +378,13 @@ class _ErrorPage extends StatelessWidget {
             children: [
               FilledButton.icon(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
+                icon: uiGlyph('reload'),
                 label: const Text('Try again'),
               ),
               const SizedBox(width: 12),
               OutlinedButton.icon(
                 onPressed: onHome,
-                icon: const Icon(Icons.home_outlined),
+                icon: uiGlyph('home'),
                 label: const Text('Home'),
               ),
             ],

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../state/browser_provider.dart';
 import 'favicon.dart';
 
-/// Chrome-mobile-style tab switcher: grid of live tab cards,
-/// plus one-tap new tab & incognito.
+/// The tab grid: every open page as a card, plus new tab and new private tab.
 class TabSwitcherPage extends StatelessWidget {
   const TabSwitcherPage({super.key});
 
@@ -22,22 +23,22 @@ class TabSwitcherPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: palette.background,
         title: Text(
-          '${browser.tabCount} ${browser.tabCount == 1 ? 'tab' : 'tabs'}',
-          style: TextStyle(color: palette.text),
+          browser.tabCount == 1 ? '1 tab' : '${browser.tabCount} tabs',
+          style: Ui.text(palette, size: 16, weight: FontWeight.w700),
         ),
         leading: IconButton(
-          icon: Icon(Icons.close_rounded, color: palette.text),
+          icon: uiGlyph('close', color: palette.text),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
           if (incognitoCount > 0)
             TextButton(
               onPressed: () => browser.closeAllIncognito(),
-              child: const Text('Close incognito'),
+              child: const Text('Close private tabs'),
             ),
           IconButton(
-            tooltip: 'New incognito tab',
-            icon: Icon(Icons.shield_outlined, color: palette.text),
+            tooltip: 'New private tab',
+            icon: uiGlyph('shield', color: palette.text),
             onPressed: () {
               browser.newTab(incognito: true);
               Navigator.of(context).pop();
@@ -45,7 +46,7 @@ class TabSwitcherPage extends StatelessWidget {
           ),
           IconButton(
             tooltip: 'New tab',
-            icon: Icon(Icons.add_rounded, color: palette.text),
+            icon: uiGlyph('plus', color: palette.text),
             onPressed: () {
               browser.newTab();
               Navigator.of(context).pop();
@@ -110,14 +111,15 @@ class _TabCard extends StatelessWidget {
     final palette = pal(context);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: Ui.petal(14),
       child: Container(
         decoration: BoxDecoration(
           color: palette.surface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: Ui.petal(14),
+          boxShadow: selected ? Ui.float(palette, y: 4, blur: 14) : null,
           border: Border.all(
             color: selected ? palette.accent : palette.border,
-            width: selected ? 1.8 : 1,
+            width: selected ? 1.4 : 1,
           ),
         ),
         padding: const EdgeInsets.all(10),
@@ -127,9 +129,9 @@ class _TabCard extends StatelessWidget {
             Row(
               children: [
                 if (tab.incognito)
-                  Icon(Icons.shield_rounded, size: 15, color: palette.accent)
+                  uiGlyph('shield-on', size: 15, color: palette.accent)
                 else if (tab.onSpeedDial)
-                  Icon(Icons.add_rounded, size: 15, color: palette.textDim)
+                  uiGlyph('plus', size: 15, color: palette.textDim)
                 else
                   Favicon(host: tab.host, url: tab.faviconUrl, size: 16),
                 const SizedBox(width: 6),
@@ -138,10 +140,10 @@ class _TabCard extends StatelessWidget {
                     tab.displayTitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: palette.text,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
+                    style: Ui.text(
+                      palette,
+                      size: Ui.sizeSmall,
+                      weight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -150,7 +152,7 @@ class _TabCard extends StatelessWidget {
                   customBorder: const CircleBorder(),
                   child: Padding(
                     padding: const EdgeInsets.all(3),
-                    child: Icon(Icons.close_rounded,
+                    child: uiGlyph('close',
                         size: 15, color: palette.textDim),
                   ),
                 ),
@@ -162,7 +164,7 @@ class _TabCard extends StatelessWidget {
                 tab.host,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: palette.textDim, fontSize: 11),
+                style: Ui.caption(palette),
               ),
             const SizedBox(height: 6),
             ClipRRect(
@@ -191,14 +193,14 @@ class _NewTabCard extends StatelessWidget {
     final palette = pal(context);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: Ui.petal(14),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: Ui.petal(14),
           border: Border.all(color: palette.border),
         ),
-        child: Icon(Icons.add_rounded, size: 34, color: palette.textDim),
+        child: uiGlyph('plus', size: 34, color: palette.textDim),
       ),
     );
   }

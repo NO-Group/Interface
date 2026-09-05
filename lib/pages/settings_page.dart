@@ -4,9 +4,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:provider/provider.dart';
+import '../widgets/icons.dart';
 
 import '../core/pal.dart';
-import '../core/palette.dart';
+import '../core/ui.dart';
 import '../core/urls.dart';
 import '../state/browser_provider.dart';
 import '../state/profile_provider.dart';
@@ -38,7 +39,7 @@ class SettingsBody extends StatelessWidget {
           SwitchListTile(
             title: const Text('Desaturate web content'),
             subtitle: const Text(
-                'Render pages in pure black & white in this theme'),
+                'Show web pages without colour'),
             value: settings.grayscaleInMono,
             onChanged: settings.setGrayscaleInMono,
           ),
@@ -56,8 +57,8 @@ class SettingsBody extends StatelessWidget {
           ),
         ],
         ListTile(
-          leading: Icon(Icons.format_size_rounded, color: palette.textDim),
-          title: Text('Interface size',
+          leading: uiGlyph('text', color: palette.textDim),
+          title: Text('Text size',
               style: TextStyle(color: palette.text, fontSize: 14)),
           subtitle: Slider(
             value: settings.fontScale,
@@ -96,7 +97,7 @@ class SettingsBody extends StatelessWidget {
         ),
         ListTile(
           leading:
-              Icon(Icons.text_fields_rounded, color: palette.textDim),
+              uiGlyph('text', color: palette.textDim),
           title: Text('Reader text size',
               style: TextStyle(color: palette.text, fontSize: 14)),
           subtitle: Slider(
@@ -114,15 +115,21 @@ class SettingsBody extends StatelessWidget {
           ),
         ),
         _Section(title: 'Search & startup'),
-        for (final engine in SearchEngine.all)
-          RadioListTile<String>(
-            dense: true,
-            title: Text(engine.name),
-            subtitle: Text(displayUrl(engine.homepage)),
-            value: engine.id,
-            groupValue: settings.searchEngineId,
-            onChanged: (v) => settings.setSearchEngine(v ?? engine.id),
+        RadioGroup<String>(
+          groupValue: settings.searchEngineId,
+          onChanged: (v) => settings.setSearchEngine(v ?? settings.searchEngineId),
+          child: Column(
+            children: [
+              for (final engine in SearchEngine.all)
+                RadioListTile<String>(
+                  dense: true,
+                  title: Text(engine.name),
+                  subtitle: Text(displayUrl(engine.homepage)),
+                  value: engine.id,
+                ),
+            ],
           ),
+        ),
         const Divider(indent: 16, endIndent: 16),
         const _HomepagePicker(),
         SwitchListTile(
@@ -135,7 +142,7 @@ class SettingsBody extends StatelessWidget {
         SwitchListTile(
           title: const Text('Block ads & pop-ups'),
           subtitle: const Text(
-              'Built-in blocklist of common ad, tracker and pop-under hosts'),
+              'Blocks common ads and trackers before they load'),
           value: settings.blockAds,
           onChanged: settings.setBlockAds,
         ),
@@ -143,7 +150,7 @@ class SettingsBody extends StatelessWidget {
           SwitchListTile(
             title: const Text('Desktop site'),
             subtitle:
-                const Text('Request desktop versions of websites (phone)'),
+                const Text('Ask sites for their desktop layout'),
             value: settings.desktopMode,
             onChanged: (v) async {
               settings.setDesktopMode(v);
@@ -153,15 +160,15 @@ class SettingsBody extends StatelessWidget {
             },
           ),
         ListTile(
-          leading: Icon(Icons.shield_rounded, color: palette.accent),
+          leading: uiGlyph('shield-on', color: palette.accent),
           title: const Text('Privacy dashboard'),
           subtitle:
-              const Text('Per-site rules, permissions and blocked stats'),
+              const Text('See what was blocked and set rules per site'),
           onTap: () => _openPrivacy(context),
         ),
         const Divider(indent: 16, endIndent: 16),
         ListTile(
-          leading: Icon(Icons.cleaning_services_outlined,
+          leading: uiGlyph('sparkle',
               color: palette.danger),
           title: const Text('Clear browsing data'),
           subtitle: const Text('History, cookies and cache'),
@@ -171,15 +178,15 @@ class SettingsBody extends StatelessWidget {
         const ListTile(
           leading: LogoMark(size: 34),
           title: Text('Interface Browser'),
-          subtitle: Text('Version 1.1.0 · Flutter + WebView'),
+          subtitle: Text('Version 2.0.0'),
         ),
         ListTile(
-          leading: Icon(Icons.waving_hand_outlined, color: palette.textDim),
+          leading: uiGlyph('sparkle', color: palette.textDim),
           title: const Text('Replay welcome tour'),
           onTap: () => settings.setOnboardingSeen(false),
         ),
         ListTile(
-          leading: Icon(Icons.description_outlined, color: palette.textDim),
+          leading: uiGlyph('file-text', color: palette.textDim),
           title: const Text('Open-source licenses'),
           onTap: () => showLicensePage(
             context: context,
@@ -205,7 +212,6 @@ class SettingsBody extends StatelessWidget {
   Future<void> _clearBrowsingData(BuildContext context) async {
     final palette = pal(context);
     final profile = context.read<ProfileProvider>();
-    final browser = context.read<BrowserProvider>();
     var clearHistory = true;
     var clearCookies = true;
     var clearCache = true;
@@ -267,11 +273,9 @@ class SettingsBody extends StatelessWidget {
       }
     }
     if (clearCache) {
-      for (final tab in browser.tabs) {
-        try {
-          await tab.controller?.clearCache();
-        } catch (_) {}
-      }
+      try {
+        await InAppWebViewController.clearAllCache();
+      } catch (_) {}
     }
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
@@ -291,15 +295,10 @@ class _Section extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = pal(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
       child: Text(
-        title.toUpperCase(),
-        style: TextStyle(
-          color: palette.textDim,
-          fontSize: 11.5,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.9,
-        ),
+        title,
+        style: Ui.text(palette, size: 14, weight: FontWeight.w700),
       ),
     );
   }
@@ -359,16 +358,17 @@ class _ThemeCard extends StatelessWidget {
     final palette = pal(context);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(13),
+      borderRadius: Ui.petal(Ui.rCard),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+        duration: Ui.quick,
+        curve: Ui.curve,
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
         decoration: BoxDecoration(
-          color: palette.surface,
-          borderRadius: BorderRadius.circular(13),
+          color: selected ? palette.activeFill : palette.surface,
+          borderRadius: Ui.petal(Ui.rCard),
           border: Border.all(
             color: selected ? palette.accent : palette.border,
-            width: selected ? 2 : 1,
+            width: selected ? 1.4 : 1,
           ),
         ),
         child: Column(
@@ -377,7 +377,7 @@ class _ThemeCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(choice.icon,
+                uiGlyph(choice.icon,
                     size: 16,
                     color: selected ? palette.accent : palette.textDim),
                 const SizedBox(width: 7),
@@ -394,7 +394,7 @@ class _ThemeCard extends StatelessWidget {
                   ),
                 ),
                 if (selected)
-                  Icon(Icons.check_circle_rounded,
+                  uiGlyph('check-circle',
                       size: 16, color: palette.accent),
               ],
             ),
@@ -461,7 +461,7 @@ class _WallpaperCard extends StatelessWidget {
       color: palette.surface,
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: Ui.petal(13),
         side: BorderSide(color: palette.border),
       ),
       child: Padding(
@@ -476,11 +476,11 @@ class _WallpaperCard extends StatelessWidget {
                   width: 74,
                   height: 48,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, _) => Container(
                     width: 74,
                     height: 48,
                     color: palette.surfaceAlt,
-                    child: Icon(Icons.broken_image_outlined,
+                    child: uiGlyph('wallpaper',
                         color: palette.textDim),
                   ),
                 ),
@@ -493,7 +493,7 @@ class _WallpaperCard extends StatelessWidget {
                   color: palette.surfaceAlt,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(Icons.image_outlined, color: palette.textDim),
+                child: uiGlyph('wallpaper', color: palette.textDim),
               ),
             const SizedBox(width: 12),
             Expanded(
@@ -531,7 +531,7 @@ class _WallpaperCard extends StatelessWidget {
                   foregroundColor: palette.onAccent,
                 ),
                 onPressed: () => _pick(context),
-                icon: const Icon(Icons.photo_library_outlined, size: 17),
+                icon: uiGlyph('images', size: 17),
                 label: const Text('Choose'),
               ),
           ],
@@ -573,20 +573,13 @@ class _HomepagePickerState extends State<_HomepagePicker> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        RadioListTile<bool>(
-          dense: true,
-          title: const Text('Homepage: Speed dial'),
-          subtitle: const Text('Opera-style start page with your favorites'),
-          value: true,
+        RadioGroup<bool>(
           groupValue: useDial,
-          onChanged: (_) => settings.setHomePage(''),
-        ),
-        RadioListTile<bool>(
-          dense: true,
-          title: const Text('Homepage: custom page'),
-          value: false,
-          groupValue: useDial,
-          onChanged: (_) {
+          onChanged: (v) {
+            if (v != false) {
+              settings.setHomePage('');
+              return;
+            }
             final parsed = urlFromInput(_controller.text);
             if (parsed != null && isWebScheme(parsed)) {
               settings.setHomePage(parsed.toString());
@@ -594,18 +587,34 @@ class _HomepagePickerState extends State<_HomepagePicker> {
               settings.setHomePage('');
             }
           },
+          child: Column(
+            children: [
+              RadioListTile<bool>(
+                dense: true,
+                title: const Text('New tab page'),
+                subtitle: const Text('Your shortcuts and a search box'),
+                value: true,
+              ),
+              RadioListTile<bool>(
+                dense: true,
+                title: const Text('Custom page'),
+                value: false,
+              ),
+            ],
+          ),
         ),
         if (!useDial)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
             child: TextField(
+              spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
               controller: _controller,
               style: const TextStyle(fontSize: 13.5),
               decoration: InputDecoration(
                 isDense: true,
                 labelText: 'Address, e.g. example.com',
                 suffixIcon: IconButton(
-                  icon: const Icon(Icons.arrow_forward_rounded, size: 19),
+                  icon: uiGlyph('forward', size: 19),
                   onPressed: () {
                     final parsed = urlFromInput(_controller.text);
                     if (parsed != null) {

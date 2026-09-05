@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../core/palette.dart';
 
-/// The Interface Browser mark: the uploaded brand logo, with a painted
-/// navy-and-cyan globe as fallback (e.g. in unit tests without assets).
+/// The Interface Browser mark, shown exactly as supplied: the brand artwork at
+/// its own aspect ratio, on no background. A painted cyan globe is used only
+/// when the asset cannot be read (e.g. unit tests without an asset bundle).
 class LogoMark extends StatelessWidget {
   const LogoMark({super.key, this.size = 48});
 
@@ -16,7 +16,8 @@ class LogoMark extends StatelessWidget {
       width: size,
       height: size,
       fit: BoxFit.contain,
-      errorBuilder: (_, __, ___) => _GlobeTile(size: size),
+      filterQuality: FilterQuality.medium,
+      errorBuilder: (_, _, _) => _GlobeTile(size: size),
     );
   }
 }
@@ -28,20 +29,12 @@ class _GlobeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF102A5C), BrowserPalette.navyDeep],
-        ),
-        borderRadius: BorderRadius.circular(size * 0.22),
-      ),
       child: CustomPaint(
         painter: _GlobePainter(
-          stroke: const Color(0xFF35E4FF),
+          stroke: Theme.of(context).colorScheme.primary,
           strokeWidth: size * 0.055,
         ),
       ),

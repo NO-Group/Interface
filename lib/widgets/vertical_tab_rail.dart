@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../state/browser_provider.dart';
 import 'favicon.dart';
 
-/// Edge/Opera-style vertical tab rail (desktop).
+/// Tabs as a column on the left, for wide screens.
 class VerticalTabRail extends StatelessWidget {
   const VerticalTabRail({super.key});
 
@@ -22,22 +24,20 @@ class VerticalTabRail extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 10, 8, 6),
             child: Row(
               children: [
-                Icon(Icons.tab_rounded, size: 15, color: palette.textDim),
-                const SizedBox(width: 8),
                 Text(
-                  '${browser.tabCount} tabs',
-                  style: TextStyle(
-                    color: palette.textDim,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                  ),
+                  'Tabs',
+                  style: Ui.text(palette, size: 14, weight: FontWeight.w700),
+                ),
+                const SizedBox(width: 7),
+                Text(
+                  '${browser.tabCount}',
+                  style: Ui.text(palette, size: Ui.sizeCaption, color: palette.textDim),
                 ),
                 const Spacer(),
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   icon:
-                      Icon(Icons.add_rounded, size: 19, color: palette.accent),
+                      uiGlyph('plus', size: 19, color: palette.accent),
                   onPressed: () => browser.newTab(),
                 ),
               ],
@@ -61,33 +61,29 @@ class VerticalTabRail extends StatelessWidget {
                   child: InkWell(
                   onTap: () => browser.select(i),
                   onSecondaryTapUp: (d) => _menu(context, tab, d.globalPosition),
-                  child: AnimatedContainer(
+                  // A rail tab is marked by its keel, exactly like a tab in the
+                  // bar: the same 3px on the same edge means the same thing.
+                  child: Stack(
+                    children: [
+                  AnimatedContainer(
                     duration: const Duration(milliseconds: 120),
                     margin:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 7),
+                        horizontal: 13, vertical: 7),
                     decoration: BoxDecoration(
                       color: selected
                           ? palette.surfaceAlt.withValues(alpha: 0.9)
                           : Colors.transparent,
-                      borderRadius: BorderRadius.circular(9),
-                      border: Border(
-                        left: BorderSide(
-                          color: selected
-                              ? (groupColor ?? palette.accent)
-                              : (groupColor ?? Colors.transparent),
-                          width: 3,
-                        ),
-                      ),
+                      borderRadius: Ui.petal(Ui.rField),
                     ),
                     child: Row(
                       children: [
                         if (tab.incognito)
-                          Icon(Icons.shield_rounded,
+                          uiGlyph('shield-on',
                               size: 15, color: palette.accent)
                         else if (tab.onSpeedDial)
-                          Icon(Icons.add_rounded,
+                          uiGlyph('plus',
                               size: 15, color: palette.textDim)
                         else
                           Favicon(host: tab.host, url: tab.faviconUrl, size: 16),
@@ -107,7 +103,7 @@ class VerticalTabRail extends StatelessWidget {
                           ),
                         ),
                         if (isSplit)
-                          Icon(Icons.vertical_split_rounded,
+                          uiGlyph('split',
                               size: 14, color: palette.accent),
                         const SizedBox(width: 4),
                         InkWell(
@@ -115,12 +111,26 @@ class VerticalTabRail extends StatelessWidget {
                           customBorder: const CircleBorder(),
                           child: Padding(
                             padding: const EdgeInsets.all(3),
-                            child: Icon(Icons.close_rounded,
+                            child: uiGlyph('close',
                                 size: 13, color: palette.textDim),
                           ),
                         ),
                       ],
                     ),
+                  ),
+                  if (selected || groupColor != null)
+                    Positioned(
+                      left: 8,
+                      top: 10,
+                      bottom: 10,
+                      child: Ui.keel(
+                        palette,
+                        color: selected
+                            ? (groupColor ?? palette.accent)
+                            : groupColor!.withValues(alpha: 0.65),
+                      ),
+                    ),
+                    ],
                   ),
                   ),
                 );
@@ -146,8 +156,12 @@ class VerticalTabRail extends StatelessWidget {
         0,
       ),
       items: const [
-        PopupMenuItem(value: 'split', child: Text('Open in split view')),
-        PopupMenuItem(value: 'close', child: Text('Close tab')),
+        PopupMenuItem(
+          value: 'split',
+          height: 40,
+          child: Text('Open in split view'),
+        ),
+        PopupMenuItem(value: 'close', height: 40, child: Text('Close tab')),
       ],
     );
     if (action == 'split') browser.openSplit(tab: tab);

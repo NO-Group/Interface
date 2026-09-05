@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../widgets/icons.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../core/urls.dart';
 import '../models.dart';
 import '../state/browser_provider.dart';
@@ -24,7 +26,7 @@ class HistoryList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.history_rounded, size: 52, color: palette.textDim),
+            uiGlyph('clock', size: 52, color: palette.textDim),
             const SizedBox(height: 12),
             Text('Pages you visit show up here',
                 style: TextStyle(color: palette.text, fontSize: 15)),
@@ -72,15 +74,10 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = pal(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
       child: Text(
-        label.toUpperCase(),
-        style: TextStyle(
-          color: palette.textDim,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
-        ),
+        label,
+        style: Ui.text(palette, size: 14, weight: FontWeight.w700),
       ),
     );
   }
@@ -125,7 +122,7 @@ class _HistoryTile extends StatelessWidget {
           ),
           if (!embedded)
             IconButton(
-              icon: Icon(Icons.close_rounded, size: 17, color: palette.textDim),
+              icon: uiGlyph('close', size: 17, color: palette.textDim),
               onPressed: () => profile.removeHistory(entry),
             ),
         ],
@@ -151,7 +148,7 @@ class HistoryRoute extends StatelessWidget {
         actions: [
           IconButton(
             tooltip: 'Clear browsing history',
-            icon: Icon(Icons.delete_sweep_outlined, color: palette.text),
+            icon: uiGlyph('clear', color: palette.text),
             onPressed: () async {
               final ok = await showDialog<bool>(
                 context: context,
@@ -178,6 +175,7 @@ class HistoryRoute extends StatelessWidget {
               );
               if (ok == true) {
                 profile.clearHistory();
+                if (!context.mounted) return;
                 final messenger = ScaffoldMessenger.of(context);
                 messenger.hideCurrentSnackBar();
                 messenger.showSnackBar(

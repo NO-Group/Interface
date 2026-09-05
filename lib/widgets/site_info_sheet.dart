@@ -3,17 +3,18 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart' hide Favicon;
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
-import '../core/urls.dart';
+import '../core/ui.dart';
 import '../models.dart';
 import '../state/browser_provider.dart';
 import '../state/privacy_provider.dart';
 import '../state/settings_provider.dart';
 import 'favicon.dart';
 
-/// Chrome-style site information sheet: security, blocked-tracker count
-/// and per-site settings (ads, JavaScript, desktop site, device access).
+/// Site information: connection, what was blocked, and per-site settings
+/// (ads, JavaScript, desktop site, camera and microphone).
 Future<void> showSiteInfoSheet(BuildContext context) {
   final browser = context.read<BrowserProvider>();
   final tab = browser.current;
@@ -33,15 +34,11 @@ Future<void> showSiteInfoSheet(BuildContext context) {
   final url = tab.url;
   final secure = url.startsWith('https://');
   final blocked = privacy.blockedFor(host);
-  final rule = privacy.ruleFor(host) ?? SiteRule(host: host);
 
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: palette.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
     builder: (sheetContext) => SafeArea(
       child: StatefulBuilder(
         builder: (sheetContext, setSheet) {
@@ -50,7 +47,7 @@ Future<void> showSiteInfoSheet(BuildContext context) {
           Widget siteToggle(
             String title,
             String subtitle,
-            IconData icon,
+            Object icon,
             bool globalDefault,
             bool? siteValue, {
             String? settingsKey,
@@ -59,15 +56,12 @@ Future<void> showSiteInfoSheet(BuildContext context) {
             final value = choice ?? globalDefault;
             final isOverride = choice != null;
             return SwitchListTile(
-              secondary: Icon(icon,
+              secondary: uiGlyph(icon,
                   color: value ? palette.accent : palette.textDim),
-              title: Text(title,
-                  style: TextStyle(color: palette.text, fontSize: 13.5)),
+              title: Text(title, style: Ui.text(palette, weight: FontWeight.w500)),
               subtitle: Text(
-                isOverride
-                    ? 'Site override — $subtitle'
-                    : '$subtitle (default)',
-                style: TextStyle(color: palette.textDim, fontSize: 11.5),
+                isOverride ? 'Only for this site' : subtitle,
+                style: Ui.caption(palette),
               ),
               value: value,
               onChanged: (v) {
@@ -87,58 +81,50 @@ Future<void> showSiteInfoSheet(BuildContext context) {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(height: 10),
-                Container(
-                  width: 38,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: palette.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 6),
                 ListTile(
                   leading: Favicon(host: host, size: 34),
                   title: Text(
                     host,
-                    style: TextStyle(
-                      color: palette.text,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
+                    style: Ui.text(palette, size: 15.5, weight: FontWeight.w700),
                   ),
                   subtitle: Text(
                     secure
                         ? 'Connection is secure (HTTPS)'
                         : 'Not secure — data can be read in transit',
-                    style: TextStyle(
+                    style: Ui.text(
+                      palette,
+                      size: Ui.sizeSmall,
+                      weight: FontWeight.w500,
                       color: secure ? palette.success : palette.danger,
-                      fontSize: 12,
                     ),
                   ),
-                  trailing: Icon(
-                    secure ? Icons.lock_rounded : Icons.warning_amber_rounded,
+                  trailing: uiGlyph(
+                    secure ? 'lock' : 'alert',
                     color: secure ? palette.success : palette.danger,
                   ),
                 ),
                 Divider(color: palette.border, height: 1),
                 Container(
-                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(12, 6, 12, 6),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  color: palette.surfaceAlt.withValues(alpha: 0.4),
+                      const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+                  decoration: BoxDecoration(
+                    color: blocked > 0 ? palette.accentSoft : palette.surfaceAlt,
+                    borderRadius: Ui.petal(Ui.rField),
+                    border: Border.all(color: palette.border),
+                  ),
                   child: Row(
                     children: [
-                      Icon(Icons.shield_rounded,
-                          size: 18, color: palette.accent),
-                      const SizedBox(width: 10),
+                      uiGlyph('shield-on',
+                          size: 17, color: palette.accent),
+                      const SizedBox(width: 11),
                       Expanded(
                         child: Text(
                           blocked > 0
-                              ? '$blocked trackers & ads blocked on this site'
-                              : 'No trackers blocked on this site yet',
-                          style: TextStyle(
-                              color: palette.text, fontSize: 13),
+                              ? '$blocked ads and trackers blocked on this site'
+                              : 'Nothing blocked on this site yet',
+                          style: Ui.text(palette, size: Ui.sizeBody),
                         ),
                       ),
                       if (blocked > 0)
@@ -153,9 +139,9 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                             Navigator.of(sheetContext).pop();
                             browser.refreshWebViews();
                             final m = ScaffoldMessenger.of(context);
-                            m.showSnackBar(SnackBar(
-                                content:
-                                    Text('Ads allowed on $host')));
+                            m.showSnackBar(
+                              SnackBar(content: Text('Ads allowed on $host')),
+                            );
                           },
                           child: const Text('Allow ads'),
                         ),
@@ -166,7 +152,7 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                 siteToggle(
                   'Block ads & trackers',
                   'Applies to this site only',
-                  Icons.block_rounded,
+                  'block',
                   settings.blockAds,
                   current.blockAds,
                   settingsKey: 'ads',
@@ -174,7 +160,7 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                 siteToggle(
                   'JavaScript',
                   'Reload applies the change',
-                  Icons.javascript_rounded,
+                  'code',
                   true,
                   current.javaScript,
                   settingsKey: 'js',
@@ -183,7 +169,7 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                   siteToggle(
                     'Desktop site',
                     'Request the desktop version',
-                    Icons.desktop_windows_rounded,
+                    'monitor',
                     settings.desktopMode,
                     current.desktopSite,
                     settingsKey: 'desktop',
@@ -191,19 +177,18 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                 siteToggle(
                   'Camera, mic & location',
                   'Ask / allow access from this site',
-                  Icons.videocam_outlined,
+                  'video',
                   true,
                   current.media,
                   settingsKey: 'media',
                 ),
                 Divider(color: palette.border, height: 1),
                 ListTile(
-                  leading: Icon(Icons.cookie_outlined, color: palette.textDim),
+                  leading: uiGlyph('cookie', color: palette.textDim),
                   title: Text('Cookies & site data',
-                      style: TextStyle(color: palette.text, fontSize: 13.5)),
+                      style: Ui.text(palette, weight: FontWeight.w500)),
                   subtitle: Text('Clear cookies set by $host',
-                      style:
-                          TextStyle(color: palette.textDim, fontSize: 11.5)),
+                      style: Ui.caption(palette)),
                   trailing: FilledButton.tonal(
                     onPressed: () async {
                       Navigator.of(sheetContext).pop();
@@ -214,6 +199,7 @@ Future<void> showSiteInfoSheet(BuildContext context) {
                           domain: host,
                         );
                       } catch (_) {}
+                      if (!context.mounted) return;
                       final messenger = ScaffoldMessenger.of(context);
                       messenger.hideCurrentSnackBar();
                       messenger.showSnackBar(SnackBar(

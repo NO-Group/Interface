@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../widgets/icons.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../state/privacy_provider.dart';
 import '../state/settings_provider.dart';
 import '../widgets/favicon.dart';
@@ -35,18 +37,16 @@ class PrivacyPage extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(14),
+                width: 52,
+                height: 52,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      palette.primary,
-                      palette.primary.withValues(alpha: 0.7),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
+                  color: palette.surfaceAlt,
+                  borderRadius: Ui.petal(Ui.rCard),
+                  border: Border.all(color: palette.border),
                 ),
-                child: Icon(Icons.shield_rounded,
-                    size: 30, color: palette.accent),
+                child: uiGlyph('shield-on',
+                    size: 24, color: palette.accent),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -79,7 +79,7 @@ class PrivacyPage extends StatelessWidget {
           child: Row(
             children: [
               _Stat(
-                icon: Icons.data_usage_rounded,
+                icon: 'shield',
                 label:
                     '${(privacy.kbSaved / 1024).toStringAsFixed(privacy.kbSaved > 10240 ? 0 : 1)} MB',
                 sub: 'data saved (est.)',
@@ -87,7 +87,7 @@ class PrivacyPage extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               _Stat(
-                icon: Icons.bolt_rounded,
+                icon: 'bolt',
                 label: '${privacy.topBlockedHosts.length}',
                 sub: 'worst offenders',
                 palette: palette,
@@ -96,20 +96,20 @@ class PrivacyPage extends StatelessWidget {
           ),
         ),
         SwitchListTile(
-          secondary: Icon(Icons.block_rounded,
+          secondary: uiGlyph('block',
               color: settings.blockAds ? palette.accent : palette.textDim),
           title: const Text('Block ads & pop-ups'),
           subtitle:
-              const Text('Network-level blocklist of ad/tracker hosts'),
+              const Text('Blocks known ad and tracker addresses before they load'),
           value: settings.blockAds,
           onChanged: settings.setBlockAds,
         ),
         SwitchListTile(
-          secondary: Icon(Icons.visibility_off_rounded,
+          secondary: uiGlyph('eye-off',
               color: settings.cosmeticFiltering
                   ? palette.accent
                   : palette.textDim),
-          title: const Text('Cosmetic filtering'),
+          title: const Text('Hide leftover ad spaces'),
           subtitle: const Text('Hide empty ad slots left behind'),
           value: settings.cosmeticFiltering,
           onChanged: settings.setCosmeticFiltering,
@@ -119,7 +119,7 @@ class PrivacyPage extends StatelessWidget {
             padding: const EdgeInsets.all(28),
             child: Center(
               child: Text(
-                'Browse a little — blocked domains will appear here.',
+                'Blocked ads and trackers will be listed here.',
                 style: TextStyle(color: palette.textDim, fontSize: 12.5),
               ),
             ),
@@ -128,13 +128,8 @@ class PrivacyPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
             child: Text(
-              'MOST-BLOCKED DOMAINS',
-              style: TextStyle(
-                color: palette.textDim,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.8,
-              ),
+              'Most blocked',
+              style: Ui.text(palette, size: 14, weight: FontWeight.w700),
             ),
           ),
           for (final e in privacy.topBlockedHosts)
@@ -148,10 +143,7 @@ class PrivacyPage extends StatelessWidget {
               trailing: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: palette.accent.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                decoration: Ui.tint(palette, palette.accent, radius: 7),
                 child: Text(
                   '${e.value}',
                   style: TextStyle(
@@ -165,7 +157,7 @@ class PrivacyPage extends StatelessWidget {
           Center(
             child: TextButton.icon(
               onPressed: () => privacy.resetStats(),
-              icon: const Icon(Icons.restart_alt_rounded, size: 18),
+              icon: uiGlyph('restore', size: 18),
               label: const Text('Reset statistics'),
             ),
           ),
@@ -184,7 +176,7 @@ class _Stat extends StatelessWidget {
     required this.palette,
   });
 
-  final IconData icon;
+  final Object icon;
   final String label;
   final String sub;
   final BrowserPalette palette;
@@ -196,12 +188,12 @@ class _Stat extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: palette.surfaceAlt.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: Ui.petal(14),
           border: Border.all(color: palette.border),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: palette.accent),
+            uiGlyph(icon, size: 20, color: palette.accent),
             const SizedBox(width: 10),
             Expanded(
               child: Column(

@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-/// Frosted-glass container used for chrome when a wallpaper is active.
+/// Blurred container for the chrome, used only by the wallpaper theme.
 class GlassBox extends StatelessWidget {
   const GlassBox({
     super.key,
@@ -38,7 +38,7 @@ class GlassBox extends StatelessWidget {
     return ClipRRect(
       borderRadius: r,
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: Container(
           padding: padding,
           decoration: BoxDecoration(

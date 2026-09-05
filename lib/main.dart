@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -6,6 +8,7 @@ import 'app.dart';
 import 'services/downloader.dart';
 import 'services/web_engine.dart';
 import 'state/browser_provider.dart';
+import 'state/files_provider.dart';
 import 'state/privacy_provider.dart';
 import 'state/profile_provider.dart';
 import 'state/settings_provider.dart';
@@ -20,9 +23,11 @@ Future<void> main() async {
   final settings = SettingsProvider(prefs: prefs);
   final profile = ProfileProvider(prefs: prefs);
   final privacy = PrivacyProvider(prefs: prefs);
+  final files = FilesProvider(prefs: prefs);
   await settings.load();
   await profile.load();
   await privacy.load();
+  unawaited(files.load());
 
   final browser = BrowserProvider(
     settings: settings,
@@ -38,6 +43,7 @@ Future<void> main() async {
         ChangeNotifierProvider.value(value: profile),
         ChangeNotifierProvider.value(value: privacy),
         ChangeNotifierProvider.value(value: browser),
+        ChangeNotifierProvider.value(value: files),
         ChangeNotifierProvider.value(value: DownloadService()),
       ],
       child: const InterfaceApp(),

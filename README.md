@@ -1,25 +1,76 @@
 # Interface Browser
 
-A real, themeable web browser for **phones (Android)** and **laptops (Windows)**, built with Flutter + native WebViews (`flutter_inappwebview` — Android System WebView / Windows WebView2).
+A fast, themeable web browser for **phones (Android)** and **laptops (Windows)**, built with
+Flutter and the platform's own web engine (`flutter_inappwebview` — System WebView on Android,
+WebView2 on Windows).
 
-**Brand:** navy blue chrome with cyan accents. **UX:** Chrome tabs & omnibox meets Opera speed dial, bottom address bar & sidebar.
+## How it looks
+
+Interface keeps the parts you already know — tabs, an address field, a menu — but arranges them
+as one quiet row:
+
+```
++------------------------------------------------------------------------------+
+| logo | back fwd reload home | ( o GitHub  x )( HN  x )( + ) | address field |
+|                                                       shield star dl side menu|
+|  loading line ...............................................................|
++------------------------------------------------------------------------------+
+|  the page                                                                     |
++------------------------------------------------------------------------------+
+```
+
+- **Tabs are pills in the bar**, not a strip of folders on top of the page. Each shows its icon,
+  title, loading state and a colour dot when it belongs to a group. On narrow windows they collapse
+  into one button that opens the tab grid.
+- **The address field lives in the same row**, with a lock that opens site information, suggestions
+  that bold what you typed, and history / bookmark / search matches in one list.
+- **One corner language.** Every surface keeps three soft corners and one tight corner, and the
+  tight one points at what the surface belongs to: a field's faces the page below it, a menu's
+  points back at the button that opened it, a row's faces the content it opens. Five numbers
+  cover the whole app: 9 for controls, 11 for fields, 15 for cards, 13 for menus, 19 for sheets.
+- **Flat surfaces, one hairline each**, with the top two pixels of every raised surface catching
+  the light so navy reads as a plate rather than a coloured rectangle. No blur except the
+  wallpaper theme.
+- **Colour means something.** Cyan only appears where something is happening: focus (a keyline
+  and a soft bloom), loading (the bar glows as it runs), the selected tab (it lifts off the bar),
+  the selected row (an accent bar down its leading edge), blocked requests. Everything else is
+  navy ink on cool paper.
+- **Plain words.** "Bookmarks", "History", "Downloads", "Reader view", "New private tab" — no
+  counters, codes or status readouts stacked on top of the page.
+- On phones the controls sit in one rounded dock at the bottom (address, back / forward / reload,
+  shield, tab count, menu) with a 2px progress line at the top of the screen.
+
+Design tokens and the shared widgets that enforce all of this are in `lib/core/ui.dart` and
+`lib/widgets/ui_kit.dart`.
 
 ## Features
 
-- 🌐 **Real web browsing** — native WebView engine on every platform, tabs stay alive when you switch them
-- 🎨 **7 themes** — System · Light · Dark (navy/cyan) · Red · Green · Black & White (can render pages fully desaturated) · **Custom picture background** (frosted-glass chrome over your wallpaper)
-- ⚡ **Speed dial** — Opera-style new tab with clock, big search box and an editable grid of favorite sites
-- 🔍 **Smart omnibox** — combined address/search with live suggestions (DuckDuckGo autocomplete), history & bookmark matches, full keyboard navigation
-- 🗂 **Tabs** — Chrome desktop tab strip (context menus, middle-click close) + Chrome mobile tab grid; incognito tabs with private chrome
-- ⭐ **Bookmarks** — toolbar star, Chrome-style bookmarks bar, manager, edit/delete
-- 🕘 **History** — grouped by day, per-item delete, clear-browsing-data dialog (history/cookies/cache)
-- ⬇️ **Real downloads** — streamed with progress and cancel, saved to your Downloads folder (Windows) / app Downloads (Android)
-- 🔎 **Find in page** (Ctrl+F) with match counter
-- 🛡 **Block ads & pop-ups** — built-in host blocklist, one-tap toggle
-- 🖥 **Desktop-site mode** for phones, per-window layout that adapts ≥840 px
-- ⌨️ **Keyboard shortcuts** — Ctrl+T / Ctrl+W / Ctrl+Tab / Ctrl+L / Ctrl+F / Ctrl+D / Ctrl+R / Alt+←→ / Ctrl+1…9
-- 🎬 Fullscreen video, permission requests (camera/mic/geo) granted with a Chromium-style prompt flow
-- 🔄 **Session restore** — reopen your tabs on startup
+- **Real web browsing** — the platform's own engine (System WebView / WebView2); tabs stay alive
+  when you switch them.
+- **Files** — a full file manager: open any folder on the device, make folders and files, rename,
+  copy, move, delete, search inside a folder, list or tiles, kept places, open a file in a tab or
+  in the app that usually takes it. Reached from the sidebar, the menu and quick actions.
+- **7 themes** — System, Light, Dark (navy and cyan), Red, Green, Black & White (can also show web
+  pages without colour), and a picture background of your own with frosted chrome.
+- **Shortcuts on the new tab page** — a greeting, one search field, and an editable grid of
+  favourite sites with folders and drag-to reorder.
+- **One address field for search and addresses** — live suggestions, history and bookmark matches,
+  a built-in calculator, full keyboard navigation.
+- **Tabs** — pill tabs with context menus, groups, middle-click close and split view; a grid
+  switcher on phones; private tabs get their own look.
+- **Bookmarks** — the star in the bar, an optional bookmarks row, and a manager with edit and delete.
+- **History** — grouped by day, delete one item, or clear everything from settings.
+- **Downloads** — streamed with progress and cancel, saved into your Downloads folder, and the file
+  manager opens on that folder in one tap.
+- **Find in page** with a match count.
+- **Ad and tracker blocking** with a per-site switch, a privacy dashboard and "hide leftover ad spaces".
+- **Desktop-site request** for phones; the layout adapts from 840 px up.
+- **Keyboard shortcuts** — Ctrl+T, Ctrl+W, Ctrl+Tab, Ctrl+L, Ctrl+F, Ctrl+D, Ctrl+R, Ctrl+K,
+  Alt+Left / Alt+Right, Ctrl+1 to 9.
+- **Fullscreen video**, and camera / microphone / location prompts with allow once, allow, block.
+- **Session restore** — your tabs come back on startup.
+- **Its own icon set** — 115 line icons drawn as SVG in `assets/icons/`, recoloured to match the
+  text around them. No emoji, no icon font.
 
 ## Get the app
 
@@ -46,19 +97,28 @@ Requirements: Flutter stable + Android SDK (APK) or Visual Studio 2022 with "Des
 ## Notes
 
 - The release APK is debug-signed (fine for sideloading); configure your own keystore for Play Store distribution.
-- Incognito tabs are fully private on Android/iOS; on Windows they share the WebView2 profile (engine limitation).
+- Private tabs keep history and cookies out of the profile on Android and iOS; on Windows they
+  share the WebView2 profile (an engine limitation).
 - Launcher icons are generated deterministically: `python3 tool/gen_icons.py`.
+- The UI icon set (115 SVGs on a 24pt grid) is generated by `tool/gen_ui_icons.py`, and
+  `tool/render_icons.py` rasterises them into `design/icon-sheet.png` so the set can be reviewed
+  without a Flutter toolchain. `python3 tool/gen_ui_icons.py --qa` fails if a glyph leaves the
+  grid, uses an arc command or stops matching the files in `assets/icons/`.
+- The styling sheet at `design/index.html` is generated from the app itself - colours are read
+  out of `lib/core/palette.dart`, icons inlined from `assets/icons/` - by
+  `python3 tool/build_design_preview.py`. `design/` is a folder to open, not a page to ship:
+  nothing in `lib/` reads from it.
 
 ## Project layout
 
 ```
 lib/
-  core/       palette (all 7 themes), URL parsing, search engines
+  core/       palette (all 7 themes), design tokens, URL parsing, search engines
   models.dart bookmarks / history / speed dial / downloads
   services/   web engine bootstrap, suggestions, downloads, blocklist
   state/      settings, profile, tabs (browser engine)
-  widgets/    omnibox, tab strip, toolbar, speed dial, find bar, …
-  pages/      browser shells (desktop/mobile), settings, history, …
+  widgets/    the one-row bar, pill tabs, address field, speed dial, find bar, icons, …
+  pages/      browser shells (desktop/mobile), settings, history, files, …
 ```
 
 ## Building the apps

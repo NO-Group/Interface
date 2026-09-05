@@ -2,10 +2,13 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../pages/bookmarks_page.dart';
 import '../pages/downloads_page.dart';
+import '../pages/files_page.dart';
 import '../pages/history_page.dart';
 import '../pages/privacy_page.dart';
 import '../pages/reader_page.dart';
@@ -19,7 +22,7 @@ import 'logo.dart';
 class _Entry {
   const _Entry(this.id, this.icon, this.label, {this.checkable = false});
   final String id;
-  final IconData icon;
+  final Object icon;
   final String label;
   final bool checkable;
 }
@@ -38,46 +41,47 @@ List<_Entry> _entriesFor(BuildContext context) {
   final onReadingList = !onDial && profile.onReadingList(tab.url);
 
   return [
-    _Entry('new_tab', Icons.add_rounded, 'New tab'),
-    _Entry('new_incognito', Icons.shield_outlined, 'New incognito tab'),
-    const _Entry('div1', Icons.horizontal_rule, ''),
-    _Entry('bookmark', Icons.star_rounded,
+    _Entry('new_tab', 'plus', 'New tab'),
+    _Entry('new_incognito', 'shield', 'New private tab'),
+    const _Entry('div1', 'rule', ''),
+    _Entry('bookmark', 'star-on',
         bookmarked ? 'Remove bookmark' : 'Bookmark this page'),
-    _Entry('speed_dial', Icons.grid_view_rounded,
+    _Entry('speed_dial', 'grid',
         dialAdded ? 'Remove from speed dial' : 'Add to speed dial'),
     _Entry(
         'reading_list',
-        Icons.auto_stories_outlined,
+        'reader',
         onReadingList
             ? 'Saved — open reading list'
             : 'Read later'),
-    if (!onDial) const _Entry('reader', Icons.menu_book_rounded, 'Reader mode'),
-    const _Entry('div2', Icons.horizontal_rule, ''),
-    const _Entry('bookmarks', Icons.bookmarks_outlined, 'Bookmarks'),
-    const _Entry('history', Icons.history_rounded, 'History'),
-    const _Entry('downloads', Icons.download_rounded, 'Downloads'),
-    const _Entry('privacy', Icons.shield_rounded, 'Privacy dashboard'),
-    const _Entry('div3', Icons.horizontal_rule, ''),
-    const _Entry('find', Icons.find_in_page_rounded, 'Find in page'),
+    if (!onDial) const _Entry('reader', 'reading-list', 'Reader view'),
+    const _Entry('div2', 'rule', ''),
+    const _Entry('bookmarks', 'bookmarks', 'Bookmarks'),
+    const _Entry('history', 'clock', 'History'),
+    const _Entry('downloads', 'download', 'Downloads'),
+    const _Entry('files', 'folder', 'Files'),
+    const _Entry('privacy', 'shield-on', 'Privacy dashboard'),
+    const _Entry('div3', 'rule', ''),
+    const _Entry('find', 'find', 'Find in page'),
     if (wide) ...[
-      const _Entry('split', Icons.vertical_split_outlined, 'Split view'),
-      const _Entry('palette', Icons.bolt_rounded, 'Command palette  (Ctrl+K)'),
-      const _Entry('print', Icons.print_rounded, 'Print page'),
+      const _Entry('split', 'split', 'Split view'),
+      const _Entry('palette', 'bolt', 'Quick actions  (Ctrl+K)'),
+      const _Entry('print', 'print', 'Print page'),
     ],
-    _Entry('block_ads', Icons.block_rounded, 'Block ads & pop-ups',
+    _Entry('block_ads', 'block', 'Block ads & pop-ups',
         checkable: settings.blockAds),
     if (!Platform.isWindows)
-      _Entry('desktop_site', Icons.desktop_windows_rounded, 'Desktop site',
+      _Entry('desktop_site', 'monitor', 'Desktop site',
           checkable: settings.desktopMode),
     if (wide)
-      _Entry('bookmarks_bar', Icons.bookmark_border_rounded, 'Bookmarks bar',
+      _Entry('bookmarks_bar', 'bookmark', 'Bookmarks bar',
           checkable: settings.showBookmarksBar),
     if (wide)
-      _Entry('vertical_tabs', Icons.view_agenda_outlined, 'Vertical tabs',
+      _Entry('vertical_tabs', 'list', 'Vertical tabs',
           checkable: settings.verticalTabs),
-    const _Entry('div4', Icons.horizontal_rule, ''),
-    const _Entry('settings', Icons.settings_outlined, 'Settings'),
-    const _Entry('about', Icons.info_outline_rounded, 'About'),
+    const _Entry('div4', 'rule', ''),
+    const _Entry('settings', 'sliders', 'Settings'),
+    const _Entry('about', 'info', 'About'),
   ];
 }
 
@@ -131,6 +135,8 @@ Future<void> runMenuAction(BuildContext context, String id) async {
       openPanelOrRoute(const HistoryRoute(), SidePanel.history);
     case 'downloads':
       openPanelOrRoute(const DownloadsRoute(), SidePanel.downloads);
+    case 'files':
+      openPanelOrRoute(const FilesRoute(), SidePanel.files);
     case 'privacy':
       openPanelOrRoute(const PrivacyRoute(), SidePanel.privacy);
     case 'find':
@@ -143,6 +149,7 @@ Future<void> runMenuAction(BuildContext context, String id) async {
       try {
         await tab.controller?.printCurrentPage();
       } catch (_) {
+        if (!context.mounted) return;
         _snack(context, 'Printing is not available for this page');
       }
     case 'block_ads':
@@ -160,9 +167,9 @@ Future<void> runMenuAction(BuildContext context, String id) async {
       showAboutDialog(
         context: context,
         applicationName: 'Interface Browser',
-        applicationVersion: '1.1.0',
+        applicationVersion: '2.0.0',
         applicationLegalese:
-            'A fast, themeable browser for phones & laptops.',
+            'A fast, themeable browser for phones and laptops.',
         applicationIcon: const LogoMark(size: 44),
       );
   }
@@ -189,9 +196,13 @@ class AppMenuButton extends StatelessWidget {
     return PopupMenuButton<String>(
       tooltip: 'Menu',
       color: palette.surface,
-      icon: Icon(Icons.more_vert_rounded, color: palette.text),
+      elevation: 0,
+      shadowColor: Colors.black.withValues(alpha: palette.isDark ? 0.5 : 0.14),
+      constraints: const BoxConstraints(minWidth: 272),
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      icon: uiGlyph('dots', color: palette.text, size: 22),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: Ui.petal(Ui.rMenu, at: UiCorner.topLeft),
         side: BorderSide(color: palette.border),
       ),
       itemBuilder: (_) => [
@@ -201,22 +212,29 @@ class AppMenuButton extends StatelessWidget {
           else
             PopupMenuItem(
               value: e.id,
-              height: 42,
+              height: Ui.menuRowHeight,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
                 children: [
-                  Icon(e.icon,
-                      size: 18,
+                  uiGlyph(e.icon,
+                      size: 17,
                       color: e.checkable ? palette.accent : palette.textDim),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 11),
                   Expanded(
                     child: Text(
                       e.label,
-                      style: TextStyle(color: palette.text, fontSize: 13.5),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Ui.text(
+                        palette,
+                        color: palette.text,
+                        weight: e.checkable ? FontWeight.w600 : FontWeight.w400,
+                      ),
                     ),
                   ),
                   if (e.checkable)
-                    Icon(Icons.check_rounded,
-                        size: 17, color: palette.accent),
+                    uiGlyph('check',
+                        size: 16, color: palette.accent),
                 ],
               ),
             ),
@@ -248,7 +266,7 @@ Future<void> showMobileMenu(BuildContext context) {
               else
                 ListTile(
                   dense: true,
-                  leading: Icon(
+                  leading: uiGlyph(
                     e.icon,
                     color: e.checkable ? palette.accent : palette.textDim,
                   ),
@@ -257,12 +275,14 @@ Future<void> showMobileMenu(BuildContext context) {
                     style: TextStyle(color: palette.text, fontSize: 14.5),
                   ),
                   trailing: e.checkable
-                      ? Icon(Icons.check_rounded,
+                      ? uiGlyph('check',
                           size: 18, color: palette.accent)
                       : null,
                   onTap: () {
                     Navigator.of(sheetContext).pop();
-                    Future.microtask(() => runMenuAction(context, e.id));
+                    Future.microtask(() {
+                      if (context.mounted) runMenuAction(context, e.id);
+                    });
                   },
                 ),
           ],

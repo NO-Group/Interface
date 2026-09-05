@@ -2,9 +2,12 @@ import 'dart:io' show File;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart' show LaunchMode, launchUrl;
 import 'package:provider/provider.dart';
+import '../widgets/icons.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../services/web_engine.dart';
 import '../state/browser_provider.dart';
 import '../state/privacy_provider.dart';
@@ -17,22 +20,23 @@ import '../widgets/omnibox.dart';
 import '../widgets/onboarding.dart';
 import '../widgets/permission_banner.dart';
 import '../widgets/site_info_sheet.dart';
-import '../widgets/tab_strip.dart';
 import '../widgets/tab_switcher.dart';
 import '../widgets/toolbar.dart';
+import '../widgets/ui_kit.dart';
 import '../widgets/vertical_tab_rail.dart';
 import '../widgets/tab_web_view.dart';
 import '../widgets/view_stack.dart';
 import 'bookmarks_page.dart';
 import 'downloads_page.dart';
+import 'files_page.dart';
 import 'history_page.dart';
 import 'privacy_page.dart';
 import 'reading_list_page.dart';
 import 'settings_page.dart';
 
 /// Root of the browser UI. Picks the desktop or mobile shell, paints the
-/// custom wallpaper layer, handles fullscreen video, split view,
-/// command palette and onboarding.
+/// wallpaper theme, and handles fullscreen video, split view, quick
+/// actions and the welcome screen.
 class BrowserPage extends StatelessWidget {
   const BrowserPage({super.key});
 
@@ -73,7 +77,7 @@ class BrowserPage extends StatelessWidget {
                 backgroundColor: Colors.black54,
                 foregroundColor: Colors.white,
               ),
-              icon: const Icon(Icons.fullscreen_rounded),
+              icon: uiGlyph('expand'),
               onPressed: () => browser.setFullscreen(false),
             ),
           ),
@@ -110,13 +114,30 @@ class _WebView2Banner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFF7A1F1F),
-      child: ListTile(
-        dense: true,
-        leading: const Icon(Icons.warning_amber_rounded, color: Colors.white),
-        title: const Text(
-          'WebView2 runtime missing — install it from Microsoft to browse.',
-          style: TextStyle(color: Colors.white, fontSize: 12.5),
+      color: palette.danger,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 9, 14, 9),
+        child: Row(
+          children: [
+            uiGlyph('alert',
+                size: 18, color: Colors.white),
+            const SizedBox(width: 11),
+            const Expanded(
+              child: Text(
+                'Pages need Microsoft’s WebView2 to display on this PC.',
+                style: TextStyle(color: Colors.white, fontSize: 13),
+              ),
+            ),
+            TextButton(
+              onPressed: () => launchUrl(
+                Uri.parse(
+                  'https://developer.microsoft.com/microsoft-edge/webview2/',
+                ),
+                mode: LaunchMode.externalApplication,
+              ),
+              child: const Text('Get it'),
+            ),
+          ],
         ),
       ),
     );
@@ -124,7 +145,7 @@ class _WebView2Banner extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Desktop (Chrome tabs + Opera sidebar + split view)
+// Desktop
 // ---------------------------------------------------------------------------
 
 class DesktopShell extends StatelessWidget {
@@ -193,13 +214,21 @@ class DesktopShell extends StatelessWidget {
         autofocus: true,
         child: Stack(
           children: [
-            Column(
+            Row(
               children: [
-                if (!settings.verticalTabs) const TabStrip(),
-                const DesktopToolbar(),
+                // The window's own keel: the state of the page you are on,
+                // read down the left edge instead of under the bar.
+                _WindowKeel(
+                  loading: browser.current.loading,
+                  progress: browser.current.progress,
+                  unsafe: browser.current.url.startsWith('http://'),
+                ),
+                Expanded(
+                  child: Column(
+              children: [
+                TopBar(showTabs: !settings.verticalTabs),
                 if (!settings.verticalTabs && settings.showBookmarksBar)
                   const BookmarksBar(),
-                Container(height: 1, color: palette.border),
                 Expanded(
                   child: Row(
                     children: [
@@ -227,10 +256,14 @@ class DesktopShell extends StatelessWidget {
                         clipBehavior: Clip.hardEdge,
                         child: browser.sidePanel == SidePanel.none
                             ? const SizedBox.shrink()
-                            : const SizedBox(width: 356, child: _SidePanel()),
+                            : const SizedBox(
+                                width: 372, child: _SidePanel()),
                       ),
                     ],
                   ),
+                ),
+              ],
+            ),
                 ),
               ],
             ),
@@ -264,7 +297,71 @@ class DesktopShell extends StatelessWidget {
   }
 }
 
-/// Two tabs side-by-side with a draggable divider (Opera-style split view).
+/// The state of the current page, drawn as a 3px rail down the window's left
+/// edge: quiet hairline when nothing is happening, accent while a page loads
+/// (filling as the estimate comes in), danger when the page is plain http.
+class _WindowKeel extends StatelessWidget {
+  const _WindowKeel({
+    required this.loading,
+    required this.progress,
+    required this.unsafe,
+  });
+
+  final bool loading;
+  final num progress;
+  final bool unsafe;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = pal(context);
+    final fraction = progress <= 0
+        ? 0.16
+        : (progress / 100).clamp(0.16, 1.0).toDouble();
+    return SizedBox(
+      width: Ui.keelWidth,
+      child: LayoutBuilder(
+        builder: (context, box) {
+          final height = loading
+              ? box.maxHeight * fraction
+              : (unsafe ? 18.0 : 0.0);
+          final color = loading
+              ? p.accent
+              : (unsafe ? p.danger.withValues(alpha: 0.85) : p.idleKeel);
+          return Stack(
+            children: [
+              Positioned.fill(child: ColoredBox(color: p.idleKeel)),
+              if (loading || unsafe)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: height,
+                  child: AnimatedContainer(
+                    duration: Ui.normal,
+                    curve: Ui.curve,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(Ui.keelWidth),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.55),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Two tabs side by side with a draggable divider.
 class _SplitView extends StatelessWidget {
   const _SplitView({
     required this.fraction,
@@ -330,7 +427,7 @@ class _SplitView extends StatelessWidget {
                       color: palette.chromeFill,
                       child: Row(
                         children: [
-                          Icon(Icons.vertical_split_rounded,
+                          uiGlyph('split',
                               size: 14, color: palette.accent),
                           const SizedBox(width: 8),
                           Expanded(
@@ -351,7 +448,7 @@ class _SplitView extends StatelessWidget {
                             customBorder: const CircleBorder(),
                             child: Padding(
                               padding: const EdgeInsets.all(3),
-                              child: Icon(Icons.close_rounded,
+                              child: uiGlyph('close',
                                   size: 14, color: palette.textDim),
                             ),
                           ),
@@ -361,7 +458,7 @@ class _SplitView extends StatelessWidget {
                             customBorder: const CircleBorder(),
                             child: Padding(
                               padding: const EdgeInsets.all(3),
-                              child: Icon(Icons.close_fullscreen_rounded,
+                              child: uiGlyph('compress',
                                   size: 14, color: palette.textDim),
                             ),
                           ),
@@ -408,7 +505,7 @@ class _PrimarySplitStack extends StatelessWidget {
   }
 }
 
-/// Opera-style sidebar with the library pages.
+/// Sidebar with the library pages.
 class _SidePanel extends StatelessWidget {
   const _SidePanel();
 
@@ -425,6 +522,7 @@ class _SidePanel extends StatelessWidget {
       SidePanel.settings => 'Settings',
       SidePanel.reading => 'Reading list',
       SidePanel.privacy => 'Privacy',
+      SidePanel.files => 'Files',
       SidePanel.none => '',
     };
 
@@ -438,30 +536,30 @@ class _SidePanel extends StatelessWidget {
             children: [
               SizedBox(
                 height: 44,
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 14),
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          color: palette.text,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 14, right: 8),
+                  child: Row(
+                    children: [
+                      Ui.keel(palette),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Ui.section(palette),
                         ),
                       ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      icon: Icon(Icons.chevron_left_rounded,
-                          color: palette.textDim),
-                      onPressed: () => browser.setSidePanel(SidePanel.none),
-                    ),
-                  ],
+                      UiIconButton(
+                        icon: 'chevron-right',
+                        tooltip: 'Hide sidebar',
+                        onTap: () => browser.setSidePanel(SidePanel.none),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              Divider(height: 1, color: palette.border),
+              Container(height: Ui.hair, color: palette.hairlineSoft),
               Expanded(
                 child: switch (page) {
                   SidePanel.bookmarks => const BookmarksList(embedded: true),
@@ -470,6 +568,7 @@ class _SidePanel extends StatelessWidget {
                   SidePanel.settings => const SettingsBody(),
                   SidePanel.reading => const ReadingListPage(embedded: true),
                   SidePanel.privacy => const PrivacyPage(embedded: true),
+                  SidePanel.files => const FilesPage(embedded: true),
                   SidePanel.none => const SizedBox.shrink(),
                 },
               ),
@@ -490,66 +589,41 @@ class _SideRail extends StatelessWidget {
   Widget build(BuildContext context) {
     final browser = context.watch<BrowserProvider>();
     final profile = context.watch<ProfileProvider>();
-    final palette = pal(context);
 
-    Widget railButton(SidePanel target, IconData icon, String tip,
+    Widget railButton(SidePanel target, Object icon, String tip,
         {int badge = 0}) {
-      final active = page == target;
-      return Tooltip(
-        message: tip,
-        waitDuration: const Duration(milliseconds: 500),
-        child: InkWell(
-          onTap: () => browser.toggleSidePanel(target),
-          customBorder: const CircleBorder(),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 130),
-            margin: const EdgeInsets.all(6),
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              color: active
-                  ? palette.accent.withValues(alpha: 0.16)
-                  : Colors.transparent,
-              shape: BoxShape.circle,
-            ),
-            child: badge > 0
-                ? Badge.count(
-                    count: badge,
-                    backgroundColor: palette.accent,
-                    textColor: palette.onAccent,
-                    child: Icon(
-                      icon,
-                      size: 20,
-                      color: active ? palette.accent : palette.textDim,
-                    ),
-                  )
-                : Icon(
-                    icon,
-                    size: 20,
-                    color: active ? palette.accent : palette.textDim,
-                  ),
-          ),
-        ),
+      return UiIconButton(
+        icon: icon,
+        tooltip: tip,
+        size: 40,
+        iconSize: 20,
+        badge: badge,
+        selected: page == target,
+        onTap: () => browser.toggleSidePanel(target),
       );
     }
 
     return SizedBox(
-      width: 46,
+      width: 48,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          const SizedBox(height: 6),
-          railButton(SidePanel.bookmarks, Icons.star_border_rounded,
+          const SizedBox(height: 8),
+          railButton(SidePanel.bookmarks, 'star',
               'Bookmarks'),
-          railButton(SidePanel.history, Icons.history_rounded, 'History (Ctrl+H)'),
-          railButton(SidePanel.downloads, Icons.download_rounded,
+          railButton(SidePanel.history, 'clock',
+              'History (Ctrl+H)'),
+          railButton(SidePanel.downloads, 'download',
               'Downloads (Ctrl+J)'),
-          railButton(SidePanel.reading, Icons.auto_stories_outlined,
+          railButton(SidePanel.files, 'folder', 'Files'),
+          railButton(SidePanel.reading, 'reader',
               'Reading list',
               badge: profile.unreadReadingCount),
           const Spacer(),
-          railButton(SidePanel.privacy, Icons.shield_outlined, 'Privacy dashboard'),
-          railButton(SidePanel.settings, Icons.settings_outlined, 'Settings'),
-          const SizedBox(height: 6),
+          railButton(SidePanel.privacy, 'shield',
+              'Privacy dashboard'),
+          railButton(SidePanel.settings, 'sliders', 'Settings'),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -557,7 +631,7 @@ class _SideRail extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Mobile (Opera bottom bar + Chrome grid)
+// Mobile
 // ---------------------------------------------------------------------------
 
 class MobileShell extends StatelessWidget {
@@ -595,48 +669,28 @@ class MobileShell extends StatelessWidget {
             if (tab.incognito)
               Container(
                 width: double.infinity,
-                color: const Color(0xFF171B21),
+                color: palette.surfaceAlt,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 child: Row(
                   children: [
-                    const Icon(Icons.shield_rounded,
-                        size: 15, color: Color(0xFF8AB4F8)),
+                    uiGlyph('shield-on', size: 14, color: palette.accent),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Incognito — history is not saved',
-                        style: TextStyle(
-                          color: palette.text,
-                          fontSize: 12,
-                        ),
+                        'Private tab — nothing is saved',
+                        style: Ui.text(palette, size: Ui.sizeSmall),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    InkWell(
-                      onTap: () => browser.newTab(),
-                      child: Text(
-                        'New tab',
-                        style: TextStyle(
-                          color: palette.accent,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                    TextButton(
+                      onPressed: () => browser.newTab(incognito: true),
+                      child: const Text('New private tab'),
                     ),
                   ],
                 ),
               ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              height: tab.loading ? 3 : 0,
-              child: LinearProgressIndicator(
-                value: tab.progress / 100,
-                minHeight: 3,
-                backgroundColor: Colors.transparent,
-                color: palette.accent,
-              ),
-            ),
+            UiProgressLine(active: tab.loading, progress: tab.progress),
             const Expanded(child: ViewStack()),
             if (browser.findOpen)
               Padding(
@@ -644,46 +698,8 @@ class MobileShell extends StatelessWidget {
                 child: FindBar(compact: true),
               ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-              child: Omnibox(compact: true),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(6, 0, 6, 6),
-              child: Row(
-                children: [
-                  _NavButton(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    enabled: tab.canBack,
-                    onTap: () => browser.goBack(),
-                  ),
-                  _NavButton(
-                    icon: Icons.arrow_forward_ios_rounded,
-                    enabled: tab.canForward,
-                    onTap: () => browser.goForward(),
-                  ),
-                  _NavButton(
-                    icon: Icons.home_outlined,
-                    onTap: () => browser.goHome(),
-                  ),
-                  _ShieldNavButton(
-                    blocked: blocked,
-                    onTap: () => showSiteInfoSheet(context),
-                  ),
-                  _TabsButton(
-                    count: browser.tabCount,
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        fullscreenDialog: true,
-                        builder: (_) => const TabSwitcherPage(),
-                      ),
-                    ),
-                  ),
-                  _NavButton(
-                    icon: Icons.more_vert_rounded,
-                    onTap: () => showMobileMenu(context),
-                  ),
-                ],
-              ),
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+              child: _MobileDock(tab: tab, blocked: blocked),
             ),
           ],
         ),
@@ -692,78 +708,139 @@ class MobileShell extends StatelessWidget {
   }
 }
 
-class _NavButton extends StatelessWidget {
-  const _NavButton({
-    required this.icon,
-    required this.onTap,
-    this.enabled = true,
-  });
+/// The phone's whole control surface: address, then one row of actions, in a
+/// single rounded dock so nothing floats over the page.
+class _MobileDock extends StatelessWidget {
+  const _MobileDock({required this.tab, required this.blocked});
 
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool enabled;
+  final BrowserTab tab;
+  final int blocked;
 
   @override
   Widget build(BuildContext context) {
-    final palette = pal(context);
-    return Expanded(
-      child: IconButton(
-        icon: Icon(icon, size: 20),
-        color: palette.text,
-        disabledColor: palette.textDim.withValues(alpha: 0.35),
-        onPressed: enabled ? onTap : null,
+    final browser = context.read<BrowserProvider>();
+    final p = pal(context);
+
+    return Container(
+      decoration: Ui.card(p),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(8, 4, 8, 0),
+            child: Omnibox(compact: true),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 2, 4, 4),
+            child: Row(
+              children: [
+                _Key(
+                  icon: 'back',
+                  enabled: tab.canBack,
+                  onTap: browser.goBack,
+                ),
+                _Key(
+                  icon: 'forward',
+                  enabled: tab.canForward,
+                  onTap: browser.goForward,
+                ),
+                _Key(
+                  icon: tab.loading ? 'close' : 'reload',
+                  onTap: tab.loading ? browser.stopLoading : browser.reload,
+                ),
+                _Key(
+                  icon: 'shield',
+                  badge: blocked,
+                  onTap: () => showSiteInfoSheet(context),
+                ),
+                _TabKey(
+                  count: browser.tabCount,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      fullscreenDialog: true,
+                      builder: (_) => const TabSwitcherPage(),
+                    ),
+                  ),
+                ),
+                _Key(
+                  icon: 'dots',
+                  onTap: () => showMobileMenu(context),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _ShieldNavButton extends StatelessWidget {
-  const _ShieldNavButton({required this.blocked, required this.onTap});
+class _Key extends StatelessWidget {
+  const _Key({
+    required this.onTap,
+    this.icon,
+    this.enabled = true,
+    this.badge = 0,
+  });
 
-  final int blocked;
   final VoidCallback onTap;
+  final Object? icon;
+  final bool enabled;
+  final int badge;
 
   @override
   Widget build(BuildContext context) {
-    final palette = pal(context);
     return Expanded(
       child: Center(
-        child: IconButton(
-          onPressed: onTap,
-          icon: Badge.count(
-            count: blocked,
-            isLabelVisible: blocked > 0,
-            backgroundColor: palette.accent,
-            textColor: palette.onAccent,
-            child: Icon(Icons.shield_outlined, size: 21, color: palette.text),
-          ),
+        child: UiIconButton(
+          icon: icon ?? 'close',
+          size: 44,
+          iconSize: 20,
+          badge: badge,
+          onTap: enabled ? onTap : null,
         ),
       ),
     );
   }
 }
 
-class _TabsButton extends StatelessWidget {
-  const _TabsButton({required this.count, required this.onTap});
+class _TabKey extends StatelessWidget {
+  const _TabKey({required this.count, required this.onTap});
 
   final int count;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final palette = pal(context);
+    final p = pal(context);
     return Expanded(
       child: Center(
-        child: IconButton(
-          onPressed: onTap,
-          icon: Badge.count(
-            count: count,
-            backgroundColor: palette.accent,
-            textColor: palette.onAccent,
-            child: Icon(Icons.tab_rounded, size: 21, color: palette.text),
+        child: UiHoverable(
+          onTap: onTap,
+          builder: (context, hovering, pressed) => AnimatedContainer(
+            duration: Ui.quick,
+            curve: Ui.curve,
+            height: 32,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: hovering || pressed ? p.hoverFill : Colors.transparent,
+              borderRadius: Ui.petal(Ui.rControl),
+              border: Border.all(color: p.border),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                uiGlyph('grid', size: 16, color: p.textDim),
+                Ui.gap(6),
+                Text('$count',
+                    style: Ui.text(p, size: Ui.sizeSmall, weight: FontWeight.w600)),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
+
+

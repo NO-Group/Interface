@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../widgets/icons.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../services/reader_extractor.dart';
 import '../state/browser_provider.dart';
 import '../state/settings_provider.dart';
@@ -64,7 +66,7 @@ class _ReaderPageState extends State<ReaderPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _error =
-          'This page does not look like an article Reader can reformat.');
+          'This page doesn’t look like an article.');
     }
   }
 
@@ -81,7 +83,7 @@ class _ReaderPageState extends State<ReaderPage> {
         foregroundColor: scheme.foreground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
+          icon: uiGlyph('close'),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         titleSpacing: 0,
@@ -96,19 +98,19 @@ class _ReaderPageState extends State<ReaderPage> {
         actions: [
           IconButton(
             tooltip: 'Smaller text',
-            icon: const Icon(Icons.text_decrease_rounded, size: 20),
+            icon: uiGlyph('text', size: 20),
             onPressed: () =>
                 settings.setReaderFontSize(settings.readerFontSize - 1),
           ),
           IconButton(
             tooltip: 'Larger text',
-            icon: const Icon(Icons.text_increase_rounded, size: 20),
+            icon: uiGlyph('text', size: 20),
             onPressed: () =>
                 settings.setReaderFontSize(settings.readerFontSize + 1),
           ),
           PopupMenuButton<ReaderTheme>(
             tooltip: 'Reader theme',
-            icon: Icon(Icons.palette_outlined,
+            icon: uiGlyph('palette',
                 size: 20, color: scheme.foreground),
             onSelected: settings.setReaderTheme,
             itemBuilder: (_) => const [
@@ -119,7 +121,7 @@ class _ReaderPageState extends State<ReaderPage> {
           ),
           IconButton(
             tooltip: 'Copy article text',
-            icon: const Icon(Icons.copy_rounded, size: 19),
+            icon: uiGlyph('copy', size: 19),
             onPressed: _article == null
                 ? null
                 : () {
@@ -132,7 +134,7 @@ class _ReaderPageState extends State<ReaderPage> {
           ),
           IconButton(
             tooltip: 'Reload',
-            icon: const Icon(Icons.refresh_rounded, size: 20),
+            icon: uiGlyph('reload', size: 20),
             onPressed: _extract,
           ),
         ],
@@ -261,11 +263,11 @@ class _ArticleBody extends StatelessWidget {
         if (hero.isNotEmpty) ...[
           const SizedBox(height: 18),
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: Ui.petal(12),
             child: Image.network(
               hero,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
             ),
           ),
         ],
@@ -285,10 +287,10 @@ class _ArticleBody extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.only(bottom: 18),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: Ui.petal(10),
           child: Image.network(
             value,
-            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
           ),
         ),
       );
@@ -346,7 +348,7 @@ class _ArticleBody extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: scheme.foreground.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: Ui.petal(10),
         ),
         child: Text(
           value,
@@ -423,7 +425,7 @@ class _EmptyReader extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.menu_book_rounded, size: 52, color: accent),
+          uiGlyph('reading-list', size: 52, color: accent),
           const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),

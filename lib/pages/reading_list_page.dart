@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../widgets/icons.dart';
 
 import '../core/pal.dart';
 import '../core/urls.dart';
@@ -23,10 +24,10 @@ class ReadingListPage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.auto_stories_rounded, size: 52, color: palette.textDim),
+            uiGlyph('reader', size: 52, color: palette.textDim),
             const SizedBox(height: 12),
             Text(
-              'Save articles with "Read later" in the menu',
+              'Save pages from the menu to read later',
               style: TextStyle(color: palette.text, fontSize: 14),
             ),
           ],
@@ -45,7 +46,7 @@ class ReadingListPage extends StatelessWidget {
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 20),
             color: palette.danger.withValues(alpha: 0.15),
-            child: Icon(Icons.delete_outline_rounded, color: palette.danger),
+            child: uiGlyph('trash', color: palette.danger),
           ),
           direction: embedded ? DismissDirection.none : DismissDirection.endToStart,
           onDismissed: (_) => profile.removeReading(e),
@@ -86,10 +87,10 @@ class ReadingListPage extends StatelessWidget {
               style: TextStyle(color: palette.textDim, fontSize: 11.5),
             ),
             trailing: IconButton(
-              icon: Icon(
+              icon: uiGlyph(
                 e.read
-                    ? Icons.radio_button_unchecked_rounded
-                    : Icons.check_circle_outline_rounded,
+                    ? 'circle'
+                    : 'check-circle',
                 size: 19,
                 color: e.read ? palette.textDim : palette.accent,
               ),

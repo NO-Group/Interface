@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
+import '../core/ui.dart';
 import '../state/browser_provider.dart';
 
-/// Chromium-style top banner for pending site permission requests
-/// (camera / microphone / location).
+/// Top banner for pending site permission requests (camera / microphone /
+/// location).
+
 class PermissionBanner extends StatelessWidget {
   const PermissionBanner({super.key});
 
@@ -17,7 +20,7 @@ class PermissionBanner extends StatelessWidget {
     final palette = pal(context);
 
     return Material(
-      elevation: 6,
+      elevation: 0,
       color: palette.surface,
       child: SafeArea(
         bottom: false,
@@ -29,36 +32,25 @@ class PermissionBanner extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: palette.accent.withValues(alpha: 0.14),
-                  shape: BoxShape.circle,
-                ),
-                child:
-                    Icon(Icons.videocam_outlined, size: 18, color: palette.accent),
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: Ui.tint(palette, palette.accent, radius: 9),
+                child: uiGlyph(_glyphFor(ask.labels),
+                    size: 17,
+                    color: palette.accent),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '${ask.host} wants to use your ${ask.labels.join(' and ')}',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: palette.text,
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Blocked sites stay blocked until you change it',
-                      style: TextStyle(color: palette.textDim, fontSize: 11),
-                    ),
-                  ],
+                child: Text(
+                  '${ask.host} wants to use your ${ask.labels.join(' and ')}',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Ui.text(
+                    palette,
+                    size: Ui.sizeBody,
+                    weight: FontWeight.w600,
+                  ),
                 ),
               ),
               TextButton(
@@ -75,6 +67,9 @@ class PermissionBanner extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: palette.accent,
                   foregroundColor: palette.onAccent,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
+                  ),
                 ),
                 onPressed: () => browser.resolvePermission(true, always: true),
                 child: const Text('Allow'),
@@ -85,4 +80,17 @@ class PermissionBanner extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The mark at the left is the thing being asked for, so a microphone prompt
+/// does not show a camera.
+String _glyphFor(List<String> labels) {
+  final s = labels.join(' and ').toLowerCase();
+  if (s.contains('camera')) return 'camera';
+  if (s.contains('microphone')) return 'mic';
+  if (s.contains('location')) return 'location';
+  if (s.contains('clipboard')) return 'copy';
+  if (s.contains('media')) return 'video';
+  if (s.contains('midi')) return 'keyboard';
+  return 'info';
 }

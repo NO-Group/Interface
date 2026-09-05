@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'icons.dart';
 
 import '../core/pal.dart';
-import '../core/palette.dart';
+import '../core/ui.dart';
+import 'logo.dart';
 import '../state/settings_provider.dart';
 
 /// First-run welcome: brand + theme preview + privacy promise.
@@ -34,17 +36,17 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
       _Slide(
         palette: palette,
         logo: true,
-        icon: Icons.public_rounded,
+        icon: 'globe',
         title: 'Welcome to Interface',
         body:
-            'A real browser for your phone and laptop.\nNavy steel, cyan speed — built to get out of your way.',
+            'One row of controls, tabs that stay out of the way,\nand a browser that doesn’t pretend to be someone else’s.',
       ),
       _Slide(
         palette: palette,
-        icon: Icons.palette_outlined,
+        icon: 'palette',
         title: 'Make it yours',
         body:
-            'Light, Dark, Red, Green, Black & White,\nor your own picture behind frosted glass.',
+            'Pick a look now, change it later in Settings.\nYou can also put your own picture behind the app.',
         extra: _ThemePicker(
           palette: palette,
           picked: _pickedTheme,
@@ -53,15 +55,25 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
       ),
       _Slide(
         palette: palette,
-        icon: Icons.shield_rounded,
+        icon: 'shield-on',
         title: 'Private by default',
         body:
-            'Ads and trackers are blocked from the first page load.\nWatch the count climb in your Privacy dashboard.',
+            'Ads and trackers are blocked from the first page load.\nTap the shield any time to see what happened on a page.',
       ),
     ];
 
     return Container(
-      color: palette.background.withValues(alpha: 0.98),
+      decoration: BoxDecoration(
+        color: palette.background.withValues(alpha: 0.98),
+        gradient: RadialGradient(
+          center: const Alignment(0, -0.9),
+          radius: 1.3,
+          colors: <Color>[
+            palette.accent.withValues(alpha: 0.12),
+            palette.accent.withValues(alpha: 0),
+          ],
+        ),
+      ),
       child: SafeArea(
         child: Column(
           children: [
@@ -82,13 +94,22 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
                       for (var i = 0; i < slides.length; i++)
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          width: _index == i ? 22 : 7,
-                          height: 7,
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          width: _index == i ? 26 : 10,
+                          height: 4,
                           decoration: BoxDecoration(
                             color:
                                 _index == i ? palette.accent : palette.border,
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(3),
+                            boxShadow: _index == i
+                                ? <BoxShadow>[
+                                    BoxShadow(
+                                      color: palette.accent
+                                          .withValues(alpha: 0.6),
+                                      blurRadius: 8,
+                                    ),
+                                  ]
+                                : null,
                           ),
                         ),
                     ],
@@ -96,13 +117,13 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
                   const SizedBox(height: 22),
                   SizedBox(
                     width: double.infinity,
-                    height: 48,
+                    height: 46,
                     child: FilledButton(
                       style: FilledButton.styleFrom(
                         backgroundColor: palette.primary,
                         foregroundColor: palette.onPrimary,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: Ui.petal(Ui.rField),
                         ),
                       ),
                       onPressed: () {
@@ -119,12 +140,15 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
                           settings.setOnboardingSeen();
                         }
                       },
-                      child: Text(
-                        _index < slides.length - 1
-                            ? 'Next'
-                            : 'Start browsing',
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w600),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          _index < slides.length - 1
+                              ? 'Next'
+                              : 'Start browsing',
+                          style: const TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ),
                   ),
@@ -163,7 +187,7 @@ class _Slide extends StatelessWidget {
   });
 
   final BrowserPalette palette;
-  final IconData icon;
+  final Object icon;
   final String title;
   final String body;
   final Widget? extra;
@@ -171,54 +195,72 @@ class _Slide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 34),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 86,
-            height: 86,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [palette.primary, palette.background],
+    // Centred when the window is tall enough, scrollable when it is not, so
+    // the slide can never spill out of the page and be painted with overflow
+    // stripes.
+    return LayoutBuilder(
+      builder: (context, box) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 18),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: (box.maxHeight - 36).clamp(0.0, double.infinity)),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+          // The app's own artwork for the welcome slide; the other slides get
+          // an icon, drawn on nothing.
+          if (logo)
+            const LogoMark(size: 66)
+          else
+            Container(
+              width: 64,
+              height: 64,
+              alignment: Alignment.center,
+              decoration: Ui.tint(palette, palette.accent, radius: 20),
+              child: uiGlyph(icon, size: 30, color: palette.accent),
+            ),
+          const SizedBox(height: 28),
+          // The heading is set like a masthead and marked by the same keel the
+          // rest of the app uses, so the first screen already has the face.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Ui.keel(palette),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  title,
+                  style: logo
+                      ? Ui.masthead(palette)
+                      : Ui.text(
+                          palette,
+                          size: Ui.sizeHero,
+                          weight: FontWeight.w700,
+                        ),
+                ),
               ),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: palette.accent.withValues(alpha: 0.5)),
-            ),
-            child: Image.asset(
-              'assets/brand/app_logo.png',
-              errorBuilder: (_, __, ___) => Icon(icon, size: 44, color: palette.accent),
-            ),
+            ],
           ),
-          const SizedBox(height: 30),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: palette.text,
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            body,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: palette.textDim,
-              fontSize: 14.5,
-              height: 1.6,
+          const SizedBox(height: 14),
+          Padding(
+            padding: const EdgeInsets.only(left: 17),
+            child: Text(
+              body,
+              style: Ui.text(
+                palette,
+                size: 14,
+                color: palette.textDim,
+                height: 1.6,
+              ),
             ),
           ),
           if (extra != null) ...[
             const SizedBox(height: 26),
-            extra!,
+            SizedBox(width: double.infinity, child: extra!),
           ],
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -262,16 +304,16 @@ class _ThemePicker extends StatelessWidget {
     final active = picked == i;
     return InkWell(
       onTap: () => onPicked(i),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: Ui.petal(12, at: UiCorner.topLeft),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: p.background,
-          borderRadius: BorderRadius.circular(12),
+          color: active ? palette.activeFill : p.background,
+          borderRadius: Ui.petal(Ui.rField, at: UiCorner.topLeft),
           border: Border.all(
             color: active ? palette.accent : palette.border,
-            width: active ? 2 : 1,
+            width: active ? 1.4 : 1,
           ),
         ),
         child: Row(
