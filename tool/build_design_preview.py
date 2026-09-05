@@ -209,6 +209,14 @@ section{margin-top:46px}
 .stitch i.on{width:26px;background:var(--accent);box-shadow:0 0 8px rgba(34,211,238,.6)}
 .types{display:grid;gap:12px}
 .types div{border-bottom:1px solid var(--hair);padding-bottom:10px}
+.keels{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:14px}
+.keels figure{margin:0;padding:16px 16px 14px 19px;border:1px solid var(--border);
+  border-radius:12px 12px 12px 3px;background:var(--surface);position:relative;overflow:hidden}
+.keels figure::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.keels figure.idle::before{background:var(--border);box-shadow:none}
+.keels figure.danger::before{background:var(--danger)}
+.keels figcaption{font-size:12px;color:var(--faint);margin-top:8px;line-height:1.5}
+.keels b{display:block;font-size:15px;letter-spacing:-.3px;margin-bottom:2px}
 .legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .legend span{font-size:12px;color:var(--faint);border:1px solid var(--border);
   border-radius:var(--r-control);padding:4px 9px}
@@ -263,12 +271,15 @@ def body():
     h.append(f"""
 <header class="lede">
   <div class="kicker">styling · v2.0.0</div>
-  <h1>The chamfer</h1>
-  <p>Every surface keeps three soft corners and one tight corner, and the tight
-  one points at whatever the surface belongs to: a field's faces the page below
-  it, a menu's points back at the button it dropped from, a row's faces the
-  content it opens. Navy plate, one hairline weight, and colour only where
-  something is actually happening — focus, loading, selected, blocked.</p>
+  <h1>The keel</h1>
+  <p>One mark, at every size: a 3px bar laid along the edge of the thing it
+  describes. It runs down the left edge of the window while a page loads, down
+  the leading edge of the tab you are on, down the corner of the address plate
+  when something is being blocked, down the selected row of a list, and down
+  the left of every heading. Corners keep three soft radii and one tight one,
+  groups are separated by 1px ticks instead of plates, and colour appears only
+  where something is actually happening — focus, loading, selected, blocked.
+  Nothing else in the window is allowed to be accented.</p>
   <div class="themes" style="margin-top:18px">
     <button class="pill" id="dark" aria-pressed="true">{ic('moon')} Dark</button>
     <button class="pill" id="light" aria-pressed="false">{ic('sun')} Light</button>
@@ -276,6 +287,32 @@ def body():
       surfaces; nothing here borrows a control from another browser.</span>
   </div>
 </header>""")
+
+    # ---- the one mark, at every scale
+    h.append('<section><h2>The same bar, six ways</h2>'
+             '<p>One motif does all the state signalling. A mark with no state '
+             'is invisible: it falls back to the hairline colour, so the window '
+             'only ever shows a lit keel when something is true.</p>'
+             '<div class="keels">')
+    for name, note, cls in [
+        ('Window', 'Left edge of the app. Fills top to bottom with the load '
+                    'estimate; turns red on a plain http page.', ''),
+        ('Tab', 'The leading edge of the tab you are on, in the group colour '
+                'when the tab belongs to one.', ''),
+        ("Address stub", "Inside the plate's left corner, lit while the shield "
+                         "is holding trackers back.", ''),
+        ('Row', 'In lists, side panels and suggestions — including the row the '
+                'arrow keys are pointing at.', ''),
+        ('Heading', 'Before every panel title, section title and masthead.', ''),
+        ('Idle', 'Nothing happening: the keel is still there, in the hairline '
+                 'colour, so the edge never appears or vanishes.', 'idle'),
+    ]:
+        h.append(f'<figure class="{cls}"><b>{name}</b>'
+                 f'<span style="font-size:13px">{note}</span></figure>')
+    h.append('<figure class="danger"><b>Insecure</b><span style="font-size:13px">'
+             'The one time the keel is red: the page is served over http, and '
+             'the window says so on its own edge.</span></figure>')
+    h.append('</div></section>')
 
     # ---- corner specimens
     specs = [
@@ -441,13 +478,14 @@ def body():
       <div class="plate">
         <h3>Icons</h3>
         <p>115 glyphs drawn on a 24pt grid: a 1.7pt primary stroke, a 1.35pt
-        detail stroke, round caps and joins, and the same chamfer as the
+        detail stroke, round caps and joins, and the same cut corner as the
         surfaces, so a folder in the bar and a folder on the page are the same
-        drawing. They recolour to the text they sit beside — nothing is baked
+        drawing. A selected control is marked by a keel under it, not by a ring
+        around it. They recolour to the text they sit beside — nothing is baked
         to a background.</p>
         <div class="legend">
           <span>24 × 24 box</span><span>2.4pt air</span><span>one weight</span>
-          <span>chamfered corner</span><span>no emoji</span>
+          <span>cut corner</span><span>no emoji</span>
         </div>
       </div>
     </div></section>""")
@@ -455,6 +493,8 @@ def body():
     # ---- type
     h.append(f"""<section><h2>Type</h2>
     <div class="grid types" style="margin-top:12px">
+      <div><span class="tag">masthead 40 / 800 · -0.8</span>
+        <div style="font-size:40px;font-weight:800;line-height:1.02;letter-spacing:-.8px">Interface</div></div>
       <div><span class="tag">hero 30 / 700</span>
         <div style="font-size:30px;font-weight:700;line-height:1.15">Good evening</div></div>
       <div><span class="tag">title 15.5 / 700</span>
@@ -526,7 +566,7 @@ def main():
     html = ('<!doctype html>\n<html lang="en" data-theme="dark">\n<head>\n'
             '<meta charset="utf-8">\n'
             '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
-            '<title>Interface — the chamfer</title>\n'
+            '<title>Interface — the keel</title>\n'
             f'<style id="theme-css">{dark}</style>\n</head>\n<body>\n'
             + body() +
             f'\n<script>var LIGHT = {light!r}; var DARK = {dark!r};\n' + JS +

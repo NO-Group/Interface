@@ -214,7 +214,17 @@ class DesktopShell extends StatelessWidget {
         autofocus: true,
         child: Stack(
           children: [
-            Column(
+            Row(
+              children: [
+                // The window's own keel: the state of the page you are on,
+                // read down the left edge instead of under the bar.
+                _WindowKeel(
+                  loading: browser.current.loading,
+                  progress: browser.current.progress,
+                  unsafe: browser.current.url.startsWith('http://'),
+                ),
+                Expanded(
+                  child: Column(
               children: [
                 TopBar(showTabs: !settings.verticalTabs),
                 if (!settings.verticalTabs && settings.showBookmarksBar)
@@ -254,6 +264,9 @@ class DesktopShell extends StatelessWidget {
                 ),
               ],
             ),
+                ),
+              ],
+            ),
             if (browser.findOpen)
               Positioned(
                 left: 0,
@@ -281,6 +294,70 @@ class DesktopShell extends StatelessWidget {
       8: LogicalKeyboardKey.digit8,
     };
     return map[n] ?? LogicalKeyboardKey.digit1;
+  }
+}
+
+/// The state of the current page, drawn as a 3px rail down the window's left
+/// edge: quiet hairline when nothing is happening, accent while a page loads
+/// (filling as the estimate comes in), danger when the page is plain http.
+class _WindowKeel extends StatelessWidget {
+  const _WindowKeel({
+    required this.loading,
+    required this.progress,
+    required this.unsafe,
+  });
+
+  final bool loading;
+  final num progress;
+  final bool unsafe;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = pal(context);
+    final fraction = progress <= 0
+        ? 0.16
+        : (progress / 100).clamp(0.16, 1.0).toDouble();
+    return SizedBox(
+      width: Ui.keelWidth,
+      child: LayoutBuilder(
+        builder: (context, box) {
+          final height = loading
+              ? box.maxHeight * fraction
+              : (unsafe ? 18.0 : 0.0);
+          final color = loading
+              ? p.accent
+              : (unsafe ? p.danger.withValues(alpha: 0.85) : p.idleKeel);
+          return Stack(
+            children: [
+              Positioned.fill(child: ColoredBox(color: p.idleKeel)),
+              if (loading || unsafe)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: height,
+                  child: AnimatedContainer(
+                    duration: Ui.normal,
+                    curve: Ui.curve,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(Ui.keelWidth),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.55),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }
 
@@ -458,18 +535,19 @@ class _SidePanel extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
-                height: 46,
+                height: 44,
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 16, right: 8),
+                  padding: const EdgeInsets.only(left: 14, right: 8),
                   child: Row(
                     children: [
+                      Ui.keel(palette),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Ui.text(palette,
-                              size: Ui.sizeTitle, weight: FontWeight.w700),
+                          style: Ui.section(palette),
                         ),
                       ),
                       UiIconButton(
@@ -481,7 +559,7 @@ class _SidePanel extends StatelessWidget {
                   ),
                 ),
               ),
-              Divider(height: 1, color: palette.hairline),
+              Container(height: Ui.hair, color: palette.hairlineSoft),
               Expanded(
                 child: switch (page) {
                   SidePanel.bookmarks => const BookmarksList(embedded: true),

@@ -15,6 +15,7 @@ import '../state/profile_provider.dart';
 import '../state/settings_provider.dart';
 import 'favicon.dart';
 import 'logo.dart';
+import 'ui_kit.dart';
 
 /// The page a fresh tab opens to: a greeting, one search field, and your
 /// shortcuts (with folders and drag-to-reorder).
@@ -108,6 +109,7 @@ class _NewTabPageState extends State<NewTabPage> {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 780),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 10),
                       if (widget.tab.incognito)
@@ -139,33 +141,30 @@ class _NewTabPageState extends State<NewTabPage> {
                           ),
                         )
                       else ...[
+                        // The masthead, not a logo in the middle of the page:
+                        // the name is set big and left, and the day sits under
+                        // it as a caption the whole page is measured against.
                         Row(
-                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const LogoMark(size: 28),
-                            const SizedBox(width: 10),
-                            Text(
-                              'Interface',
-                              maxLines: 1,
-                              style: Ui.text(
-                                palette,
-                                size: 16,
-                                weight: FontWeight.w700,
+                            const LogoMark(size: 30),
+                            const SizedBox(width: 12),
+                            Flexible(
+                              child: Text(
+                                'Interface',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Ui.masthead(palette),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 8),
                         Text(
                           '$_greetingWord  ·  $date',
                           maxLines: 2,
-                          textAlign: TextAlign.center,
                           overflow: TextOverflow.ellipsis,
-                          style: Ui.text(
-                            palette,
-                            size: Ui.sizeTitle,
-                            color: palette.textDim,
-                          ),
+                          style: Ui.caption(palette),
                         ),
                       ],
                       const SizedBox(height: 22),
@@ -201,6 +200,8 @@ class _NewTabPageState extends State<NewTabPage> {
                               borderSide:
                                   BorderSide(color: palette.border, width: 1.2),
                             ),
+                            // Focus is a keel along the left edge of the
+                            // plate, not a ring drawn around all four sides.
                             focusedBorder: OutlineInputBorder(
                               borderRadius: Ui.petal(Ui.rCard),
                               borderSide: BorderSide(
@@ -236,6 +237,8 @@ class _NewTabPageState extends State<NewTabPage> {
                                 size: 15, color: palette.textDim),
                             const SizedBox(width: 6),
                           ],
+                          Ui.keel(palette),
+                          const SizedBox(width: 9),
                           Text(
                             folder?.name ?? 'Shortcuts',
                             style: Ui.text(
@@ -279,7 +282,6 @@ class _NewTabPageState extends State<NewTabPage> {
                       ),
                       const SizedBox(height: 26),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           _QuickLink(
                             icon: 'star-on',
@@ -599,16 +601,19 @@ class _DialGrid extends StatelessWidget {
       child: Wrap(
       spacing: 14,
       runSpacing: 16,
-      alignment: WrapAlignment.center,
+      alignment: WrapAlignment.start,
       children: [
         for (var i = 0; i < items.length; i++)
-          _DraggableTile(
+          UiStagger(
+            index: i,
+            child: _DraggableTile(
             index: i,
             item: items[i],
             palette: palette,
             onReorder: onReorder,
             onTap: () => onTapItem(items[i]),
             onLongPress: () => onItemLongPress(items[i]),
+          ),
           ),
         for (final f in folders)
           _FolderTile(

@@ -16,14 +16,17 @@ import 'favicon.dart';
 import 'glass.dart';
 import 'logo.dart';
 import 'omnibox.dart';
-import 'site_info_sheet.dart';
 import 'tab_strip.dart';
 import 'ui_kit.dart';
 
-/// The whole desktop chrome in one row: navigation, tabs, address, actions.
+/// The whole desktop chrome in one row: a brand plate, navigation, the tabs
+/// themselves, the address plate, then what you can do to this page.
 ///
-/// Nothing here is stacked into a second toolbar — the tabs sit beside the
-/// address field the way a paper log sits beside a pen.
+/// Three rules hold it together. Groups are separated by a 1px tick, never by
+/// a plate behind them. A control that is on is marked with a keel, and
+/// nothing idle has one. Colour only appears where something is happening —
+/// the brand plate lights while the page loads or when trackers are blocked,
+/// and the address plate lights when it has focus.
 class TopBar extends StatelessWidget {
   const TopBar({super.key, this.showTabs = true});
 
@@ -42,6 +45,8 @@ class TopBar extends StatelessWidget {
 
     final bookmarked = !tab.onSpeedDial && profile.isBookmarked(tab.url);
     final blocked = tab.onSpeedDial ? 0 : privacy.blockedFor(tab.host);
+    final shielding =
+        privacy.effectiveBlockAds(tab.siteUrl, settings.blockAds) && blocked > 0;
     final runningDownloads =
         downloads.downloads.where((d) => d.isRunning).length;
 
@@ -60,42 +65,43 @@ class TopBar extends StatelessWidget {
               return SizedBox(
                 height: Ui.barHeight,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  padding: const EdgeInsets.only(
+                      left: Ui.dockInset, right: 10, top: 0, bottom: 0),
                   child: Row(
                     children: [
-                      LogoMark(size: 22),
+                      _BrandPlate(lit: tab.loading || shielding),
                       Ui.gap(12),
-                      UiCluster(
-                        children: [
-                          UiIconButton(
-                            icon: 'back',
-                            iconSize: 16,
-                            tooltip: 'Back (Alt+Left)',
-                            onTap: tab.canBack ? browser.goBack : null,
-                          ),
-                          UiIconButton(
-                            icon: 'forward',
-                            iconSize: 16,
-                            tooltip: 'Forward (Alt+Right)',
-                            onTap: tab.canForward ? browser.goForward : null,
-                          ),
-                          UiIconButton(
-                            icon: tab.loading
-                                ? 'close'
-                                : 'reload',
-                            tooltip:
-                                tab.loading ? 'Stop loading (Esc)' : 'Reload (Ctrl+R)',
-                            onTap: tab.loading ? browser.stopLoading : browser.reload,
-                          ),
-                          if (medium)
-                            UiIconButton(
-                              icon: 'home',
-                              tooltip: 'New tab page',
-                              onTap: browser.goHome,
-                            ),
-                        ],
+                      UiIconButton(
+                        icon: 'back',
+                        iconSize: 16,
+                        tooltip: 'Back (Alt+Left)',
+                        onTap: tab.canBack ? browser.goBack : null,
                       ),
-                      Ui.gap(10),
+                      UiIconButton(
+                        icon: 'forward',
+                        iconSize: 16,
+                        tooltip: 'Forward (Alt+Right)',
+                        onTap: tab.canForward ? browser.goForward : null,
+                      ),
+                      UiIconButton(
+                        icon: tab.loading ? 'stop' : 'reload',
+                        tooltip: tab.loading
+                            ? 'Stop loading (Esc)'
+                            : 'Reload (Ctrl+R)',
+                        onTap:
+                            tab.loading ? browser.stopLoading : browser.reload,
+                      ),
+                      if (medium) ...[
+                        Ui.gap(2),
+                        Ui.vRule(p, height: 20),
+                        Ui.gap(2),
+                        UiIconButton(
+                          icon: 'home',
+                          tooltip: 'New tab page',
+                          onTap: browser.goHome,
+                        ),
+                      ],
+                      Ui.gap(12),
                       if (roomForPills)
                         Expanded(flex: 5, child: const TabStrip())
                       else if (showTabs)
@@ -110,31 +116,26 @@ class TopBar extends StatelessWidget {
                         )
                       else
                         const Spacer(),
-                      Ui.gap(12),
-                      Ui.vRule(p, height: 22),
-                      Ui.gap(12),
+                      if (roomForPills) ...[
+                        Ui.gap(12),
+                        Ui.vRule(p, height: 20),
+                        Ui.gap(12),
+                      ],
                       Expanded(
                         flex: roomForPills ? 6 : 1,
                         child: Align(
-                          alignment: Alignment.centerLeft,
+                          alignment: Alignment.centerRight,
                           child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 660),
+                            constraints: const BoxConstraints(maxWidth: 700),
                             child: const Omnibox(),
                           ),
                         ),
                       ),
-                      Ui.gap(10),
-                      _Shield(
-                        blocked: blocked,
-                        enabled: privacy.effectiveBlockAds(
-                          tab.siteUrl,
-                          settings.blockAds,
-                        ),
-                      ),
+                      Ui.gap(12),
+                      Ui.vRule(p, height: 20),
+                      Ui.gap(6),
                       UiIconButton(
-                        icon: bookmarked
-                            ? 'star-on'
-                            : 'star',
+                        icon: bookmarked ? 'star-on' : 'star',
                         color: bookmarked ? p.accent : null,
                         tooltip: bookmarked
                             ? 'Remove bookmark (Ctrl+D)'
@@ -145,7 +146,7 @@ class TopBar extends StatelessWidget {
                       ),
                       if (roomy)
                         UiIconButton(
-                          icon: 'reading-list',
+                          icon: 'reader',
                           tooltip: 'Reader view',
                           onTap: () => Navigator.of(context).push(
                             MaterialPageRoute<void>(
@@ -160,9 +161,13 @@ class TopBar extends StatelessWidget {
                               ? '$runningDownloads downloads in progress'
                               : 'Downloads (Ctrl+J)',
                           badge: runningDownloads,
-                          onTap: () => browser.setSidePanel(SidePanel.downloads),
+                          onTap: () =>
+                              browser.setSidePanel(SidePanel.downloads),
                         ),
-                      if (roomy)
+                      if (roomy) ...[
+                        Ui.gap(4),
+                        Ui.vRule(p, height: 20),
+                        Ui.gap(4),
                         UiIconButton(
                           icon: 'split',
                           tooltip: browser.splitActive
@@ -173,16 +178,14 @@ class TopBar extends StatelessWidget {
                               ? browser.closeSplit()
                               : browser.openSplit(),
                         ),
-                      if (roomy)
                         UiIconButton(
                           icon: 'bolt',
                           tooltip: 'Quick actions (Ctrl+K)',
                           onTap: browser.openPalette,
                         ),
+                      ],
                       UiIconButton(
-                        icon: browser.sidePanel == SidePanel.none
-                            ? 'sidebar'
-                            : 'sidebar',
+                        icon: 'sidebar',
                         tooltip: browser.sidePanel == SidePanel.none
                             ? 'Show sidebar'
                             : 'Hide sidebar',
@@ -193,12 +196,14 @@ class TopBar extends StatelessWidget {
                               : SidePanel.none,
                         ),
                       ),
+                      Ui.gap(4),
+                      Ui.vRule(p, height: 20),
+                      Ui.gap(4),
                       UiIconButton(
                         icon: 'private',
                         tooltip: 'New private tab (Ctrl+Shift+N)',
                         onTap: () => browser.newTab(incognito: true),
                       ),
-                      Ui.gap(2),
                       const AppMenuButton(desktop: true),
                     ],
                   ),
@@ -206,7 +211,6 @@ class TopBar extends StatelessWidget {
               );
             },
           ),
-          UiProgressLine(active: tab.loading, progress: tab.progress),
           Container(height: Ui.hair, color: p.border),
         ],
       ),
@@ -226,36 +230,64 @@ class TopBar extends StatelessWidget {
         duration: const Duration(seconds: 2),
         action: SnackBarAction(
           label: 'Undo',
-          onPressed: () => profile.toggleBookmark(url: tab.url, title: tab.title),
+          onPressed: () =>
+              profile.toggleBookmark(url: tab.url, title: tab.title),
         ),
       ),
     );
   }
 }
 
-/// The privacy shield in the bar: click for what happened on this site.
-class _Shield extends StatelessWidget {
-  const _Shield({required this.blocked, required this.enabled});
+/// The name of the app, cut into the left end of the bar. It is the only part
+/// of the chrome that is allowed to be navy on a navy day, and it lights with
+/// the page: accent while it loads, or while the shield is doing something.
+class _BrandPlate extends StatelessWidget {
+  const _BrandPlate({required this.lit});
 
-  final int blocked;
-  final bool enabled;
+  final bool lit;
 
   @override
   Widget build(BuildContext context) {
     final p = pal(context);
-    return UiIconButton(
-      icon: 'shield',
-      color: enabled && blocked > 0 ? p.accent : p.textDim,
-      badge: blocked,
-      tooltip: blocked > 0
-          ? '$blocked ads and trackers blocked on this site'
-          : 'Site information',
-      onTap: () => showSiteInfoSheet(context),
+    return Tooltip(
+      message: 'Interface',
+      waitDuration: const Duration(milliseconds: 600),
+      child: AnimatedContainer(
+        duration: Ui.normal,
+        curve: Ui.curve,
+        height: Ui.barHeight,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: lit
+              ? p.accent.withValues(alpha: p.isDark ? 0.16 : 0.12)
+              : p.primary.withValues(alpha: p.isDark ? 0.55 : 1),
+          borderRadius: Ui.petal(Ui.rField, at: UiCorner.bottomRight),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const LogoMark(size: 22),
+            const SizedBox(width: 9),
+            // The wordmark only fits on a wide window; the mark is enough when
+            // the bar is crowded, so it is dropped rather than ellipsised.
+            if (MediaQuery.sizeOf(context).width >= 1120)
+              Text(
+                'Interface',
+                style: Ui.text(
+                  p,
+                  size: Ui.sizeSmall + 0.5,
+                  weight: FontWeight.w700,
+                  color: lit ? p.text : p.onPrimary,
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-/// Optional row of bookmarks under the bar.
+/// The row of saved pages under the bar: ticks between the names, no plates.
 class BookmarksBar extends StatelessWidget {
   const BookmarksBar({super.key});
 
@@ -268,11 +300,13 @@ class BookmarksBar extends StatelessWidget {
     return GlassBox(
       enabled: p.blurredChrome,
       color: p.chromeFill,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      padding: const EdgeInsets.only(left: Ui.dockInset + 4, right: 10, top: 3, bottom: 3),
       child: SizedBox(
         height: Ui.bookmarkBarHeight,
         child: Row(
           children: [
+            Ui.keel(p, color: p.idleKeel),
+            const SizedBox(width: 10),
             if (profile.bookmarks.isEmpty)
               Expanded(
                 child: Text(

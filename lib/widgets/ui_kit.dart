@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'icons.dart';
 
@@ -99,18 +101,33 @@ class UiIconButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: pressed
               ? p.activeFill
-              : (hovering ? p.hoverFill : Colors.transparent),
-          borderRadius: Ui.petal(Ui.rControl),
-          border: Border.all(
-            color: selected ? p.ring : Colors.transparent,
+              : (hovering
+                  ? p.hoverFill
+                  : (selected ? p.activeFill : Colors.transparent)),
+          borderRadius: Ui.petal(
+            Ui.rControl,
+            at: selected ? UiCorner.topLeft : UiCorner.bottomRight,
           ),
         ),
-        child: uiGlyph(
-          icon,
-          size: iconSize,
-          color: !enabled
-              ? p.textFaint
-              : (selected ? p.accent : (color ?? p.text)),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            uiGlyph(
+              icon,
+              size: iconSize,
+              color: !enabled
+                  ? p.textFaint
+                  : (selected ? p.accent : (color ?? p.text)),
+            ),
+            // A control that is on has a keel; nothing else in the bar does.
+            if (selected)
+              Positioned(
+                left: 7,
+                right: 7,
+                bottom: 3,
+                child: Ui.keel(p, horizontal: true),
+              ),
+          ],
         ),
       ),
     );
@@ -192,12 +209,8 @@ class UiCluster extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = pal(context);
-    return Container(
-      padding: padding ?? const EdgeInsets.symmetric(horizontal: 2),
-      decoration: BoxDecoration(
-        color: p.blurredChrome ? Colors.black26 : p.clusterFill,
-        borderRadius: Ui.petal(Ui.rField),
-      ),
+    return Padding(
+      padding: padding ?? EdgeInsets.zero,
       child: Row(mainAxisSize: MainAxisSize.min, children: children),
     );
   }
@@ -337,6 +350,7 @@ class UiRow extends StatelessWidget {
     this.height,
     this.padding,
     this.dense = false,
+    this.ticked = false,
   });
 
   final String title;
@@ -351,6 +365,10 @@ class UiRow extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final bool dense;
 
+  /// A short rule at the leading edge instead of a full-width divider: a list
+  /// of rows reads as a stack of plates, not a table.
+  final bool ticked;
+
   @override
   Widget build(BuildContext context) {
     final p = pal(context);
@@ -359,66 +377,85 @@ class UiRow extends StatelessWidget {
       onTap: onTap,
       onSecondaryTap: onSecondaryTap,
       onLongPress: onLongPress,
-      builder: (context, hovering, pressed) => AnimatedContainer(
-        duration: Ui.quick,
-        curve: Ui.curve,
-        // A minimum, not a fixed height: a long subtitle or a large text size
-        // grows the row instead of running past it.
-        constraints: BoxConstraints(minHeight: h),
-        padding: padding ??
-            EdgeInsets.symmetric(horizontal: dense ? 10 : Ui.padLg),
-        decoration: BoxDecoration(
-          color: pressed
-              ? p.activeFill
-              : (selected
-                  ? p.activeFill
-                  : (hovering ? p.hoverFill : Colors.transparent)),
-          borderRadius: Ui.petal(Ui.rControl),
-        ),
-        // The selected row carries an accent bar down its leading edge, the
-        // one cue that says "this row is the one the window is showing".
-        foregroundDecoration: selected
-            ? BoxDecoration(
-                border: Border(left: BorderSide(color: p.accent, width: 2.6)),
-              )
-            : null,
-        child: Row(
-          children: [
-            if (leading != null) ...[leading!, Ui.gap(10)],
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Ui.text(
-                      p,
-                      size: dense ? Ui.sizeSmall : Ui.sizeBody,
-                      weight: selected ? FontWeight.w600 : FontWeight.w400,
-                    ),
-                  ),
-                  if (subtitle != null && subtitle!.isNotEmpty)
+      builder: (context, hovering, pressed) {
+        final plate = AnimatedContainer(
+          duration: Ui.quick,
+          curve: Ui.curve,
+          // A minimum, not a fixed height: a long subtitle or a large text
+          // size grows the row instead of running past it.
+          constraints: BoxConstraints(minHeight: h),
+          padding: padding ?? EdgeInsets.symmetric(horizontal: dense ? 10 : Ui.padLg),
+          decoration: BoxDecoration(
+            color: pressed
+                ? p.activeFill
+                : (selected
+                    ? p.activeFill
+                    : (hovering ? p.hoverFill : Colors.transparent)),
+            borderRadius: Ui.petal(Ui.rControl),
+          ),
+          child: Row(
+            children: [
+              if (leading != null) ...[leading!, Ui.gap(10)],
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      subtitle!,
+                      title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Ui.caption(p),
+                      style: Ui.text(
+                        p,
+                        size: dense ? Ui.sizeSmall : Ui.sizeBody,
+                        weight: selected ? FontWeight.w600 : FontWeight.w400,
+                      ),
                     ),
-                ],
+                    if (subtitle != null && subtitle!.isNotEmpty)
+                      Text(
+                        subtitle!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Ui.caption(p),
+                      ),
+                  ],
+                ),
               ),
-            ),
-            if (trailing != null) ...[Ui.gap(8), trailing!],
+              if (trailing != null) ...[Ui.gap(8), trailing!],
+            ],
+          ),
+        );
+        // The selected row carries a keel down its leading edge: the one cue
+        // that says "this row is the one the window is showing".
+        final keeled = Stack(
+          children: [
+            plate,
+            if (selected)
+              Positioned(
+                left: 0,
+                top: 8,
+                bottom: 8,
+                child: Ui.keel(p),
+              ),
           ],
-        ),
-      ),
+        );
+        if (!ticked) return keeled;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            keeled,
+            Padding(
+              padding: const EdgeInsets.only(left: 10),
+              child: Ui.tick(p, color: p.hairlineSoft),
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
-/// Titled container used on settings-like screens.
 class UiSection extends StatelessWidget {
   const UiSection({
     super.key,
@@ -446,13 +483,15 @@ class UiSection extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            constraints: const BoxConstraints(minHeight: 42),
+            constraints: const BoxConstraints(minHeight: 44),
             padding: const EdgeInsets.symmetric(horizontal: Ui.padLg),
             decoration: BoxDecoration(
               border: Border(bottom: BorderSide(color: p.hairlineSoft)),
             ),
             child: Row(
               children: [
+                Ui.keel(p, color: p.accent.withValues(alpha: 0.55)),
+                const SizedBox(width: 9),
                 Expanded(
                   child: Text(
                     title,
@@ -579,14 +618,20 @@ class UiChip extends StatelessWidget {
       builder: (context, hovering, pressed) => AnimatedContainer(
         duration: Ui.quick,
         curve: Ui.curve,
-        height: 26,
+        constraints: const BoxConstraints(minHeight: 26),
         padding: const EdgeInsets.symmetric(horizontal: 9),
         decoration: BoxDecoration(
           color: selected
               ? p.activeFill
               : (hovering || pressed ? p.hoverFill : Colors.transparent),
-          borderRadius: Ui.petal(Ui.rControl),
-          border: Border.all(color: selected ? p.ring : p.border),
+          borderRadius: Ui.petal(
+            Ui.rControl,
+            at: selected ? UiCorner.topRight : UiCorner.bottomRight,
+          ),
+          border: Border.all(
+            color: selected ? p.accent : p.border,
+            width: selected ? 1.2 : Ui.hair,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -678,6 +723,68 @@ class UiEmpty extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Rows and plates arrive in a short cascade instead of appearing all at once,
+/// so opening a panel reads as something being laid out rather than dumped.
+class UiStagger extends StatefulWidget {
+  const UiStagger({
+    super.key,
+    required this.index,
+    required this.child,
+    this.enabled = true,
+  });
+
+  final int index;
+  final Widget child;
+  final bool enabled;
+
+  @override
+  State<UiStagger> createState() => _UiStaggerState();
+}
+
+class _UiStaggerState extends State<UiStagger> {
+  Timer? _timer;
+  late bool _shown;
+
+  @override
+  void initState() {
+    super.initState();
+    final mq = MediaQuery.maybeOf(context);
+    final reduce = !widget.enabled ||
+        (mq?.disableAnimations ?? false) ||
+        (mq?.platformDispatcher.accessibilityFeatures.disableAnimations ?? false);
+    _shown = reduce;
+    if (reduce) return;
+    // The timer is cancelled on dispose: a row that goes away mid-arrival
+    // must not leave a pending callback behind.
+    _timer = Timer(Ui.enter(widget.index) + Ui.quick, () {
+      if (mounted) setState(() => _shown = true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      duration: Ui.normal,
+      curve: Ui.curve,
+      // minOpacity keeps an arriving row tappable from the first frame.
+      minOpacity: 1.0,
+      opacity: _shown ? 1 : 0,
+      child: AnimatedSlide(
+        duration: Ui.normal,
+        curve: Ui.curve,
+        offset: _shown ? Offset.zero : const Offset(0, 0.03),
+        child: widget.child,
       ),
     );
   }

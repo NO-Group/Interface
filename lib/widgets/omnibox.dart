@@ -16,6 +16,7 @@ import 'site_info_sheet.dart';
 import '../state/browser_provider.dart';
 import '../state/profile_provider.dart';
 import '../state/settings_provider.dart';
+import '../state/privacy_provider.dart';
 
 enum _Kind { history, bookmark, search, url }
 
@@ -117,6 +118,7 @@ class _OmniboxState extends State<Omnibox> {
 
     final focused = _focus.hasFocus;
     final compact = widget.compact;
+    final blocked = _blockedFor(context, tab);
     final height = compact ? 46.0 : 36.0;
 
     return CompositedTransformTarget(
@@ -125,7 +127,9 @@ class _OmniboxState extends State<Omnibox> {
         onTap: () {
           if (!_focus.hasFocus) _focus.requestFocus();
         },
-        child: AnimatedContainer(
+        child: Stack(
+          children: [
+        AnimatedContainer(
           duration: Ui.quick,
           curve: Ui.curve,
           height: height,
@@ -135,13 +139,29 @@ class _OmniboxState extends State<Omnibox> {
               : Ui.field(p: palette, focused: focused),
           child: Row(
             children: [
-              _SiteButton(
-                onTap: tab.onSpeedDial || tab.url.isEmpty
-                    ? null
-                    : () => showSiteInfoSheet(context),
-                child: _leadingIcon(palette, tab),
-              ),
-              SizedBox(width: compact ? 8 : 9),
+              // The security state is not a button beside the address: it is
+              // the plate's own left corner, cut off by a rule and lit by a
+              // keel when there is something to say.
+              if (!compact)
+                _Stub(
+                  onTap: tab.onSpeedDial || tab.url.isEmpty
+                      ? null
+                      : () => showSiteInfoSheet(context),
+                  child: _leadingIcon(palette, tab, blocked: blocked),
+                  lit: blocked > 0,
+                  count: blocked,
+                  tip: blocked > 0
+                      ? '$blocked ads and trackers blocked on this site'
+                      : 'Site information',
+                )
+              else
+                _SiteButton(
+                  onTap: tab.onSpeedDial || tab.url.isEmpty
+                      ? null
+                      : () => showSiteInfoSheet(context),
+                  child: _leadingIcon(palette, tab),
+                ),
+              SizedBox(width: compact ? 8 : 10),
               Expanded(
                 child: TextField(
                   spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
@@ -177,14 +197,30 @@ class _OmniboxState extends State<Omnibox> {
               ],
             ],
           ),
+            // The plate's own keel lights while the field has the keyboard, so
+            // the focus cue sits on the same edge as every other cue.
+            if (!compact && focused)
+              Positioned(
+                left: 0,
+                top: 5,
+                bottom: 5,
+                child: Ui.keel(palette),
+              ),
+          ],
+        ),
         ),
       ),
     );
   }
 
-  Widget _leadingIcon(BrowserPalette palette, BrowserTab tab) {
+  Widget _leadingIcon(BrowserPalette palette, BrowserTab tab,
+      {int blocked = 0}) {
     if (tab.onSpeedDial || tab.url.isEmpty) {
       return uiGlyph('search', size: 17, color: palette.textDim);
+    }
+    // The shield only replaces the lock when it has actually done something.
+    if (blocked > 0) {
+      return uiGlyph('shield-on', size: 15, color: palette.accent);
     }
     if (tab.url.startsWith('https://')) {
       return uiGlyph('lock', size: 14, color: palette.success);
@@ -197,7 +233,7 @@ class _OmniboxState extends State<Omnibox> {
 
   Widget _trailingButton(BrowserPalette palette, BrowserTab tab) {
     final browser = context.read<BrowserProvider>();
-    final icon = tab.loading ? 'close' : 'reload';
+    final icon = tab.loading ? 'stop' : 'reload';
     return IconButton(
       visualDensity: VisualDensity.compact,
       splashRadius: 16,
@@ -429,6 +465,90 @@ class _OmniboxState extends State<Omnibox> {
 
 /// The lock / info / search glyph, tappable, with the same hover language as
 /// everything else in the bar.
+/// How much the shield is holding back on this page, for the stub's keel.
+int _blockedFor(BuildContext context, BrowserTab tab) {
+  if (tab.onSpeedDial || tab.host.isEmpty) return 0;
+  final privacy = context.watch<PrivacyProvider>();
+  final settings = context.watch<SettingsProvider>();
+  final on =
+      privacy.effectiveBlockAds(tab.siteUrl, settings.blockAds);
+  return on ? privacy.blockedFor(tab.host) : 0;
+}
+
+/// The address plate's own left corner: the site's state, in the plate, with
+/// a keel when there is something to look at.
+class _Stub extends StatelessWidget {
+  const _Stub({
+    required this.child,
+    required this.lit,
+    this.count = 0,
+    this.tip = '',
+    this.onTap,
+  });
+
+  final Widget child;
+  final bool lit;
+  final int count;
+  final String tip;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = pal(context);
+    return UiHoverable(
+      onTap: onTap,
+      builder: (context, hovering, pressed) => AnimatedContainer(
+        duration: Ui.quick,
+        curve: Ui.curve,
+        width: Ui.stubWidth,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: pressed
+              ? p.activeFill
+              : (hovering
+                  ? p.hoverFill
+                  : (lit ? p.accentSoft : Colors.transparent)),
+          borderRadius: Ui.hang(v: Ui.rField, bottom: true, top: true, right: false),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Tooltip(
+              message: tip,
+              waitDuration: const Duration(milliseconds: 700),
+              child: count > 0
+                  ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        child,
+                        Text(
+                          Ui.count(count),
+                          style: Ui.text(
+                            p,
+                            size: 9.5,
+                            weight: FontWeight.w700,
+                            color: p.accent,
+                            height: 1,
+                          ),
+                        ),
+                      ],
+                    )
+                  : child,
+            ),
+            if (lit)
+              Positioned(
+                left: 0,
+                top: 6,
+                bottom: 6,
+                child: Ui.keel(p),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _SiteButton extends StatelessWidget {
   const _SiteButton({required this.child, this.onTap});
 
@@ -516,7 +636,9 @@ class _PanelCard extends StatelessWidget {
           return InkWell(
             onTap: () => onSelected(i),
             onHover: (_) => onHover(i),
-            child: AnimatedContainer(
+            child: Column(
+              children: [
+            AnimatedContainer(
               duration: Ui.quick,
               curve: Ui.curve,
               // Grows instead of clipping when text size is turned up.
@@ -527,7 +649,9 @@ class _PanelCard extends StatelessWidget {
                 color: isSel ? palette.activeFill : Colors.transparent,
                 borderRadius: Ui.petal(Ui.rControl),
               ),
-              child: Row(
+              child: Stack(
+                children: [
+                  Row(
                 children: [
                   Container(
                     width: 26,
@@ -535,7 +659,8 @@ class _PanelCard extends StatelessWidget {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: palette.surfaceAlt,
-                      borderRadius: BorderRadius.circular(7),
+                      borderRadius: Ui.petal(7),
+                      border: Border.all(color: palette.border),
                     ),
                     child: s.kind == _Kind.url
                         ? Favicon(host: _hostOf(s.value), size: 15)
@@ -567,6 +692,25 @@ class _PanelCard extends StatelessWidget {
                   ],
                 ],
               ),
+                  // The row the arrow keys are on keeps a keel, so the
+                  // keyboard can see where it is without a blue ring.
+                  if (isSel)
+                    Positioned(
+                      left: 0,
+                      top: 6,
+                      bottom: 6,
+                      child: Ui.keel(palette),
+                    ),
+                ],
+              ),
+            ),
+            if (i != items.length - 1)
+              Padding(
+                padding: const EdgeInsets.only(left: 16, right: 5),
+                child: Ui.tick(palette, width: double.infinity,
+                    color: palette.hairlineSoft),
+              ),
+          ],
             ),
           );
         },

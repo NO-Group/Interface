@@ -61,25 +61,21 @@ class VerticalTabRail extends StatelessWidget {
                   child: InkWell(
                   onTap: () => browser.select(i),
                   onSecondaryTapUp: (d) => _menu(context, tab, d.globalPosition),
-                  child: AnimatedContainer(
+                  // A rail tab is marked by its keel, exactly like a tab in the
+                  // bar: the same 3px on the same edge means the same thing.
+                  child: Stack(
+                    children: [
+                  AnimatedContainer(
                     duration: const Duration(milliseconds: 120),
                     margin:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 7),
+                        horizontal: 13, vertical: 7),
                     decoration: BoxDecoration(
                       color: selected
                           ? palette.surfaceAlt.withValues(alpha: 0.9)
                           : Colors.transparent,
                       borderRadius: Ui.petal(Ui.rField),
-                      border: Border(
-                        left: BorderSide(
-                          color: selected
-                              ? (groupColor ?? palette.accent)
-                              : (groupColor ?? Colors.transparent),
-                          width: 3,
-                        ),
-                      ),
                     ),
                     child: Row(
                       children: [
@@ -121,6 +117,20 @@ class VerticalTabRail extends StatelessWidget {
                         ),
                       ],
                     ),
+                  ),
+                  if (selected || groupColor != null)
+                    Positioned(
+                      left: 8,
+                      top: 10,
+                      bottom: 10,
+                      child: Ui.keel(
+                        palette,
+                        color: selected
+                            ? (groupColor ?? palette.accent)
+                            : groupColor!.withValues(alpha: 0.65),
+                      ),
+                    ),
+                    ],
                   ),
                   ),
                 );

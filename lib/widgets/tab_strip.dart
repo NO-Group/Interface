@@ -363,6 +363,8 @@ class _TabPill extends StatelessWidget {
 
     return ConstrainedBox(
       constraints: const BoxConstraints(minWidth: 96, maxWidth: 208),
+      child: Align(
+        alignment: Alignment.bottomLeft,
       child: UiHoverable(
         onTap: () {
           // Keep the tab you picked in view.
@@ -382,31 +384,37 @@ class _TabPill extends StatelessWidget {
               duration: Ui.quick,
               curve: Ui.curve,
               height: Ui.tabHeight,
-              padding: const EdgeInsets.only(left: 9, right: 4),
+              padding: EdgeInsets.only(left: selected ? 12 : 9, right: 4),
               decoration: BoxDecoration(
+                // A tab is moored to the page, not floated in the bar: the one
+                // you are on takes the page's own colour and stops square at
+                // the bottom edge, so it reads as the page reaching up.
                 color: selected
-                    ? p.surface
+                    ? p.background
                     : (pressed
                         ? p.activeFill
                         : (hovering ? p.hoverFill : Colors.transparent)),
-                borderRadius: Ui.petal(Ui.rField),
+                borderRadius: Ui.rTab,
                 border: Border.all(
-                  color: groupColor?.withValues(alpha: 0.5) ??
-                      (selected ? p.border : Colors.transparent),
+                  color: selected ? p.border : Colors.transparent,
+                  width: Ui.hair,
                 ),
-                // The tab you are on lifts a little off the bar.
-                boxShadow: selected
-                    ? <BoxShadow>[
-                        BoxShadow(
-                          color: p.accent.withValues(
-                              alpha: p.isDark ? 0.14 : 0.10),
-                          blurRadius: 16,
-                          spreadRadius: 0.5,
-                        ),
-                      ]
-                    : null,
               ),
-              child: Row(
+              child: Stack(
+        children: [
+          // The keel: this tab's identity, in its own edge. A group colours
+          // it; an ungrouped tab only lights it when it is the one you are on.
+          Positioned(
+            left: 0,
+            top: 8,
+            bottom: 0,
+            child: AnimatedOpacity(
+              duration: Ui.quick,
+              opacity: (selected || groupColor != null) ? 1 : 0,
+              child: Ui.keel(p, color: groupColor ?? p.accent),
+            ),
+          ),
+          Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (groupColor != null)
@@ -484,9 +492,12 @@ class _TabPill extends StatelessWidget {
                   ),
                 ],
               ),
+            ],
+          ),
             ),
           );
         },
+      ),
       ),
     );
   }

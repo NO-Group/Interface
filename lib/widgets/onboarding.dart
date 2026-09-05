@@ -205,6 +205,7 @@ class _Slide extends StatelessWidget {
           constraints: BoxConstraints(minHeight: (box.maxHeight - 36).clamp(0.0, double.infinity)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
           // The app's own artwork for the welcome slide; the other slides get
           // an icon, drawn on nothing.
@@ -218,30 +219,44 @@ class _Slide extends StatelessWidget {
               decoration: Ui.tint(palette, palette.accent, radius: 20),
               child: uiGlyph(icon, size: 30, color: palette.accent),
             ),
-          const SizedBox(height: 30),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: Ui.text(
-              palette,
-              size: Ui.sizeHero,
-              weight: FontWeight.w700,
-            ),
+          const SizedBox(height: 28),
+          // The heading is set like a masthead and marked by the same keel the
+          // rest of the app uses, so the first screen already has the face.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Ui.keel(palette),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  title,
+                  style: logo
+                      ? Ui.masthead(palette)
+                      : Ui.text(
+                          palette,
+                          size: Ui.sizeHero,
+                          weight: FontWeight.w700,
+                        ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            body,
-            textAlign: TextAlign.center,
-            style: Ui.text(
-              palette,
-              size: 14,
-              color: palette.textDim,
-              height: 1.6,
+          const SizedBox(height: 14),
+          Padding(
+            padding: const EdgeInsets.only(left: 17),
+            child: Text(
+              body,
+              style: Ui.text(
+                palette,
+                size: 14,
+                color: palette.textDim,
+                height: 1.6,
+              ),
             ),
           ),
           if (extra != null) ...[
             const SizedBox(height: 26),
-            extra!,
+            SizedBox(width: double.infinity, child: extra!),
           ],
             ],
           ),
