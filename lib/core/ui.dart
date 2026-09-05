@@ -173,10 +173,14 @@ abstract final class Ui {
     bool glow = false,
   }) {
     final c = color ?? p.accent;
+    // A definite size in both directions: a keel is often laid out where the
+    // incoming height is unbounded (a header inside a scrollable column), and
+    // a box that tries to fill that would be given an infinite size.
+    // Where the keel is positioned against two edges, the tight constraint
+    // wins over the default span.
     final bar = Container(
-      width: horizontal ? null : width,
-      height: horizontal ? width : null,
-      constraints: horizontal ? BoxConstraints.tightFor(height: width) : null,
+      width: horizontal ? length : width,
+      height: horizontal ? width : (length ?? 22),
       decoration: BoxDecoration(
         color: c,
         borderRadius: BorderRadius.circular(width),
@@ -184,7 +188,6 @@ abstract final class Ui {
             ? [BoxShadow(color: c.withValues(alpha: 0.6), blurRadius: 7)]
             : null,
       ),
-      child: horizontal && length != null ? SizedBox(width: length) : null,
     );
     return bar;
   }

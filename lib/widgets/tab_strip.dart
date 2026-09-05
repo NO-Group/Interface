@@ -28,6 +28,9 @@ class TabStrip extends StatelessWidget {
     ];
 
     return Row(
+      // The strip hangs from the bottom of the bar: tabs are moored to the
+      // page, not floated in the middle of the chrome.
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Expanded(
           child: SingleChildScrollView(
@@ -394,7 +397,7 @@ class _TabPill extends StatelessWidget {
                     : (pressed
                         ? p.activeFill
                         : (hovering ? p.hoverFill : Colors.transparent)),
-                borderRadius: Ui.rTab,
+                borderRadius: Ui.hang(v: Ui.rTab, bottom: false),
                 border: Border.all(
                   color: selected ? p.border : Colors.transparent,
                   width: Ui.hair,

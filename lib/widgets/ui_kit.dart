@@ -208,7 +208,6 @@ class UiCluster extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final p = pal(context);
     return Padding(
       padding: padding ?? EdgeInsets.zero,
       child: Row(mainAxisSize: MainAxisSize.min, children: children),
@@ -753,10 +752,10 @@ class _UiStaggerState extends State<UiStagger> {
   @override
   void initState() {
     super.initState();
-    final mq = MediaQuery.maybeOf(context);
     final reduce = !widget.enabled ||
-        (mq?.disableAnimations ?? false) ||
-        (mq?.platformDispatcher.accessibilityFeatures.disableAnimations ?? false);
+        MediaQuery.maybeOf(context)?.disableAnimations == true ||
+        WidgetsBinding.instance.platformDispatcher.accessibilityFeatures
+            .disableAnimations;
     _shown = reduce;
     if (reduce) return;
     // The timer is cancelled on dispose: a row that goes away mid-arrival
@@ -777,8 +776,6 @@ class _UiStaggerState extends State<UiStagger> {
     return AnimatedOpacity(
       duration: Ui.normal,
       curve: Ui.curve,
-      // minOpacity keeps an arriving row tappable from the first frame.
-      minOpacity: 1.0,
       opacity: _shown ? 1 : 0,
       child: AnimatedSlide(
         duration: Ui.normal,

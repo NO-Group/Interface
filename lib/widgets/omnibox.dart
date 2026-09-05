@@ -147,12 +147,12 @@ class _OmniboxState extends State<Omnibox> {
                   onTap: tab.onSpeedDial || tab.url.isEmpty
                       ? null
                       : () => showSiteInfoSheet(context),
-                  child: _leadingIcon(palette, tab, blocked: blocked),
                   lit: blocked > 0,
                   count: blocked,
                   tip: blocked > 0
                       ? '$blocked ads and trackers blocked on this site'
                       : 'Site information',
+                  child: _leadingIcon(palette, tab, blocked: blocked),
                 )
               else
                 _SiteButton(
@@ -197,6 +197,7 @@ class _OmniboxState extends State<Omnibox> {
               ],
             ],
           ),
+        ),
             // The plate's own keel lights while the field has the keyboard, so
             // the focus cue sits on the same edge as every other cue.
             if (!compact && focused)
@@ -207,7 +208,6 @@ class _OmniboxState extends State<Omnibox> {
                 child: Ui.keel(palette),
               ),
           ],
-        ),
         ),
       ),
     );
